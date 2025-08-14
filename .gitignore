@@ -1,0 +1,86 @@
+# Root .gitignore for ToryApp monorepo (ASP.NET Core + TypeScript)
+
+# OS / Editor junk
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+*.swp
+*.swo
+
+# IDEs
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.idea/
+*.iml
+
+# VS Code (keep common workspace configs)
+.vscode/
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+
+# Environment files (never commit secrets)
+*.env
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+
+# Logs
+*.log
+logs/
+Logs/
+
+# Databases
+*.mdf
+*.ldf
+*.ndf
+*.sqlite
+*.sqlite3
+
+# Frontend / Node
+node_modules/
+dist/
+build/
+out/
+.cache/
+.parcel-cache/
+.npm/
+.yarn/*
+!.yarn/releases/
+!.yarn/plugins/
+!.yarn/sdks/
+!.yarn/versions/
+.pnp.*
+.eslintcache
+.stylelintcache
+coverage/
+.cypress/
+cypress/screenshots/
+cypress/videos/
+*.tsbuildinfo
+
+# Backend / .NET
+bin/
+obj/
+TestResults/
+.publish/
+*.nupkg
+*.snupkg
+project.lock.json
+artifacts/
+
+# ASP.NET static maps (optional)
+wwwroot/*.map
+
+# AppSettings local/secret overrides (keep non-secret configs in repo)
+appsettings.Local.json
+appsettings.*.Local.json
+appsettings.Secrets.json
+appsettings.*.Secrets.json

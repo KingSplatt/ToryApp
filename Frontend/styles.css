@@ -1,0 +1,8 @@
+:root{color-scheme:light dark}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.4;padding:1rem}
+#app{max-width:960px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.btn{padding:.5rem .75rem;border:1px solid #888;border-radius:.5rem;cursor:pointer;background:transparent}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{border-bottom:1px solid #ddd;padding:.5rem;text-align:left}

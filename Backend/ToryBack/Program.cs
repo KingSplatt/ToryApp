@@ -1,56 +1,118 @@
+using DotNetEnv;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using ToryBack.Data;
+using ToryBack.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+Env.Load();
 
-// CORS from configuration (env or appsettings): Cors:Origins = ["http://localhost:5173", ...]
+builder.Configuration["Google:ClientId"] = Env.GetString("GOOGLE_CLIENT_ID") ?? throw new InvalidOperationException("Google ClientId not configured");
+builder.Configuration["Google:ClientSecret"] = Env.GetString("GOOGLE_CLIENT_SECRET") ?? throw new InvalidOperationException("Google ClientSecret not configured");
+builder.Configuration["Facebook:AppId"] = Env.GetString("FACEBOOK_APP_ID") ?? throw new InvalidOperationException("Facebook AppId not configured");
+builder.Configuration["Facebook:AppSecret"] = Env.GetString("FACEBOOK_APP_SECRET") ?? throw new InvalidOperationException("Facebook AppSecret not configured");
+
+// Add services to the container
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Database configuration
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseMySql(builder.Configuration.GetConnectionString("Default"), 
+                    new MySqlServerVersion(new Version(8, 0, 21)))
+           .EnableSensitiveDataLogging(builder.Environment.IsDevelopment()));
+
+// Identity configuration
+builder.Services.AddIdentity<User, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 4;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
+    options.User.RequireUniqueEmail = true;
+    options.SignIn.RequireConfirmedEmail = false;
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
+
+//Google y Facebook authentication
+builder.Services.AddAuthentication()
+    .AddGoogle(gl =>
+    {
+        gl.ClientId = builder.Configuration["Google:ClientId"] ?? throw new InvalidOperationException("Google ClientId no configurado");
+        gl.ClientSecret = builder.Configuration["Google:ClientSecret"] ?? throw new InvalidOperationException("Google ClientSecret no configurado");
+        gl.SaveTokens = true;
+    })
+    .AddFacebook(fb =>
+    {
+        fb.AppId = builder.Configuration["Facebook:AppId"] ?? throw new InvalidOperationException("Facebook AppId no configurado");
+        fb.AppSecret = builder.Configuration["Facebook:AppSecret"] ?? throw new InvalidOperationException("Facebook AppSecret no configurado");
+        fb.SaveTokens = true;
+    });
+
+// CORS configuration
 var allowedOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() 
-                    ?? new[] { "http://localhost:5173", "http://localhost:3000" };
+                    ?? new[] { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" };
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowConfiguredOrigins", policy =>
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
-              .AllowAnyMethod());
+              .AllowAnyMethod()
+              .AllowCredentials());
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
+
+// CORS must be before Authentication
 app.UseCors("AllowConfiguredOrigins");
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+// Authentication & Authorization
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.MapGet("/", () => Results.Ok(new { status = "ok", env = app.Environment.EnvironmentName }))
-   .WithName("RootHealth");
+// Controllers
+app.MapControllers();
 
-app.MapGet("/weatherforecast", () =>
+// Health check endpoint
+app.MapGet("/api/health", () => Results.Ok(new { 
+    status = "ok", 
+    timestamp = DateTime.UtcNow,
+    environment = app.Environment.EnvironmentName,
+    database = "inventorydb"
+}))
+.WithName("HealthCheck")
+.WithTags("Health");
+
+//test endpoint
+app.MapGet("/api/test-db", async (ApplicationDbContext context) =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
+    try
+    {
+        var itemCount = await context.Items.CountAsync();
+        return Results.Ok(new { 
+            message = "Database connection successful", 
+            itemCount,
+            timestamp = DateTime.UtcNow 
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Database connection failed: {ex.Message}");
+    }
 })
-.WithName("GetWeatherForecast");
+.WithName("TestDatabase")
+.WithTags("Health");
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

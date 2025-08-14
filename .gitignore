@@ -37,12 +37,6 @@ $RECYCLE.BIN/
 logs/
 Logs/
 
-# Databases
-*.mdf
-*.ldf
-*.ndf
-*.sqlite
-*.sqlite3
 
 # Frontend / Node
 node_modules/

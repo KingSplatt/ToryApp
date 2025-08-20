@@ -1,20 +1,35 @@
-// Home page component
+import { UIUtils } from '../utils/ui';
+
 export function homePage() {
+  const isAuthenticated = UIUtils.isUserAuthenticated();
+  const currentUser = UIUtils.getCurrentUser();
+  const displayName = UIUtils.getUserDisplayName(currentUser);
+  const userId = currentUser ? currentUser.id : null;
+  console.log(displayName, userId, currentUser);
   return `
     <div class="home-container">
       <section class="hero">
-        <h1>Bienvenido a ToryApp</h1>
-        <p>Gestiona tus inventarios de forma sencilla y colaborativa</p>
-        <div class="hero-actions">
-          <a href="/inventories" data-navigate="/inventories" class="btn btn-primary">Ver Inventarios</a>
-          <a href="/login" data-navigate="/login" class="btn btn-secondary">Iniciar Sesión</a>
-        </div>
+        ${isAuthenticated ? `
+          <h1>¡Welcome, ${displayName}!</h1>
+          <p>Management your inventories easily and collaboratively</p>
+          <div class="hero-actions">
+            <a href="/inventories" data-navigate="/inventories" class="btn btn-primary">Watch my inventories</a>
+            <a href="/search" data-navigate="/search" class="btn btn-secondary">Search Items</a>
+          </div>
+        ` : `
+          <h1>Welcome to ToryApp</h1>
+          <p>Management your inventories easily and collaboratively</p>
+          <div class="hero-actions">
+            <a href="/inventories" data-navigate="/inventories" class="btn btn-primary">Watch inventories</a>
+            <a href="/login" data-navigate="/login" class="btn btn-success">Log In</a>
+          </div>
+        `}
       </section>
       
       <section class="featured-section">
         <div class="section-header">
-          <h2>Inventarios Recientes</h2>
-          <a href="/inventories" data-navigate="/inventories">Ver todos</a>
+          <h2>${isAuthenticated ? 'Your Recent Inventories' : 'Recent Inventories'}</h2>
+          <a href="/inventories" data-navigate="/inventories">View All</a>
         </div>
         <div class="inventory-grid" id="recent-inventories">
           <!-- Dynamic content will be loaded here -->
@@ -23,8 +38,8 @@ export function homePage() {
       
       <section class="featured-section">
         <div class="section-header">
-          <h2>Inventarios Populares</h2>
-          <a href="/inventories?sort=popular" data-navigate="/inventories">Ver todos</a>
+          <h2>Popular Inventories</h2>
+          <a href="/inventories?sort=popular" data-navigate="/inventories">View All</a>
         </div>
         <div class="inventory-grid" id="popular-inventories">
           <!-- Dynamic content will be loaded here -->
@@ -32,7 +47,7 @@ export function homePage() {
       </section>
       
       <section class="tags-section">
-        <h2>Explorar por Tags</h2>
+        <h2>Search by tags</h2>
         <div class="tag-cloud" id="tag-cloud">
           <!-- Tags will be loaded dynamically -->
         </div>
@@ -46,6 +61,32 @@ export function initializeHome() {
   loadRecentInventories();
   loadPopularInventories();
   loadTagCloud();
+  
+  // Listen for authentication state changes
+  UIUtils.listenToAuthChanges((user) => {
+    // Update hero section when auth state changes
+    const heroSection = document.querySelector('.hero');
+    if (heroSection) {
+      const isAuthenticated = user !== null;
+      const displayName = UIUtils.getUserDisplayName(user);
+      
+      heroSection.innerHTML = isAuthenticated ? `
+        <h1>¡Welcome, ${displayName}!</h1>
+        <p>Management your inventories easily and collaboratively</p>
+        <div class="hero-actions">
+          <a href="/inventories" data-navigate="/inventories" class="btn btn-primary">Watch my inventories</a>
+          <a href="/search" data-navigate="/search" class="btn btn-secondary">Search Items</a>
+        </div>
+      ` : `
+        <h1>Welcome to ToryApp</h1>
+        <p>Management your inventories easily and collaboratively</p>
+        <div class="hero-actions">
+          <a href="/inventories" data-navigate="/inventories" class="btn btn-primary">Watch inventories</a>
+          <a href="/login" data-navigate="/login" class="btn btn-success">Log In</a>
+        </div>
+      `;
+    }
+  });
 }
 
 async function loadRecentInventories() {

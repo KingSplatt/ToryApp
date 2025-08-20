@@ -1,4 +1,3 @@
-// Inventories listing page
 export function inventoriesPage() {
   return `
     <div class="inventories-container">

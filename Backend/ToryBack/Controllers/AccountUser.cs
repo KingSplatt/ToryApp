@@ -24,12 +24,33 @@ namespace ToryBack.Controllers
         }
 
         [HttpGet("status")]
-        public IActionResult GetStatus()
+        public async Task<IActionResult> GetStatus()
         {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var user = await _userManager.FindByNameAsync(User.Identity.Name!);
+                if (user != null)
+                {
+                    return Ok(new
+                    {
+                        isAuthenticated = true,
+                        user = new
+                        {
+                            id = user.Id,
+                            email = user.Email,
+                            fullName = user.FullName,
+                            profilePictureUrl = user.ProfilePictureUrl,
+                            isOAuthUser = user.IsOAuthUser
+                        },
+                        timestamp = DateTime.UtcNow
+                    });
+                }
+            }
+            
             return Ok(new
             {
-                isAuthenticated = User.Identity?.IsAuthenticated ?? false,
-                userName = User.Identity?.Name,
+                isAuthenticated = false,
+                user = (object?)null,
                 timestamp = DateTime.UtcNow
             });
         }
@@ -104,6 +125,7 @@ namespace ToryBack.Controllers
         public IActionResult GoogleLogin(string returnUrl = "/")
         {
             var redirectUrl = Url.Action("GoogleCallback", "Account", new { returnUrl });
+            Console.WriteLine($"Redirect URL: {redirectUrl}");
             var properties = _signInManager.ConfigureExternalAuthenticationProperties("Google", redirectUrl);
             return Challenge(properties, "Google");
         }
@@ -114,7 +136,7 @@ namespace ToryBack.Controllers
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
-                return BadRequest(new { message = "Error loading external login information." });
+                return Redirect("http://localhost:5173/login?error=external_login_failed");
             }
 
             // Attempt to sign in with external login provider
@@ -124,17 +146,9 @@ namespace ToryBack.Controllers
             {
                 _logger.LogInformation("User logged in with {Name} provider.", info.LoginProvider);
                 var existingUser = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
-                return Ok(new
-                {
-                    message = "Login successful",
-                    provider = info.LoginProvider,
-                    user = new
-                    {
-                        id = existingUser?.Id,
-                        email = existingUser?.Email,
-                        fullName = existingUser?.FullName
-                    }
-                });
+                
+                // Redirect to frontend with success
+                return Redirect("http://localhost:5173/?login=success");
             }
 
             // If external login is not registered, create a new user
@@ -143,7 +157,7 @@ namespace ToryBack.Controllers
 
             if (email == null)
             {
-                return BadRequest(new { message = "Email claim not received from Google." });
+                return Redirect("http://localhost:5173/login?error=email_not_provided");
             }
 
             var user = await _userManager.FindByEmailAsync(email);
@@ -161,7 +175,7 @@ namespace ToryBack.Controllers
                 var createResult = await _userManager.CreateAsync(user);
                 if (!createResult.Succeeded)
                 {
-                    return BadRequest(new { message = "Failed to create user account.", errors = createResult.Errors });
+                    return Redirect("http://localhost:5173/login?error=user_creation_failed");
                 }
             }
 
@@ -171,20 +185,11 @@ namespace ToryBack.Controllers
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
                 
-                return Ok(new
-                {
-                    message = "Account created and login successful",
-                    provider = info.LoginProvider,
-                    user = new
-                    {
-                        id = user.Id,
-                        email = user.Email,
-                        fullName = user.FullName
-                    }
-                });
+                // Redirect to frontend with success
+                return Redirect("http://localhost:5173/?login=success&new_user=true");
             }
 
-            return BadRequest(new { message = "Failed to add external login." });
+            return Redirect("http://localhost:5173/login?error=login_association_failed");
         }
 
         [HttpGet("login/facebook")]
@@ -201,7 +206,7 @@ namespace ToryBack.Controllers
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
-                return BadRequest(new { message = "Error loading external login information." });
+                return Redirect("http://localhost:5173/login?error=external_login_failed");
             }
 
             // Attempt to sign in with external login provider
@@ -211,17 +216,9 @@ namespace ToryBack.Controllers
             {
                 _logger.LogInformation("User logged in with {Name} provider.", info.LoginProvider);
                 var existingUser = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
-                return Ok(new
-                {
-                    message = "Login successful",
-                    provider = info.LoginProvider,
-                    user = new
-                    {
-                        id = existingUser?.Id,
-                        email = existingUser?.Email,
-                        fullName = existingUser?.FullName
-                    }
-                });
+                
+                // Redirect to frontend with success
+                return Redirect("http://localhost:5173/?login=success");
             }
 
             // If external login is not registered, create a new user
@@ -230,7 +227,7 @@ namespace ToryBack.Controllers
 
             if (email == null)
             {
-                return BadRequest(new { message = "Email claim not received from Facebook." });
+                return Redirect("http://localhost:5174/login?error=email_not_provided");
             }
 
             var user = await _userManager.FindByEmailAsync(email);
@@ -248,7 +245,7 @@ namespace ToryBack.Controllers
                 var createResult = await _userManager.CreateAsync(user);
                 if (!createResult.Succeeded)
                 {
-                    return BadRequest(new { message = "Failed to create user account.", errors = createResult.Errors });
+                    return Redirect("http://localhost:5173/login?error=user_creation_failed");
                 }
             }
 
@@ -258,20 +255,11 @@ namespace ToryBack.Controllers
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
                 
-                return Ok(new
-                {
-                    message = "Account created and login successful",
-                    provider = info.LoginProvider,
-                    user = new
-                    {
-                        id = user.Id,
-                        email = user.Email,
-                        fullName = user.FullName
-                    }
-                });
+                // Redirect to frontend with success
+                return Redirect("http://localhost:5173/?login=success&new_user=true");
             }
 
-            return BadRequest(new { message = "Failed to add external login." });
+            return Redirect("http://localhost:5173/login?error=login_association_failed");
         }
     }
 

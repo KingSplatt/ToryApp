@@ -1,0 +1,222 @@
+import { UIUtils } from '../utils/ui';
+import { User } from '../login/interfaces/UserInterface';
+
+export function profilePage() {
+  const currentUser = UIUtils.getCurrentUser();
+  
+  if (!currentUser) {
+    return `
+      <div class="profile-container">
+        <div class="alert alert-warning">
+          <h2>Access Denied</h2>
+          <p>You must Log in to access this page.</p>
+          <a href="/login" data-navigate="/login" class="btn btn-primary">Log In</a>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="profile-container">
+      <div class="page-header">
+        <h1>Your profile</h1>
+        <p>Edit your personal information and preferences</p>
+      </div>
+      
+      <div class="profile-content">
+        <div class="profile-info-card">
+          <h2>Personal Information</h2>
+          <div class="user-info">
+            <div class="info-item">
+              <label>Full Name:</label>
+              <span>${currentUser.fullName || 'Not specified'}</span>
+            </div>
+            <div class="info-item">
+              <label>Email:</label>
+              <span>${currentUser.email}</span>
+            </div>
+            <div class="info-item">
+              <label>User ID:</label>
+              <span>${currentUser.id}</span>
+            </div>
+            <div class="info-item">
+              <label>Account Type:</label>
+              <span>${currentUser.isOAuthUser ? 'Social Account' : 'Local Account'}</span>
+            </div>
+            ${currentUser.profilePictureUrl ? `
+            <div class="info-item">
+              <label>Profile Picture:</label>
+              <img src="${currentUser.profilePictureUrl}" alt="Profile Picture" class="profile-picture">
+            </div>
+            ` : ''}
+          </div>
+          
+          <div class="profile-actions">
+            <button class="btn btn-primary" id="edit-profile-btn">Edit Profile</button>
+            <button class="btn btn-secondary" id="change-password-btn">Change Password</button>
+          </div>
+        </div>
+        
+        <div class="profile-stats-card">
+          <h2>Statistics</h2>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <h3 id="user-inventories-count">0</h3>
+              <p>Inventories Created</p>
+            </div>
+            <div class="stat-item">
+              <h3 id="user-items-count">0</h3>
+              <p>Items Registered</p>
+            </div>
+            <div class="stat-item">
+              <h3 id="user-shared-count">0</h3>
+              <p>Inventories Shared</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="profile-preferences-card">
+          <h2>Preferences</h2>
+          <div class="preferences-form">
+            <div class="form-group">
+              <label for="theme-preference">Theme:</label>
+              <select id="theme-preference" class="form-control">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="auto">Auto</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="language-preference">Language:</label>
+              <select id="language-preference" class="form-control">
+                <option value="es">Spanish</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="email-notifications" checked>
+                Receive email notifications
+              </label>
+            </div>
+            <button class="btn btn-success" id="save-preferences-btn">Save Preferences</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+export function initializeProfile() {
+  const currentUser = UIUtils.getCurrentUser();
+  
+  if (!currentUser) {
+    return;
+  }
+
+  // Load user statistics
+  loadUserStatistics();
+  
+  // Load current preferences
+  loadUserPreferences();
+  
+  // Set up event listeners
+  setupProfileEventListeners();
+  
+  // Listen for auth state changes
+  UIUtils.listenToAuthChanges((user) => {
+    if (!user) {
+      // User logged out, redirect to home
+      window.history.pushState({}, '', '/');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
+  });
+}
+
+async function loadUserStatistics() {
+  try {
+    // Here you would load actual statistics from your API
+    // For now, we'll use placeholder data
+    document.getElementById('user-inventories-count')!.textContent = '5';
+    document.getElementById('user-items-count')!.textContent = '127';
+    document.getElementById('user-shared-count')!.textContent = '3';
+  } catch (error) {
+    console.error('Error loading user statistics:', error);
+  }
+}
+
+function loadUserPreferences() {
+  // Load theme preference
+  const themePreference = localStorage.getItem('theme') || 'light';
+  const themeSelect = document.getElementById('theme-preference') as HTMLSelectElement;
+  if (themeSelect) {
+    themeSelect.value = themePreference;
+  }
+  
+  // Load language preference
+  const languagePreference = localStorage.getItem('language') || 'es';
+  const languageSelect = document.getElementById('language-preference') as HTMLSelectElement;
+  if (languageSelect) {
+    languageSelect.value = languagePreference;
+  }
+  
+  // Load notification preference
+  const emailNotifications = localStorage.getItem('emailNotifications') !== 'false';
+  const emailCheckbox = document.getElementById('email-notifications') as HTMLInputElement;
+  if (emailCheckbox) {
+    emailCheckbox.checked = emailNotifications;
+  }
+}
+
+function setupProfileEventListeners() {
+  // Edit profile button
+  const editProfileBtn = document.getElementById('edit-profile-btn');
+  editProfileBtn?.addEventListener('click', () => {
+    UIUtils.showMessage('Función de edición de perfil en desarrollo', 'info');
+  });
+  
+  // Change password button
+  const changePasswordBtn = document.getElementById('change-password-btn');
+  changePasswordBtn?.addEventListener('click', () => {
+    UIUtils.showMessage('Función de cambio de contraseña en desarrollo', 'info');
+  });
+  
+  // Save preferences button
+  const savePreferencesBtn = document.getElementById('save-preferences-btn');
+  savePreferencesBtn?.addEventListener('click', saveUserPreferences);
+  
+  // Theme change handler
+  const themeSelect = document.getElementById('theme-preference') as HTMLSelectElement;
+  themeSelect?.addEventListener('change', (e) => {
+    const newTheme = (e.target as HTMLSelectElement).value;
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+  });
+}
+
+function saveUserPreferences() {
+  try {
+    // Save theme preference
+    const themeSelect = document.getElementById('theme-preference') as HTMLSelectElement;
+    if (themeSelect) {
+      localStorage.setItem('theme', themeSelect.value);
+    }
+    
+    // Save language preference
+    const languageSelect = document.getElementById('language-preference') as HTMLSelectElement;
+    if (languageSelect) {
+      localStorage.setItem('language', languageSelect.value);
+    }
+    
+    // Save notification preference
+    const emailCheckbox = document.getElementById('email-notifications') as HTMLInputElement;
+    if (emailCheckbox) {
+      localStorage.setItem('emailNotifications', emailCheckbox.checked.toString());
+    }
+    
+    UIUtils.showMessage('Preferencias guardadas exitosamente', 'success');
+  } catch (error) {
+    console.error('Error saving preferences:', error);
+    UIUtils.showMessage('Error al guardar las preferencias', 'error');
+  }
+}

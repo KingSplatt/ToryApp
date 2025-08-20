@@ -1,4 +1,3 @@
-// Simple SPA router for ToryApp
 export type Route = {
   path: string;
   title: string;
@@ -7,6 +6,9 @@ export type Route = {
 };
 
 export class Router {
+  static navigate(arg0: string) {
+    throw new Error('Method not implemented.');
+  }
   private routes: Route[] = [];
   private currentPath = '/';
 

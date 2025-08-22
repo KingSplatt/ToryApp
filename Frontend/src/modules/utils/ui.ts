@@ -1,5 +1,6 @@
 import { AuthService } from '../login/services/auth';
 import { User } from '../login/interfaces/UserInterface';
+import { Router } from '../router/router';
 
 export class UIUtils {
   static showLoading(element: HTMLButtonElement, text: string = 'Loading...'): void {
@@ -16,20 +17,16 @@ export class UIUtils {
   }
 
   static showMessage(message: string, type: 'success' | 'error' | 'info' = 'info'): void {
-    // Remove existing messages
     const existingMessages = document.querySelectorAll('.auth-message');
     existingMessages.forEach(msg => msg.remove());
-
     const messageElement = document.createElement('div');
     messageElement.className = `auth-message auth-message-${type}`;
     messageElement.textContent = message;
-    
-    // Add to login container
+  
     const loginContainer = document.querySelector('.login-container');
     if (loginContainer) {
       loginContainer.appendChild(messageElement);
       loginContainer.scrollTop = loginContainer.scrollHeight;
-
       setTimeout(() => {
         messageElement.remove();
       }, 5000);
@@ -46,8 +43,7 @@ export class UIUtils {
         if (authService.isAuthenticated()) {
           UIUtils.showMessage('Login successful! Redirecting...', 'success');
           setTimeout(() => {
-            window.history.pushState({}, '', '/');
-            window.dispatchEvent(new PopStateEvent('popstate'));
+            Router.navigate('/');
           }, 1500);
         }
       } catch (error) {
@@ -57,7 +53,6 @@ export class UIUtils {
     }
   }
 
-  // User-related utilities
   static getCurrentUser(): User | null {
     const authService = AuthService.getInstance();
     return authService.getUser();
@@ -80,11 +75,8 @@ export class UIUtils {
       const authService = AuthService.getInstance();
       await authService.logout();
       UIUtils.showMessage('Sesión cerrada exitosamente', 'success');
-      
-      // Redirect to home after logout
       setTimeout(() => {
-        window.history.pushState({}, '', '/');
-        window.dispatchEvent(new PopStateEvent('popstate'));
+        Router.navigate('/');
       }, 1000);
     } catch (error) {
       console.error('Logout error:', error);
@@ -95,5 +87,26 @@ export class UIUtils {
   static listenToAuthChanges(callback: (user: User | null) => void): () => void {
     const authService = AuthService.getInstance();
     return authService.onAuthStateChanged(callback);
+  }
+
+  static handleErrorOAuth(error: string): void {
+    let errorMessage = 'Authentication failed.';
+    switch (error) {
+      case 'external_login_failed':
+        errorMessage = 'External login failed. Please try again.';
+        break;
+      case 'email_not_provided':
+        errorMessage = 'Email not provided by the authentication provider.';
+        break;
+      case 'user_creation_failed':
+        errorMessage = 'Failed to create user account.';
+        break;
+      case 'login_association_failed':
+        errorMessage = 'Failed to associate login with account.';
+        break;
+    }
+
+    console.error(errorMessage);
+    UIUtils.showMessage(errorMessage, 'error');
   }
 }

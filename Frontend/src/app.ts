@@ -6,11 +6,13 @@ import { inventoriesPage, initializeInventories } from './modules/inventories/in
 import { searchPage, initializeSearch } from './modules/search/search';
 import { profilePage, initializeProfile } from './modules/profile/profile';
 import { AuthService } from './modules/login/services/auth';
+import { Register } from './modules/login/views/register';
+import { initializeRegisterForm } from './modules/login/views/register';
+import { UIUtils } from './modules/utils/ui';
 
-// Initialize router
-const router = new Router();
+const router = Router.getInstance();
 
-// Define routes
+// Routes
 router.addRoute({
   path: '/',
   title: 'Home',
@@ -27,6 +29,16 @@ router.addRoute({
   component: () => {
     const content = loginPage();
     setTimeout(initializeLogin, 0);
+    return createLayout(content, router.getCurrentPath());
+  }
+});
+
+router.addRoute({
+  path: '/register',
+  title: 'Register',
+  component: () => {
+    const content = Register();
+    setTimeout(initializeRegisterForm, 0);
     return createLayout(content, router.getCurrentPath());
   }
 });
@@ -97,73 +109,27 @@ router.addRoute({
 
 // Initialize app
 async function initializeApp() {
-  // Initialize authentication service first
   const authService = AuthService.getInstance();
   await authService.initialize();
 
-  // Initialize layout with auth state management
   initializeLayout();
-
-  // Initialize theme and language management
   setTimeout(() => {
     initializeTheme();
     initializeLanguage();
   }, 0);
   
-  // Check for OAuth success/error parameters
   const urlParams = new URLSearchParams(window.location.search);
-  console.log('URL Params:', urlParams.toString());
-  console.log('Current URL:', window.location.href);
-  
   const loginStatus = urlParams.get('login');
   const error = urlParams.get('error');
-  const newUser = urlParams.get('new_user');
-  
-  console.log('Login Status:', loginStatus);
-  console.log('Error:', error);
-  console.log('New User:', newUser);
-
   if (loginStatus === 'success') {
-    // Clean URL parameters
-    window.history.replaceState({}, document.title, window.location.pathname);
-    
-    // Show success message
-    if (newUser === 'true') {
-      console.log('Account created and login successful!');
-    } else {
-      console.log('Login successful!');
-    }
-    
-    // Navigate to home
     router.navigate('/');
     return;
   } else if (error) {
-    // Clean URL parameters
     window.history.replaceState({}, document.title, window.location.pathname);
-    
-    // Show error message and redirect to login
-    let errorMessage = 'Authentication failed.';
-    switch (error) {
-      case 'external_login_failed':
-        errorMessage = 'External login failed. Please try again.';
-        break;
-      case 'email_not_provided':
-        errorMessage = 'Email not provided by the authentication provider.';
-        break;
-      case 'user_creation_failed':
-        errorMessage = 'Failed to create user account.';
-        break;
-      case 'login_association_failed':
-        errorMessage = 'Failed to associate login with account.';
-        break;
-    }
-    
-    console.error(errorMessage);
+    UIUtils.handleErrorOAuth(error);
     router.navigate('/login');
     return;
   }
-  
-  // Normal app initialization
   if (authService.isAuthenticated()) {
     router.navigate('/');
   } else {
@@ -171,5 +137,4 @@ async function initializeApp() {
   }
 }
 
-// Bootstrap the application
 initializeApp();

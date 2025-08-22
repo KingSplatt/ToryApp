@@ -1,9 +1,11 @@
 import { LoginRequest } from "../interfaces/LoginRequestInterface";
 import { AuthResponse } from "../interfaces/AuthRequestInterface";
+import { RegisterRequest } from "../interfaces/RegisterRequestInterface";
 export const API_CONFIG = {
   BASE_URL: 'http://localhost:5217',
   ENDPOINTS: {
     LOGIN: '/api/account/login',
+    REGISTER: '/api/account/register',
     GOOGLE_LOGIN: '/api/Account/login/google',
     FACEBOOK_LOGIN: '/api/Account/login/facebook',
     STATUS: '/api/Account/status',
@@ -62,6 +64,13 @@ export class ApiService {
     return this.makeRequest<AuthResponse>(API_CONFIG.ENDPOINTS.LOGIN, {
       method: 'POST',
       body: JSON.stringify(credentials),
+    });
+  }
+
+  async register(userData: RegisterRequest): Promise<AuthResponse> {
+    return this.makeRequest<AuthResponse>(API_CONFIG.ENDPOINTS.REGISTER, {
+      method: 'POST',
+      body: JSON.stringify(userData),
     });
   }
 

@@ -6,9 +6,7 @@ export type Route = {
 };
 
 export class Router {
-  static navigate(arg0: string) {
-    throw new Error('Method not implemented.');
-  }
+  private static instance: Router;
   private routes: Route[] = [];
   private currentPath = '/';
 
@@ -16,6 +14,28 @@ export class Router {
     window.addEventListener('popstate', () => {
       this.navigate(window.location.pathname, false);
     });
+  }
+
+  static getInstance(): Router {
+    if (!Router.instance) {
+      Router.instance = new Router();
+    }
+    return Router.instance;
+  }
+
+  static navigate(path: string, pushState = true): void {
+    const instance = Router.getInstance();
+    instance.navigate(path, pushState);
+  }
+
+  static getCurrentPath(): string {
+    const instance = Router.getInstance();
+    return instance.getCurrentPath();
+  }
+
+  static addRoute(route: Route): void {
+    const instance = Router.getInstance();
+    instance.addRoute(route);
   }
 
   addRoute(route: Route) {
@@ -40,13 +60,11 @@ export class Router {
   private render(route: Route) {
     const appEl = document.getElementById('app')!;
     appEl.innerHTML = route.component();
-    
-    // Re-attach event listeners after DOM update
+
     this.attachEventListeners();
   }
 
   private attachEventListeners() {
-    // Handle navigation links
     document.querySelectorAll('[data-navigate]').forEach(el => {
       el.addEventListener('click', (e) => {
         e.preventDefault();
@@ -55,7 +73,7 @@ export class Router {
       });
     });
   }
-
+  
   getCurrentPath() {
     return this.currentPath;
   }

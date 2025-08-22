@@ -4,6 +4,8 @@ import { AuthService } from '../services/auth';
 import { UIUtils } from '../../utils/ui';
 import { LoginRequest } from '../interfaces/LoginRequestInterface';
 import { Router } from '../../router/router';
+import { LoginSchema } from '../schemas/LoginSchema';
+import { ZodError } from 'zod';
 
 export function loginPage() {
   return `
@@ -62,24 +64,20 @@ export function initializeLogin() {
   const googleBtn = document.getElementById('google-login') as HTMLButtonElement;
   const facebookBtn = document.getElementById('facebook-login') as HTMLButtonElement;
   const submitBtn = form?.querySelector('button[type="submit"]') as HTMLButtonElement;
-  
   const apiService = ApiService.getInstance();
   const authService = AuthService.getInstance();
 
-  // Check if user is already authenticated
+
   authService.onAuthStateChanged((user) => {
     if (user) {
       // User is logged in, redirect to home
       console.log('User already authenticatedddd:', user);
-      Router.navigate('/Home');
+      Router.navigate('/');
       return;
     }
   });
 
-  // Handle OAuth callback if present
-  UIUtils.handleOAuthCallback();
-
-  // Traditional email/password login
+  //UIUtils.handleOAuthCallback();
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -92,9 +90,23 @@ export function initializeLogin() {
       rememberMe: formData.get('rememberMe') === 'on'
     };
 
-    // Validate form
-    if (!credentials.email || !credentials.password) {
-      UIUtils.showMessage('Please fill in all required fields.', 'error');
+    // Validate form using Zod schema
+    try {
+      const validatedData = LoginSchema.parse({
+        email: credentials.email,
+        password: credentials.password
+      });
+      credentials.email = validatedData.email;
+      credentials.password = validatedData.password;
+
+
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const firstError = error.issues[0];
+        UIUtils.showMessage(firstError.message, 'error');
+      } else {
+        UIUtils.showMessage('Please check your input data.', 'error');
+      }
       return;
     }
 
@@ -111,14 +123,12 @@ export function initializeLogin() {
         
         // Redirect after a brief delay
         setTimeout(() => {
-          window.history.pushState({}, '', '/');
-          window.dispatchEvent(new PopStateEvent('popstate'));
+          Router.navigate('/');
         }, 1500);
       } else {
         UIUtils.showMessage('Login failed. Please check your credentials.', 'error');
       }
     } catch (error) {
-      console.error('Login error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Login failed. Please try again.';
       UIUtils.showMessage(errorMessage, 'error');
     } finally {

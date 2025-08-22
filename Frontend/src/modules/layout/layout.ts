@@ -72,8 +72,11 @@ export function initializeLayout() {
 function updateLayoutAuthState(user: User | null) {
   const navLinks = document.querySelector('.nav-links') as HTMLElement;
   const navTools = document.querySelector('.nav-tools') as HTMLElement;
-  
-  if (!navTools) return;
+
+  if (!navLinks) {
+    console.log('Layout: navLinks not found, layout may not be rendered yet');
+    return;
+  }
   
   const isAuthenticated = user !== null;
   
@@ -83,7 +86,7 @@ function updateLayoutAuthState(user: User | null) {
   }
   
   // Update nav tools content
-  navTools.innerHTML = isAuthenticated ? `
+  const newContent = isAuthenticated ? `
     <div class="user-info-nav">
       <span class="user-welcome">Bienvenido, ${user?.fullName || user?.email}</span>
     </div>
@@ -93,6 +96,8 @@ function updateLayoutAuthState(user: User | null) {
   ` : `
     <a href="/login" data-navigate="/login" class="btn btn-success">Iniciar sesión</a>
   `;
+  
+  navTools.innerHTML = newContent;
   
   // Re-attach navigation event listeners
   attachNavigationListeners();

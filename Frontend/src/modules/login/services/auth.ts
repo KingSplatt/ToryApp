@@ -13,13 +13,10 @@ export class AuthService {
     return AuthService.instance;
   }
 
-  // Event listeners for auth state changes
+  // for auth state changes
   onAuthStateChanged(callback: (user: User | null) => void): () => void {
     this.authListeners.push(callback);
-    // Call immediately with current state
     callback(this.user);
-    
-    // Return unsubscribe function
     return () => {
       const index = this.authListeners.indexOf(callback);
       if (index > -1) {
@@ -34,14 +31,11 @@ export class AuthService {
 
   setUser(user: User | null): void {
     this.user = user;
-    
-    // Store in localStorage for persistence
     if (user) {
       localStorage.setItem('user', JSON.stringify(user));
     } else {
       localStorage.removeItem('user');
     }
-    
     this.notifyAuthStateChange();
   }
 
@@ -56,23 +50,19 @@ export class AuthService {
   // Initialize from localStorage
   async initialize(): Promise<void> {
     try {
-      // First try to get from localStorage
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         this.user = JSON.parse(storedUser);
       }
 
-      // Then verify with server
       const apiService = ApiService.getInstance();
-      const response = await apiService.getAuthStatus();
-      
+      const response = await apiService.getAuthStatus();      
       if (response.user) {
         this.setUser(response.user);
       } else {
         this.setUser(null);
       }
     } catch (error) {
-      console.log('Not authenticated or server not available');
       this.setUser(null);
     }
   }

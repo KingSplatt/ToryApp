@@ -113,17 +113,9 @@ export function initializeProfile() {
   if (!currentUser) {
     return;
   }
-
-  // Load user statistics
   loadUserStatistics();
-  
-  // Load current preferences
   loadUserPreferences();
-  
-  // Set up event listeners
   setupProfileEventListeners();
-  
-  // Listen for auth state changes
   UIUtils.listenToAuthChanges((user) => {
     if (!user) {
       // User logged out, redirect to home
@@ -134,15 +126,7 @@ export function initializeProfile() {
 }
 
 async function loadUserStatistics() {
-  try {
-    // Here you would load actual statistics from your API
-    // For now, we'll use placeholder data
-    document.getElementById('user-inventories-count')!.textContent = '5';
-    document.getElementById('user-items-count')!.textContent = '127';
-    document.getElementById('user-shared-count')!.textContent = '3';
-  } catch (error) {
-    console.error('Error loading user statistics:', error);
-  }
+  // Load user statistics from API
 }
 
 function loadUserPreferences() {
@@ -153,14 +137,12 @@ function loadUserPreferences() {
     themeSelect.value = themePreference;
   }
   
-  // Load language preference
   const languagePreference = localStorage.getItem('language') || 'es';
   const languageSelect = document.getElementById('language-preference') as HTMLSelectElement;
   if (languageSelect) {
     languageSelect.value = languagePreference;
   }
   
-  // Load notification preference
   const emailNotifications = localStorage.getItem('emailNotifications') !== 'false';
   const emailCheckbox = document.getElementById('email-notifications') as HTMLInputElement;
   if (emailCheckbox) {
@@ -169,7 +151,7 @@ function loadUserPreferences() {
 }
 
 function setupProfileEventListeners() {
-  // Edit profile button
+  // Edit profile button - waiting
   const editProfileBtn = document.getElementById('edit-profile-btn');
   editProfileBtn?.addEventListener('click', () => {
     UIUtils.showMessage('Función de edición de perfil en desarrollo', 'info');

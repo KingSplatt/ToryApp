@@ -4,8 +4,8 @@ import { RegisterRequest } from "../interfaces/RegisterRequestInterface";
 export const API_CONFIG = {
   BASE_URL: 'http://localhost:5217',
   ENDPOINTS: {
-    LOGIN: '/api/account/login',
-    REGISTER: '/api/account/register',
+    LOGIN: '/api/Account/login',
+    REGISTER: '/api/Account/register',
     GOOGLE_LOGIN: '/api/Account/login/google',
     FACEBOOK_LOGIN: '/api/Account/login/facebook',
     STATUS: '/api/Account/status',

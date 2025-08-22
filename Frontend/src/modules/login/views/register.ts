@@ -7,9 +7,6 @@ import { UIUtils } from '../../utils/ui';
 
 
 export function Register() {
-
-  // Registration logic here
-
   return `
     <div class="login-container">
       <div class="login-card">
@@ -57,17 +54,13 @@ export function initializeRegisterForm() {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const formData = new FormData(form);
-    
-    // Get password and confirm password values
     const password = formData.get('password') as string;
     const confirmPassword = formData.get('confirm-password') as string;
-    
-    // Validate password confirmation
     if (password !== confirmPassword) {
       UIUtils.showMessage('Passwords do not match.', 'error');
       return;
     }
-    
+  
     const userData: RegisterRequest = {
       email: formData.get('email') as string,
       fullName: formData.get('fullName') as string,
@@ -76,14 +69,9 @@ export function initializeRegisterForm() {
     
     try {
       const response = await apiService.register(userData);
-      console.log('Registration response:', response);
-      if(response.user) {
-        authService.setUser(response.user);
-        UIUtils.showMessage('Registration successful! Redirecting to login...', 'success');
-        Router.navigate('/login');
-      }else{
-        UIUtils.showMessage('Registration failed. Please try again.', 'error');
-      }
+      console.log('User registered successfully:', response.user);
+      Router.navigate('/login');
+      return;
     } catch (error) {
       console.error('Registration failed:', error);
     }

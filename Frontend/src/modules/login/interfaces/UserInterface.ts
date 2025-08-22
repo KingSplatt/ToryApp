@@ -4,4 +4,5 @@ export interface User{
   fullName: string;
   profilePictureUrl?: string;
   isOAuthUser?: boolean;
+  roles?: string[];
 }

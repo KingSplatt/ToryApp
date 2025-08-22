@@ -1,7 +1,9 @@
 import { AuthService } from "../login/services/auth";
 import { User } from "../login/interfaces/UserInterface";
+import { UIUtils } from "../utils/ui";
 
 export function createLayout(content: string, currentPath: string) {
+  const isAdmin = UIUtils.isAdmin();
   const authService = AuthService.getInstance();
   const currentUser = authService.getUser();
   const isAuthenticated = authService.isAuthenticated();
@@ -22,9 +24,12 @@ export function createLayout(content: string, currentPath: string) {
       </div>
       ` : ''}
       <div class="nav-tools">
+        ${isAdmin ? `
+          <a href="/adminMan" data-navigate="/adminMan" class="btn btn-primary">🔧</a>
+        ` : ''}
         ${isAuthenticated ? `
           <div class="user-info-nav">
-            <span class="user-welcome">Bienvenido, ${currentUser?.fullName || currentUser?.email}</span>
+            <span class="user-welcome">Bienvenido, ${currentUser?.fullName} </span>
           </div>
           <a href="/logout" data-navigate="/logout" class="btn btn-secondary">
             <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión
@@ -61,46 +66,6 @@ export function initializeTheme() {
 // Initialize layout with auth state management
 export function initializeLayout() {
   const authService = AuthService.getInstance();
-  
-  // Listen for auth state changes and update layout accordingly
-  authService.onAuthStateChanged((user) => {
-    updateLayoutAuthState(user);
-  });
-}
-
-// Update layout based on authentication state
-function updateLayoutAuthState(user: User | null) {
-  const navLinks = document.querySelector('.nav-links') as HTMLElement;
-  const navTools = document.querySelector('.nav-tools') as HTMLElement;
-
-  if (!navLinks) {
-    console.log('Layout: navLinks not found, layout may not be rendered yet');
-    return;
-  }
-  
-  const isAuthenticated = user !== null;
-  
-  // Show/hide navigation links based on auth state
-  if (navLinks) {
-    navLinks.style.display = isAuthenticated ? 'flex' : 'none';
-  }
-  
-  // Update nav tools content
-  const newContent = isAuthenticated ? `
-    <div class="user-info-nav">
-      <span class="user-welcome">Bienvenido, ${user?.fullName || user?.email}</span>
-    </div>
-    <a href="/logout" data-navigate="/logout" class="btn btn-secondary">
-      <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión
-    </a>
-  ` : `
-    <a href="/login" data-navigate="/login" class="btn btn-success">Iniciar sesión</a>
-  `;
-  
-  navTools.innerHTML = newContent;
-  
-  // Re-attach navigation event listeners
-  attachNavigationListeners();
 }
 
 // Attach navigation event listeners

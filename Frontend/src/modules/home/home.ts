@@ -2,10 +2,14 @@ import { UIUtils } from '../utils/ui';
 
 export function homePage() {
   const isAuthenticated = UIUtils.isUserAuthenticated();
+  const User = UIUtils.getCurrentUser();
+  const isAdmin = UIUtils.isAdmin();
+  console.log('User:', User);
   const currentUser = UIUtils.getCurrentUser();
   const displayName = UIUtils.getUserDisplayName(currentUser);
   const userId = currentUser ? currentUser.id : null;
-  console.log(displayName, userId, currentUser);
+  console.log(displayName, userId, currentUser, 'Is Admin:', isAdmin);
+  
   return `
     <div class="home-container">
       <section class="hero">
@@ -103,7 +107,7 @@ async function loadRecentInventories() {
   container.innerHTML = mockInventories.map(inv => `
     <div class="inventory-card">
       <div class="inventory-image">
-        ${inv.image ? `<img src="${inv.image}" alt="${inv.title}">` : '<div class="image-placeholder">📦</div>'}
+        ${inv.image ? `<img src="${inv.image}" alt="${inv.title}">` : '<div class="image-placeholder">📦 </div>'}
       </div>
       <div class="inventory-info">
         <h3><a href="/inventory/${inv.id}" data-navigate="/inventory/${inv.id}">${inv.title}</a></h3>

@@ -7,8 +7,10 @@ import { searchPage, initializeSearch } from './modules/search/search';
 import { profilePage, initializeProfile } from './modules/profile/profile';
 import { AuthService } from './modules/login/services/auth';
 import { Register } from './modules/login/views/register';
+import { adminPage } from './modules/admin/admin';
 import { initializeRegisterForm } from './modules/login/views/register';
 import { UIUtils } from './modules/utils/ui';
+import './modules/admin/admin.css';
 
 const router = Router.getInstance();
 
@@ -74,6 +76,15 @@ router.addRoute({
 });
 
 router.addRoute({
+  path: '/adminMan',
+  title: 'Admin Panel',
+  component: () => {
+    const content = adminPage();
+    return createLayout(content, router.getCurrentPath());
+  }
+});
+
+router.addRoute({
   path: '/logout',
   title: 'Logout',
   component: () => {
@@ -123,11 +134,13 @@ async function initializeApp() {
   const error = urlParams.get('error');
   if (loginStatus === 'success') {
     router.navigate('/');
+    initializeLayout();
     return;
   } else if (error) {
     window.history.replaceState({}, document.title, window.location.pathname);
     UIUtils.handleErrorOAuth(error);
     router.navigate('/login');
+    initializeLayout();
     return;
   }
   if (authService.isAuthenticated()) {

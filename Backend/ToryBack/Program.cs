@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ToryBack.Data;
 using ToryBack.Models;
+using ToryBack.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +54,9 @@ builder.Services.AddAuthentication()
         fb.SaveTokens = true;
     });
 
+// Register custom services
+builder.Services.AddScoped<RoleInitializerService>();
+
 // CORS configuration
 var allowedOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() 
                     ?? new[] { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" };
@@ -94,6 +98,16 @@ app.MapGet("/api/health", () => Results.Ok(new {
 }))
 .WithName("HealthCheck")
 .WithTags("Health");
+
+// Initialize roles and admin user
+using (var scope = app.Services.CreateScope())
+{
+    var roleService = scope.ServiceProvider.GetRequiredService<RoleInitializerService>();
+    await roleService.InitializeRolesAsync();
+    
+    // Create default admin user
+    await roleService.CreateAdminUserAsync("admin@toryapp.com", "admin123", "Administrator");
+}
 
 //test endpoint
 app.MapGet("/api/test-db", async (ApplicationDbContext context) =>

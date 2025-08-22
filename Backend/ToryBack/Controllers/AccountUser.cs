@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication;
 using ToryBack.Models;
+using ToryBack.Services;
 
 namespace ToryBack.Controllers
 {
@@ -11,15 +12,18 @@ namespace ToryBack.Controllers
     {
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
+        private readonly RoleInitializerService _roleService;
         private readonly ILogger<AccountController> _logger;
 
         public AccountController(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
+            RoleInitializerService roleService,
             ILogger<AccountController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _roleService = roleService;
             _logger = logger;
         }
 
@@ -31,6 +35,7 @@ namespace ToryBack.Controllers
                 var user = await _userManager.FindByNameAsync(User.Identity.Name!);
                 if (user != null)
                 {
+                    var roles = await _roleService.GetUserRolesAsync(user.Id);
                     return Ok(new
                     {
                         isAuthenticated = true,
@@ -40,7 +45,8 @@ namespace ToryBack.Controllers
                             email = user.Email,
                             fullName = user.FullName,
                             profilePictureUrl = user.ProfilePictureUrl,
-                            isOAuthUser = user.IsOAuthUser
+                            isOAuthUser = user.IsOAuthUser,
+                            roles = roles
                         },
                         timestamp = DateTime.UtcNow
                     });
@@ -73,6 +79,8 @@ namespace ToryBack.Controllers
 
             if (result.Succeeded)
             {
+                // Asignar rol por defecto al usuario registrado
+                await _roleService.AssignRoleToUserAsync(user.Id, "AuthUser");
                 _logger.LogInformation("User created a new account with password.");
                 return Ok(new { message = "User registered successfully", userId = user.Id });
             }
@@ -98,16 +106,23 @@ namespace ToryBack.Controllers
             {
                 _logger.LogInformation("User logged in.");
                 var user = await _userManager.FindByEmailAsync(request.Email);
-                return Ok(new
+                if (user != null)
                 {
-                    message = "Login successful",
-                    user = new
+                    var roles = await _roleService.GetUserRolesAsync(user.Id);
+                    return Ok(new
                     {
-                        id = user?.Id,
-                        email = user?.Email,
-                        fullName = user?.FullName
-                    }
-                });
+                        message = "Login successful",
+                        user = new
+                        {
+                            id = user.Id,
+                            email = user.Email,
+                            fullName = user.FullName,
+                            profilePictureUrl = user.ProfilePictureUrl,
+                            isOAuthUser = user.IsOAuthUser,
+                            roles = roles
+                        }
+                    });
+                }
             }
 
             return Unauthorized(new { message = "Invalid email or password" });
@@ -182,6 +197,9 @@ namespace ToryBack.Controllers
             var addLoginResult = await _userManager.AddLoginAsync(user, info);
             if (addLoginResult.Succeeded)
             {
+                // Asignar rol AuthUser al nuevo usuario OAuth
+                await _roleService.AssignRoleToUserAsync(user.Id, "AuthUser");
+                
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
                 
@@ -252,6 +270,9 @@ namespace ToryBack.Controllers
             var addLoginResult = await _userManager.AddLoginAsync(user, info);
             if (addLoginResult.Succeeded)
             {
+                // Asignar rol AuthUser al nuevo usuario OAuth
+                await _roleService.AssignRoleToUserAsync(user.Id, "AuthUser");
+                
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
                 
@@ -260,6 +281,35 @@ namespace ToryBack.Controllers
             }
 
             return Redirect("http://localhost:5173/login?error=login_association_failed");
+        }
+
+        // Endpoints para gestión de roles
+        [HttpGet("user/{userId}/roles")]
+        public async Task<IActionResult> GetUserRoles(string userId)
+        {
+            var roles = await _roleService.GetUserRolesAsync(userId);
+            return Ok(new { userId, roles });
+        }
+
+        [HttpPost("user/{userId}/roles/{roleName}")]
+        public async Task<IActionResult> AssignRole(string userId, string roleName)
+        {
+            await _roleService.AssignRoleToUserAsync(userId, roleName);
+            return Ok(new { message = $"Role {roleName} assigned to user {userId}" });
+        }
+
+        [HttpDelete("user/{userId}/roles/{roleName}")]
+        public async Task<IActionResult> RemoveRole(string userId, string roleName)
+        {
+            await _roleService.RemoveUserFromRoleAsync(userId, roleName);
+            return Ok(new { message = $"Role {roleName} removed from user {userId}" });
+        }
+
+        [HttpGet("roles")]
+        public IActionResult GetAvailableRoles()
+        {
+            var roles = new[] { "Admin", "AuthUser", "Public" };
+            return Ok(roles);
         }
     }
 

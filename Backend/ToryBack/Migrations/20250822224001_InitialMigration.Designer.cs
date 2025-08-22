@@ -12,8 +12,8 @@ using ToryBack.Data;
 namespace ToryBack.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250814230552_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250822224001_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

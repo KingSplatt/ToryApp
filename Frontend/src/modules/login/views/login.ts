@@ -67,20 +67,11 @@ export function initializeLogin() {
   const apiService = ApiService.getInstance();
   const authService = AuthService.getInstance();
 
+  UIUtils.handleOAuthCallback();
 
-  authService.onAuthStateChanged((user) => {
-    if (user) {
-      // User is logged in, redirect to home
-      console.log('User already authenticatedddd:', user);
-      Router.navigate('/');
-      return;
-    }
-  });
-
-  //UIUtils.handleOAuthCallback();
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+    console.log("al clickear el boton")
     if (!submitBtn) return;
     
     const formData = new FormData(form);
@@ -98,8 +89,6 @@ export function initializeLogin() {
       });
       credentials.email = validatedData.email;
       credentials.password = validatedData.password;
-
-
     } catch (error) {
       if (error instanceof ZodError) {
         const firstError = error.issues[0];
@@ -109,30 +98,19 @@ export function initializeLogin() {
       }
       return;
     }
-
-    const originalText = submitBtn.innerHTML;
-    
     try {
-      UIUtils.showLoading(submitBtn, 'Signing in...');
-      
+      console.log("antes de llamar al api")
       const response = await apiService.login(credentials);
-      
       if (response.user) {
         authService.setUser(response.user);
-        UIUtils.showMessage('Login successful! Redirecting...', 'success');
-        
-        // Redirect after a brief delay
-        setTimeout(() => {
-          Router.navigate('/');
-        }, 1500);
+        Router.navigate('/');
+        return;
       } else {
         UIUtils.showMessage('Login failed. Please check your credentials.', 'error');
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Login failed. Please try again.';
       UIUtils.showMessage(errorMessage, 'error');
-    } finally {
-      UIUtils.hideLoading(submitBtn, originalText);
     }
   });
   

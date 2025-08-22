@@ -36,16 +36,12 @@ export class UIUtils {
   static async handleOAuthCallback(): Promise<void> {
     const urlParams = new URLSearchParams(window.location.search);
     const returnUrl = urlParams.get('returnUrl');
-    if (returnUrl || window.location.pathname.includes('callback')) {
+    const loginSuccess = urlParams.get('login');
+    
+    if (loginSuccess === 'success' || returnUrl || window.location.pathname.includes('callback')) {
       try {
         const authService = AuthService.getInstance();
         await authService.initialize();
-        if (authService.isAuthenticated()) {
-          UIUtils.showMessage('Login successful! Redirecting...', 'success');
-          setTimeout(() => {
-            Router.navigate('/');
-          }, 1500);
-        }
       } catch (error) {
         console.error('OAuth callback error:', error);
         UIUtils.showMessage('Authentication failed. Please try again.', 'error');
@@ -87,6 +83,47 @@ export class UIUtils {
   static listenToAuthChanges(callback: (user: User | null) => void): () => void {
     const authService = AuthService.getInstance();
     return authService.onAuthStateChanged(callback);
+  }
+
+  // Métodos para manejo de roles
+  static getUserRoles(): string[] {
+    const user = UIUtils.getCurrentUser();
+    return user?.roles || [];
+  }
+
+  static hasRole(roleName: string): boolean {
+    const roles = UIUtils.getUserRoles();
+    return roles.includes(roleName);
+  }
+
+  static isAdmin(): boolean {
+    return UIUtils.hasRole('Admin');
+  }
+
+  static isAuthenticatedUser(): boolean {
+    return UIUtils.hasRole('AuthUser');
+  }
+
+  static showElementByRole(element: HTMLElement, requiredRoles: string[]): void {
+    const userRoles = UIUtils.getUserRoles();
+    const hasPermission = requiredRoles.some(role => userRoles.includes(role));
+    
+    if (hasPermission) {
+      element.style.display = '';
+    } else {
+      element.style.display = 'none';
+    }
+  }
+
+  static hideElementByRole(element: HTMLElement, forbiddenRoles: string[]): void {
+    const userRoles = UIUtils.getUserRoles();
+    const isForbidden = forbiddenRoles.some(role => userRoles.includes(role));
+    
+    if (isForbidden) {
+      element.style.display = 'none';
+    } else {
+      element.style.display = '';
+    }
   }
 
   static handleErrorOAuth(error: string): void {

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication;
 using ToryBack.Models;
 using ToryBack.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace ToryBack.Controllers
 {
@@ -162,6 +163,22 @@ namespace ToryBack.Controllers
                 _logger.LogInformation("User logged in with {Name} provider.", info.LoginProvider);
                 var existingUser = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
                 
+                if (existingUser != null)
+                {
+                    var userRoles = await _roleService.GetUserRolesAsync(existingUser.Id);
+                    if (!userRoles.Contains("AuthUser"))
+                    {
+                        await _roleService.AssignRoleToUserAsync(existingUser.Id, "AuthUser");
+                        _logger.LogInformation("Assigned AuthUser role to existing user {UserId} logged in with {Provider}.", existingUser.Id, info.LoginProvider);
+                    }
+                    
+                    if (!existingUser.IsOAuthUser)
+                    {
+                        existingUser.IsOAuthUser = true;
+                        await _userManager.UpdateAsync(existingUser);
+                    }
+                }
+                
                 // Redirect to frontend with success
                 return Redirect("http://localhost:5173/?login=success");
             }
@@ -184,7 +201,8 @@ namespace ToryBack.Controllers
                     Email = email,
                     FullName = name ?? email,
                     RegistrationTime = DateTime.UtcNow,
-                    EmailConfirmed = true // Auto-confirm email for Google users
+                    EmailConfirmed = true, // Auto-confirm email for Google users
+                    IsOAuthUser = true // Marcar como usuario OAuth
                 };
 
                 var createResult = await _userManager.CreateAsync(user);
@@ -235,6 +253,22 @@ namespace ToryBack.Controllers
                 _logger.LogInformation("User logged in with {Name} provider.", info.LoginProvider);
                 var existingUser = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
                 
+                if (existingUser != null)
+                {
+                    var userRoles = await _roleService.GetUserRolesAsync(existingUser.Id);
+                    if (!userRoles.Contains("AuthUser"))
+                    {
+                        await _roleService.AssignRoleToUserAsync(existingUser.Id, "AuthUser");
+                        _logger.LogInformation("Assigned AuthUser role to existing user {UserId} logged in with {Provider}.", existingUser.Id, info.LoginProvider);
+                    }
+                    
+                    if (!existingUser.IsOAuthUser)
+                    {
+                        existingUser.IsOAuthUser = true;
+                        await _userManager.UpdateAsync(existingUser);
+                    }
+                }
+                
                 // Redirect to frontend with success
                 return Redirect("http://localhost:5173/?login=success");
             }
@@ -257,7 +291,8 @@ namespace ToryBack.Controllers
                     Email = email,
                     FullName = name ?? email,
                     RegistrationTime = DateTime.UtcNow,
-                    EmailConfirmed = true // Auto-confirm email for Facebook users
+                    EmailConfirmed = true, 
+                    IsOAuthUser = true
                 };
 
                 var createResult = await _userManager.CreateAsync(user);
@@ -281,6 +316,58 @@ namespace ToryBack.Controllers
             }
 
             return Redirect("http://localhost:5173/login?error=login_association_failed");
+        }
+        [HttpGet("users")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var users = _userManager.Users.ToList();
+            var userList = new List<object>();
+
+            foreach (var user in users)
+            {
+                var roles = await _roleService.GetUserRolesAsync(user.Id);
+                userList.Add(new
+                {
+                    id = user.Id,
+                    email = user.Email,
+                    fullName = user.FullName,
+                    profilePictureUrl = user.ProfilePictureUrl,
+                    isOAuthUser = user.IsOAuthUser,
+                    roles = roles
+                });
+            }
+
+            return Ok(userList);
+        }
+
+        [HttpDelete("user/{userId}")]
+        public async Task<IActionResult> DeleteUser(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found", userId });
+            }
+            await _userManager.DeleteAsync(user);
+            return Ok(new { message = "User deleted successfully", userId });
+        }
+
+        //borrar lista de usuarios
+        [HttpDelete("user/DeleteUsers")]
+        public async Task<IActionResult> DeleteUsers([FromBody] List<string> userIds)
+        {
+            var users = await _userManager.Users.Where(u => userIds.Contains(u.Id)).ToListAsync();
+            if (!users.Any())
+            {
+                return NotFound(new { message = "No users found", userIds });
+            }
+
+            foreach (var user in users)
+            {
+                await _userManager.DeleteAsync(user);
+            }
+
+            return Ok(new { message = "Users deleted successfully", userIds });
         }
 
         // Endpoints para gestión de roles

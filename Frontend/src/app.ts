@@ -7,10 +7,9 @@ import { searchPage, initializeSearch } from './modules/search/search';
 import { profilePage, initializeProfile } from './modules/profile/profile';
 import { AuthService } from './modules/login/services/auth';
 import { Register } from './modules/login/views/register';
-import { adminPage } from './modules/admin/admin';
+import { adminPage, initAdminPage } from './modules/admin/views/admin';
 import { initializeRegisterForm } from './modules/login/views/register';
 import { UIUtils } from './modules/utils/ui';
-import './modules/admin/admin.css';
 
 const router = Router.getInstance();
 
@@ -80,6 +79,7 @@ router.addRoute({
   title: 'Admin Panel',
   component: () => {
     const content = adminPage();
+    setTimeout(initAdminPage, 100);
     return createLayout(content, router.getCurrentPath());
   }
 });

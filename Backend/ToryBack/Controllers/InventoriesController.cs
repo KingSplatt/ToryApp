@@ -170,6 +170,27 @@ namespace ToryBack.Controllers
 
             return Ok(tags);
         }
+        //pendiente
+        [HttpPost]
+        public async Task<ActionResult<InventoryDto>> CreateInventory(InventoryDto inventoryDto)
+        {
+            var inventory = new Inventory
+            {
+                Title = inventoryDto.Title,
+                Description = inventoryDto.Description,
+                CategoryId = inventoryDto.CategoryId,
+                IsPublic = inventoryDto.IsPublic,
+                OwnerId = inventoryDto.OwnerId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Inventories.Add(inventory);
+            await _context.SaveChangesAsync();
+
+            inventoryDto.Id = inventory.Id;
+            return CreatedAtAction(nameof(GetInventory), new { id = inventory.Id }, inventoryDto);
+        }
     }
 
     // DTOs
@@ -179,9 +200,11 @@ namespace ToryBack.Controllers
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;
+        public string CategoryId { get; set; } = string.Empty;
         public int ItemCount { get; set; }
         public bool IsPublic { get; set; }
         public string Owner { get; set; } = string.Empty;
+        public int OwnerId { get; set; }
         public DateTime LastUpdated { get; set; }
         public List<string> Tags { get; set; } = new();
         public string? ImageUrl { get; set; }

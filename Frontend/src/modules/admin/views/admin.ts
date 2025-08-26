@@ -1,5 +1,5 @@
 import { Route } from "../../router/router";
-import { getUsers, deleteUsers } from "../services/UserServices";
+import { getUsers, deleteUsers, blockUser, unblockUser, blockUsers, unblockUsers } from "../services/UserServices";
 import "./admin.css";
 
 export function adminPage(){
@@ -44,18 +44,24 @@ export async function showUserManagement() {
               <th>ID</th>
               <th>Full Name</th>
               <th>Email</th>
+              <th>Status</th>
               <th>Roles</th>
             </tr>
           </thead>
           <tbody>
             ${users.map(user => `
-              <tr>
+              <tr class="${user.isBlocked ? 'blocked-user' : ''}">
                 <td>
                   <input type="checkbox" class="admin-user-checkbox" value="${user.id}" onchange="updateToolBar()">
                 </td>
                 <td>${user.id}</td>
                 <td>${user.fullName}</td>
                 <td>${user.email}</td>
+                <td>
+                  <span class="status-badge ${user.isBlocked ? 'status-blocked' : 'status-active'}">
+                    ${user.isBlocked ? 'Blocked' : 'Active'}
+                  </span>
+                </td>
                 <td>${user.roles ? user.roles.join(", ") : "No roles"}</td>
               </tr>
             `).join("")}
@@ -75,6 +81,14 @@ export function toolBar() {
         <button class="admin-btn admin-btn-secondary" id="delete-selected-btn" onclick="deleteSelectedUsers()" disabled>
           Delete Selected (<span class="admin-selected-count" id="selected-count">0</span>)
         </button>
+        <button class="admin-btn admin-btn-warning" id="block-selected-btn" onclick="blockSelectedUsers()" disabled>
+          Block Selected
+        </button>
+        <button class="admin-btn admin-btn-success" id="unblock-selected-btn" onclick="unblockSelectedUsers()" disabled>
+          Unblock Selected
+        </button>
+      </div>
+      <div class="admin-btn-group">
         <button class="admin-btn admin-btn-outline-secondary" id="select-all-btn" onclick="toggleSelectAllUsers()">
           Select All
         </button>
@@ -101,9 +115,12 @@ export function toggleSelectAll() {
 export function updateToolBar() {
   const checkedBoxes = document.querySelectorAll(".admin-user-checkbox:checked") as NodeListOf<HTMLInputElement>;
   const hasSelection = checkedBoxes.length > 0;
-  const deleteSelectedBtn = document.getElementById("delete-selected-btn") as HTMLButtonElement;
-  const selectedCountSpan = document.getElementById("selected-count");
   
+  const deleteSelectedBtn = document.getElementById("delete-selected-btn") as HTMLButtonElement;
+  const blockSelectedBtn = document.getElementById("block-selected-btn") as HTMLButtonElement;
+  const unblockSelectedBtn = document.getElementById("unblock-selected-btn") as HTMLButtonElement;
+  const selectedCountSpan = document.getElementById("selected-count");
+
   if (deleteSelectedBtn) {
     deleteSelectedBtn.disabled = !hasSelection;
     if (hasSelection) {
@@ -115,14 +132,18 @@ export function updateToolBar() {
     }
   }
 
+  if (blockSelectedBtn) {
+    blockSelectedBtn.disabled = !hasSelection;
+  }
+  if (unblockSelectedBtn) {
+    unblockSelectedBtn.disabled = !hasSelection;
+  }
   if (selectedCountSpan) {
     selectedCountSpan.textContent = checkedBoxes.length.toString();
   }
-
   const userCheckboxes = document.querySelectorAll(".admin-user-checkbox") as NodeListOf<HTMLInputElement>;
   const allChecked = Array.from(userCheckboxes).every(checkbox => checkbox.checked);
   const selectAllCheckbox = document.getElementById("select-all") as HTMLInputElement;
-  
   if (selectAllCheckbox) {
     selectAllCheckbox.checked = allChecked && userCheckboxes.length > 0;
   }
@@ -194,6 +215,73 @@ export function getSelectedUserIds(): string[] {
   return Array.from(checkedBoxes).map(checkbox => checkbox.value);
 }
 
+// Functions for blocking/unblocking individual users
+export async function blockSingleUser(userId: string) {
+  
+  try {
+    await blockUser(userId);
+    alert("User blocked successfully");
+    await showUserManagement();
+  } catch (error) {
+    console.error("Error blocking user:", error);
+    alert("Failed to block user. Please try again.");
+  }
+}
+
+export async function unblockSingleUser(userId: string) {
+  try {
+    await unblockUser(userId);
+    alert("User unblocked successfully");
+    await showUserManagement();
+  } catch (error) {
+    console.error("Error unblocking user:", error);
+    alert("Failed to unblock user. Please try again.");
+  }
+}
+
+export async function blockSelectedUsers() {
+  const selectedUserIds = getSelectedUserIds();
+  
+  if (selectedUserIds.length === 0) {
+    alert("No users selected for blocking.");
+    return;
+  }
+  
+  try {
+    await blockUsers(selectedUserIds);
+    alert(`Successfully blocked ${selectedUserIds.length} user(s).`);
+    await showUserManagement();
+    updateToolBar();
+  } catch (error) {
+    console.error("Error blocking users:", error);
+    alert("Failed to block users. Please try again.");
+  }
+}
+
+export async function unblockSelectedUsers() {
+  const selectedUserIds = getSelectedUserIds();
+  
+  if (selectedUserIds.length === 0) {
+    alert("No users selected for unblocking.");
+    return;
+  }
+  
+  const confirmMessage = `Are you sure you want to unblock ${selectedUserIds.length} user(s)?`;
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+  
+  try {
+    await unblockUsers(selectedUserIds);
+    alert(`Successfully unblocked ${selectedUserIds.length} user(s).`);
+    await showUserManagement();
+    updateToolBar();
+  } catch (error) {
+    console.error("Error unblocking users:", error);
+    alert("Failed to unblock users. Please try again.");
+  }
+}
+
 export function initAdminPage(){
     showUserManagement();
     
@@ -203,4 +291,8 @@ export function initAdminPage(){
     (window as any).toggleSelectAllUsers = toggleSelectAllUsers;
     (window as any).clearSelection = clearSelection;
     (window as any).deleteSelectedUsers = deleteSelectedUsers;
+    (window as any).blockSingleUser = blockSingleUser;
+    (window as any).unblockSingleUser = unblockSingleUser;
+    (window as any).blockSelectedUsers = blockSelectedUsers;
+    (window as any).unblockSelectedUsers = unblockSelectedUsers;
 }

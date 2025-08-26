@@ -47,13 +47,15 @@ namespace ToryBack.Controllers
                             fullName = user.FullName,
                             profilePictureUrl = user.ProfilePictureUrl,
                             isOAuthUser = user.IsOAuthUser,
+                            isBlocked = user.IsBlocked,
+                            blockedAt = user.BlockedAt,
                             roles = roles
                         },
                         timestamp = DateTime.UtcNow
                     });
                 }
             }
-            
+
             return Ok(new
             {
                 isAuthenticated = false,
@@ -120,6 +122,8 @@ namespace ToryBack.Controllers
                             fullName = user.FullName,
                             profilePictureUrl = user.ProfilePictureUrl,
                             isOAuthUser = user.IsOAuthUser,
+                            isBlocked = user.IsBlocked,
+                            blockedAt = user.BlockedAt,
                             roles = roles
                         }
                     });
@@ -157,28 +161,34 @@ namespace ToryBack.Controllers
 
             // Attempt to sign in with external login provider
             var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false);
-            
+
             if (result.Succeeded)
             {
                 _logger.LogInformation("User logged in with {Name} provider.", info.LoginProvider);
                 var existingUser = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
-                
+
                 if (existingUser != null)
                 {
                     var userRoles = await _roleService.GetUserRolesAsync(existingUser.Id);
+                    var isBlocked = existingUser.IsBlocked;
+                    var blockedAt = existingUser.BlockedAt;
                     if (!userRoles.Contains("AuthUser"))
                     {
                         await _roleService.AssignRoleToUserAsync(existingUser.Id, "AuthUser");
                         _logger.LogInformation("Assigned AuthUser role to existing user {UserId} logged in with {Provider}.", existingUser.Id, info.LoginProvider);
                     }
-                    
+
                     if (!existingUser.IsOAuthUser)
                     {
                         existingUser.IsOAuthUser = true;
                         await _userManager.UpdateAsync(existingUser);
                     }
+                    if (isBlocked)
+                    {
+                        return Redirect($"http://localhost:5173/login?error=account_blocked&blockedAt={blockedAt?.ToString("o")}");
+                    }
                 }
-                
+
                 // Redirect to frontend with success
                 return Redirect("http://localhost:5173/?login=success");
             }
@@ -217,10 +227,10 @@ namespace ToryBack.Controllers
             {
                 // Asignar rol AuthUser al nuevo usuario OAuth
                 await _roleService.AssignRoleToUserAsync(user.Id, "AuthUser");
-                
+
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
-                
+
                 // Redirect to frontend with success
                 return Redirect("http://localhost:5173/?login=success&new_user=true");
             }
@@ -247,28 +257,36 @@ namespace ToryBack.Controllers
 
             // Attempt to sign in with external login provider
             var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false);
-            
+
             if (result.Succeeded)
             {
                 _logger.LogInformation("User logged in with {Name} provider.", info.LoginProvider);
                 var existingUser = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
-                
+
                 if (existingUser != null)
                 {
                     var userRoles = await _roleService.GetUserRolesAsync(existingUser.Id);
+                    var isBlocked = existingUser.IsBlocked;
+                    var blockedAt = existingUser.BlockedAt;
+                    
                     if (!userRoles.Contains("AuthUser"))
                     {
                         await _roleService.AssignRoleToUserAsync(existingUser.Id, "AuthUser");
                         _logger.LogInformation("Assigned AuthUser role to existing user {UserId} logged in with {Provider}.", existingUser.Id, info.LoginProvider);
                     }
-                    
+
                     if (!existingUser.IsOAuthUser)
                     {
                         existingUser.IsOAuthUser = true;
                         await _userManager.UpdateAsync(existingUser);
                     }
+                    
+                    if (isBlocked)
+                    {
+                        return Redirect($"http://localhost:5173/login?error=account_blocked&blockedAt={blockedAt?.ToString("o")}");
+                    }
                 }
-                
+
                 // Redirect to frontend with success
                 return Redirect("http://localhost:5173/?login=success");
             }
@@ -291,7 +309,7 @@ namespace ToryBack.Controllers
                     Email = email,
                     FullName = name ?? email,
                     RegistrationTime = DateTime.UtcNow,
-                    EmailConfirmed = true, 
+                    EmailConfirmed = true,
                     IsOAuthUser = true
                 };
 
@@ -307,10 +325,10 @@ namespace ToryBack.Controllers
             {
                 // Asignar rol AuthUser al nuevo usuario OAuth
                 await _roleService.AssignRoleToUserAsync(user.Id, "AuthUser");
-                
+
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
-                
+
                 // Redirect to frontend with success
                 return Redirect("http://localhost:5173/?login=success&new_user=true");
             }
@@ -333,6 +351,8 @@ namespace ToryBack.Controllers
                     fullName = user.FullName,
                     profilePictureUrl = user.ProfilePictureUrl,
                     isOAuthUser = user.IsOAuthUser,
+                    isBlocked = user.IsBlocked,
+                    blockedAt = user.BlockedAt,
                     roles = roles
                 });
             }
@@ -398,6 +418,107 @@ namespace ToryBack.Controllers
             var roles = new[] { "Admin", "AuthUser", "Public" };
             return Ok(roles);
         }
+        
+        
+        // Endpoints para bloquear/desbloquear usuarios
+        [HttpPost("user/{userId}/block")]
+        public async Task<IActionResult> BlockUser(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found", userId });
+            }
+
+            user.IsBlocked = true;
+            user.BlockedAt = DateTime.UtcNow;
+            var result = await _userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                _logger.LogInformation("User {UserId} has been blocked", userId);
+                return Ok(new { message = "User blocked successfully", userId, blockedAt = user.BlockedAt });
+            }
+
+            return BadRequest(new { message = "Failed to block user", errors = result.Errors });
+        }
+
+        [HttpPost("user/{userId}/unblock")]
+        public async Task<IActionResult> UnblockUser(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found", userId });
+            }
+
+            user.IsBlocked = false;
+            user.BlockedAt = null;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                _logger.LogInformation("User {UserId} has been unblocked", userId);
+                return Ok(new { message = "User unblocked successfully", userId });
+            }
+
+            return BadRequest(new { message = "Failed to unblock user", errors = result.Errors });
+        }
+
+        [HttpPost("users/block")]
+        public async Task<IActionResult> BlockUsers([FromBody] BlockUsersRequest request)
+        {
+            var users = await _userManager.Users.Where(u => request.UserIds.Contains(u.Id)).ToListAsync();
+            if (!users.Any())
+            {
+                return NotFound(new { message = "No users found", userIds = request.UserIds });
+            }
+
+            var blockedCount = 0;
+            foreach (var user in users)
+            {
+                user.IsBlocked = true;
+                user.BlockedAt = DateTime.UtcNow;
+                var result = await _userManager.UpdateAsync(user);
+                if (result.Succeeded)
+                {
+                    blockedCount++;
+                }
+            }
+
+            _logger.LogInformation("{BlockedCount} users have been blocked.", blockedCount);
+            return Ok(new { message = $"{blockedCount} users blocked successfully", blockedCount, userIds = request.UserIds });
+        }
+
+        [HttpPost("users/unblock")]
+        public async Task<IActionResult> UnblockUsers([FromBody] List<string> userIds)
+        {
+            var users = await _userManager.Users.Where(u => userIds.Contains(u.Id)).ToListAsync();
+            if (!users.Any())
+            {
+                return NotFound(new { message = "No users found", userIds });
+            }
+
+            var unblockedCount = 0;
+            foreach (var user in users)
+            {
+                user.IsBlocked = false;
+                user.BlockedAt = null;
+                var result = await _userManager.UpdateAsync(user);
+                if (result.Succeeded)
+                {
+                    unblockedCount++;
+                }
+            }
+
+            _logger.LogInformation("{UnblockedCount} users have been unblocked", unblockedCount);
+            return Ok(new { message = $"{unblockedCount} users unblocked successfully", unblockedCount, userIds });
+        }
+    }
+
+    
+    public class BlockUsersRequest
+    {
+        public List<string> UserIds { get; set; } = new();
     }
 
     public class RegisterRequest

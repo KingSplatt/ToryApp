@@ -178,7 +178,7 @@ namespace ToryBack.Controllers
             {
                 Title = inventoryDto.Title,
                 Description = inventoryDto.Description,
-                CategoryId = inventoryDto.CategoryId,
+                CategoryId = int.Parse(inventoryDto.CategoryId),
                 IsPublic = inventoryDto.IsPublic,
                 OwnerId = inventoryDto.OwnerId,
                 CreatedAt = DateTime.UtcNow,
@@ -204,7 +204,7 @@ namespace ToryBack.Controllers
         public int ItemCount { get; set; }
         public bool IsPublic { get; set; }
         public string Owner { get; set; } = string.Empty;
-        public int OwnerId { get; set; }
+        public String OwnerId { get; set; } = string.Empty;
         public DateTime LastUpdated { get; set; }
         public List<string> Tags { get; set; } = new();
         public string? ImageUrl { get; set; }

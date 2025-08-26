@@ -132,18 +132,53 @@ async function initializeApp() {
   const urlParams = new URLSearchParams(window.location.search);
   const loginStatus = urlParams.get('login');
   const error = urlParams.get('error');
-  if (loginStatus === 'success') {
-    router.navigate('/');
-    initializeLayout();
-    return;
-  } else if (error) {
+  const blockedAt = urlParams.get('blockedAt');
+  
+  if (error) {
     window.history.replaceState({}, document.title, window.location.pathname);
-    UIUtils.handleErrorOAuth(error);
+    if (error === 'account_blocked') {
+      const blockedMessage = blockedAt 
+        ? `Your account was blocked on ${new Date(blockedAt).toLocaleDateString()}.`
+        : 'Your account has been blocked.';
+      UIUtils.showMessage(`Access denied. ${blockedMessage} Please contact support.`, 'error');
+    } else {
+      UIUtils.handleErrorOAuth(error);
+    }
     router.navigate('/login');
     initializeLayout();
     return;
   }
+  
+  if (loginStatus === 'success') {
+    const user = authService.getUser();
+    if (user && user.isBlocked) {
+      await authService.logout();
+      const blockedMessage = user.blockedAt 
+        ? `Your account was blocked on ${new Date(user.blockedAt).toLocaleDateString()}.`
+        : 'Your account has been blocked.';
+      UIUtils.showMessage(`Access denied. ${blockedMessage} Please contact support.`, 'error');
+      router.navigate('/login');
+      initializeLayout();
+      return;
+    }
+    
+    router.navigate('/');
+    initializeLayout();
+    return;
+  }
+  
   if (authService.isAuthenticated()) {
+    if (authService.isBlocked()) {
+      const user = authService.getUser();
+      const blockedMessage = user?.blockedAt 
+        ? `Your account was blocked on ${new Date(user.blockedAt).toLocaleDateString()}.`
+        : 'Your account has been blocked.';
+      UIUtils.showMessage(`Access denied. ${blockedMessage} Please contact support.`, 'error');
+      await authService.logout();
+      router.navigate('/login');
+      initializeLayout();
+      return;
+    }
     router.navigate('/');
   } else {
     router.navigate('/');

@@ -103,6 +103,11 @@ export function initializeLogin() {
       const response = await apiService.login(credentials);
       if (response.user) {
         authService.setUser(response.user);
+        console.log('User after login:', response.user);
+        if (response.user.isBlocked) {
+          Router.navigate('/blocked');
+          return;
+        }
         Router.navigate('/');
         return;
       } else {

@@ -1,12 +1,46 @@
 import { AuthService } from "../login/services/auth";
 import { User } from "../login/interfaces/UserInterface";
 import { UIUtils } from "../utils/ui";
+import "./layout.css"
 
 export function createLayout(content: string, currentPath: string) {
   const isAdmin = UIUtils.isAdmin();
   const authService = AuthService.getInstance();
   const currentUser = authService.getUser();
   const isAuthenticated = authService.isAuthenticated();
+  const isBlocked = authService.isBlocked();
+  console.log(currentUser)
+  console.log('isAuthenticated at layout:', isAuthenticated);
+  console.log('isBlocked at layout:', isBlocked);
+
+  if (isAuthenticated && isBlocked) {
+    console.log('Rendering blocked user message');
+    return `
+      <nav class="navbar">
+        <div class="nav-brand">
+          <a href="/" data-navigate="/">ToryApp</a>
+          <button class="btn btn-theme" id="theme-toggle">🌙</button>
+          <button class="btn btn-lang" id="lang-toggle">ES</button>
+        </div>
+        <div class="nav-tools">
+          <a href="/logout" data-navigate="/logout" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión
+          </a>
+        </div>
+      </nav>
+      <main class="main-content">
+        <div class="blocked-user-message">
+          <div class="alert alert-danger">
+            <h2>🚫 Cuenta Bloqueada</h2>
+            <p>Tu cuenta ha sido bloqueada. No puedes acceder a las funcionalidades de la aplicación.</p>
+            <p>Si crees que esto es un error, contacta al administrador.</p>
+            <p><strong>Usuario:</strong> ${currentUser?.fullName}</p>
+            <p><strong>Bloqueado desde:</strong> ${currentUser?.blockedAt ? new Date(currentUser.blockedAt).toLocaleDateString() : 'N/A'}</p>
+          </div>
+        </div>
+      </main>
+    `;
+  }
 
   return `
     <nav class="navbar">
@@ -27,7 +61,7 @@ export function createLayout(content: string, currentPath: string) {
         ${isAdmin ? `
           <a href="/adminMan" data-navigate="/adminMan" class="btn btn-primary">🔧</a>
         ` : ''}
-        ${isAuthenticated ? `
+        ${isAuthenticated && !isBlocked ? `
           <div class="user-info-nav">
             <span class="user-welcome">Bienvenido, ${currentUser?.fullName} </span>
           </div>
@@ -56,8 +90,6 @@ export function initializeTheme() {
     const newTheme = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
-    
-    // Update button icon
     const button = themeToggle as HTMLButtonElement;
     button.textContent = newTheme === 'light' ? '🌙' : '☀️';
   });
@@ -70,7 +102,6 @@ export function initializeLayout() {
 
 // Attach navigation event listeners
 function attachNavigationListeners() {
-  // Re-attach logout handler
   const logoutLink = document.querySelector('a[data-navigate="/logout"]');
   if (logoutLink) {
     logoutLink.addEventListener('click', async (e) => {
@@ -92,11 +123,9 @@ export function initializeLanguage() {
     const newLang = currentLang === 'es' ? 'en' : 'es';
     localStorage.setItem('language', newLang);
     
-    // Update button text
     const button = langToggle as HTMLButtonElement;
     button.textContent = newLang.toUpperCase();
     
-    // Here you would implement actual language switching
     console.log('Language switched to:', newLang);
   });
 }

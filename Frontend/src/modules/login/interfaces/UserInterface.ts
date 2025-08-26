@@ -5,4 +5,6 @@ export interface User{
   profilePictureUrl?: string;
   isOAuthUser?: boolean;
   roles?: string[];
+  isBlocked: boolean;
+  blockedAt: string;
 }

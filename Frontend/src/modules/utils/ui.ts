@@ -37,11 +37,42 @@ export class UIUtils {
     const urlParams = new URLSearchParams(window.location.search);
     const returnUrl = urlParams.get('returnUrl');
     const loginSuccess = urlParams.get('login');
+    const error = urlParams.get('error');
+    const blockedAt = urlParams.get('blockedAt');
+    
+    if (error) {
+      if (error === 'account_blocked') {
+        const blockedMessage = blockedAt 
+          ? `Your account was blocked on ${new Date(blockedAt).toLocaleDateString()}.`
+          : 'Your account has been blocked.';
+        UIUtils.showMessage(`Access denied. ${blockedMessage} Please contact support.`, 'error');
+        Router.navigate('/login');
+        return;
+      } else {
+        UIUtils.handleErrorOAuth(error);
+        return;
+      }
+    }
     
     if (loginSuccess === 'success' || returnUrl || window.location.pathname.includes('callback')) {
       try {
         const authService = AuthService.getInstance();
         await authService.initialize();
+        
+        // Verificar si el usuario está bloqueado después de la inicialización
+        const user = authService.getUser();
+        if (user && user.isBlocked) {
+          await authService.logout();
+          const blockedMessage = user.blockedAt 
+            ? `Your account was blocked on ${new Date(user.blockedAt).toLocaleDateString()}.`
+            : 'Your account has been blocked.';
+          UIUtils.showMessage(`Access denied. ${blockedMessage} Please contact support.`, 'error');
+          Router.navigate('/login');
+          return;
+        }
+        
+        // Si todo está bien, navegar al home
+        Router.navigate('/');
       } catch (error) {
         console.error('OAuth callback error:', error);
         UIUtils.showMessage('Authentication failed. Please try again.', 'error');
@@ -140,6 +171,9 @@ export class UIUtils {
         break;
       case 'login_association_failed':
         errorMessage = 'Failed to associate login with account.';
+        break;
+      case 'account_blocked':
+        errorMessage = 'Your account has been blocked. Please contact support.';
         break;
     }
 

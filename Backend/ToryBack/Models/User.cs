@@ -29,5 +29,10 @@ namespace ToryBack.Models
         public bool IsOAuthUser { get; set; } = false;
         
         public DateTime? LastLoginTime { get; set; }
+        
+        // Campo para bloquear/desbloquear usuario
+        public bool IsBlocked { get; set; } = false;
+        
+        public DateTime? BlockedAt { get; set; }
     }
 }

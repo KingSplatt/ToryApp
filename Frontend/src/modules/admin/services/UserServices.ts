@@ -5,8 +5,11 @@ export const API_CONFIG = {
     ENDPOINTS:{
         users: "/Account/users",
         DELETEusers: "/Account/user/DeleteUsers",
-        DELETEUser: "/Account/user"
-
+        DELETEUser: "/Account/user",
+        blockUser: "/Account/user",
+        unblockUser: "/Account/user",
+        blockUsers: "/Account/users/block",
+        unblockUsers: "/Account/users/unblock"
     }
 };
 
@@ -42,5 +45,60 @@ export const deleteUsers = async (userIds: string[]): Promise<void> => {
 
     if (!response.ok) {
         throw new Error(`Failed to delete users`);
+    }
+};
+
+export const blockUser = async (userId: string, reason: string = ""): Promise<void> => {
+    const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.ENDPOINTS.blockUser}/${userId}/block`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason }),
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to block user with ID: ${userId}`);
+    }
+};
+
+export const unblockUser = async (userId: string): Promise<void> => {
+    const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.ENDPOINTS.unblockUser}/${userId}/unblock`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to unblock user with ID: ${userId}`);
+    }
+};
+
+export const blockUsers = async (userIds: string[], reason: string = ""): Promise<void> => {
+    const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.ENDPOINTS.blockUsers, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userIds, reason }),
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to block users`);
+    }
+};
+
+export const unblockUsers = async (userIds: string[]): Promise<void> => {
+    const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.ENDPOINTS.unblockUsers, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userIds),
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to unblock users`);
     }
 };

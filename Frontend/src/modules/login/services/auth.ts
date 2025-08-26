@@ -47,6 +47,10 @@ export class AuthService {
     return this.user !== null;
   }
 
+  isBlocked(): boolean {
+    return this.user?.isBlocked === true;
+  }
+
   // Initialize from localStorage
   async initialize(): Promise<void> {
     try {
@@ -58,6 +62,12 @@ export class AuthService {
       const apiService = ApiService.getInstance();
       const response = await apiService.getAuthStatus();      
       if (response.user) {
+        // Verificar si el usuario está bloqueado
+        if (response.user.isBlocked) {
+          // Si está bloqueado, hacer logout automáticamente
+          await this.logout();
+          return;
+        }
         this.setUser(response.user);
       } else {
         this.setUser(null);

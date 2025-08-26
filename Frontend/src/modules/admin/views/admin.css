@@ -42,6 +42,26 @@
   transition: all 0.2s ease;
 }
 
+.admin-actions .admin-btn-warning {
+  background-color: #ffc107;
+  border-color: #ffc107;
+}
+
+.admin-actions .admin-btn-warning:hover {
+  background-color: #e0a800;
+  border-color: #d39e00;
+}
+
+.admin-actions .admin-btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.admin-actions .admin-btn-success:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+}
+
 /* User Management Section */
 .admin-user-management {
   display: flex;
@@ -257,5 +277,85 @@
   .admin-btn {
     padding: 6px 12px;
     font-size: 12px;
+  }
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 0.25em 0.6em;
+  font-size: 0.75em;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.25rem;
+  text-transform: uppercase;
+}
+
+.status-active {
+  color: #155724;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+}
+
+.status-blocked {
+  color: #b0b300;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+}
+
+/* Blocked user row styling */
+.blocked-user {
+  background-color: #fdf2f2 !important;
+}
+
+.blocked-user:hover {
+  background-color: #fce8e8 !important;
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.admin-btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  border-radius: 0.2rem;
+}
+
+/* Toolbar improvements */
+.admin-btn-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.admin-btn-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .admin-btn-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .admin-btn-group {
+    justify-content: center;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
   }
 }

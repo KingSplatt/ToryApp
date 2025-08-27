@@ -1,9 +1,110 @@
 import "./inventories.css"
-import { categories } from "../additions/categoriesContainer";
-import { customFields } from "../additions/customFields";
 
-const categoriesField = categories
-const additionalFields = customFields
+const categories = [
+  { id: "electronica", name: "Electronics" },
+  { id: "herramientas", name: "Tools" },
+  { id: "libros", name: "Books" },
+  { id: "hogar", name: "Home" },
+  { id: "coleccion", name: "Collectibles" },
+  { id: "office", name: "Office" },
+  { id: "sports", name: "Sports" },
+  { id: "music", name: "Music" },
+  { id: "art", name: "Art" },
+  { id: "others", name: "Others" },
+];
+
+const additionalFields = [
+  {
+    id: "inventory-serial-number",
+    name: "Serial Number",
+    type: "text",
+    showintable: true,
+    sortorder: 1,
+    validationrules: { required: true, maxLength: 50 },
+    options: null,
+    placeholder: "E.g. 123456789"
+  },
+  {
+    id: "inventory-brand",
+    name: "Brand",
+    type: "dropdown",
+    showintable: true,
+    sortorder: 2,
+    validationrules: { required: true },
+    options: ["Dell", "HP", "Lenovo", "Apple", "ASUS"],
+    placeholder: "Select a brand"
+  },
+  {
+    id: "inventory-model",
+    name: "Model",
+    type: "text",
+    showintable: true,
+    sortorder: 3,
+    validationrules: { required: true, maxLength: 100 },
+    options: null,
+    placeholder: "E.g. MacBook Pro"
+  },
+  {
+    id: "inventory-price",
+    name: "Price",
+    type: "number",
+    showintable: true,
+    sortorder: 4,
+    validationrules: { min: 0, max: 50000 },
+    options: null,
+    placeholder: "E.g. 1200"
+  },
+  {
+    id: "inventory-purchase-date",
+    name: "Purchase Date",
+    type: "date",
+    showintable: true,
+    sortorder: 5,
+    validationrules: { required: true },
+    options: null,
+    placeholder: ""
+  },
+  {
+    id: "inventory-under-warranty",
+    name: "Under Warranty",
+    type: "checkbox",
+    showintable: true,
+    sortorder: 6,
+    validationrules: null,
+    options: null,
+    placeholder: ""
+  },
+  {
+    id: "inventory-condition",
+    name: "Condition",
+    type: "dropdown",
+    showintable: true,
+    sortorder: 7,
+    validationrules: { required: true },
+    options: ["Excellent", "Good", "Fair", "Poor"],
+    placeholder: "Select condition"
+  },
+  {
+    id: "inventory-location",
+    name: "Location",
+    type: "text",
+    showintable: false,
+    sortorder: 8,
+    validationrules: { maxLength: 200 },
+    options: null,
+    placeholder: "E.g. Office 2nd Floor"
+  },
+  {
+    id: "inventory-notes",
+    name: "Notes",
+    type: "text",
+    showintable: false,
+    sortorder: 9,
+    validationrules: { maxLength: 500 },
+    options: null,
+    placeholder: "Additional notes"
+  }
+];
 
 export function inventoriesPage() {
   return `
@@ -20,7 +121,7 @@ export function inventoriesPage() {
           <label for="category-filter">Category:</label>
           <select id="category-filter">
             <option value="">All</option>
-            ${categoriesField.map(category => `
+            ${categories.map(category => `
               <option value="${category.id}">${category.name}</option>
             `).join('')}
           </select>
@@ -30,7 +131,7 @@ export function inventoriesPage() {
           <label for="subcategory-filter">Subcategoría:</label>
           <select id="subcategory-filter">
             <option value="">Todas</option>
-            ${categoriesField.map(category => `
+            ${categories.map(category => `
               <option value="${category.id}">${category.name}</option>
             `).join('')}
           </select>
@@ -94,7 +195,7 @@ export function inventoriesPage() {
                 <label for="inventory-category">Category</label>
                 <select id="inventory-category" name="category">
                   <option value="">Select a category</option>
-                  ${categoriesField.map(category => `
+                  ${categories.map(category => `
                     <option value="${category.id}">${category.name}</option>
                   `).join('')}
                 </select>
@@ -112,7 +213,11 @@ export function inventoriesPage() {
             </div>
 
             <div class="form-group">
-              <label for="inventory-fields">Additional Fields</label>
+              <label>Additional Fields (Maximum 3)</label>
+              <div id="custom-fields-container">
+                <!-- Custom fields will be loaded here -->
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" id="add-custom-field">+ Add Custom Field</button>
             </div>
           </form>
         </div>
@@ -232,8 +337,10 @@ function setupCreateButton() {
   const cancelBtn = document.getElementById('cancel-create');
   const saveBtn = document.getElementById('save-inventory');
   const form = document.getElementById('create-inventory-form') as HTMLFormElement;
+  let selectedCustomFields: string[] = []; // Array para almacenar los IDs de campos seleccionados
   createBtn?.addEventListener('click', () => {
     modalNewInventory?.classList.add('is-active');
+    setupCustomFields(); // Configurar los campos personalizados al abrir el modal
   });
   closeModalBtn?.addEventListener('click', () => {
     closeModal();
@@ -260,9 +367,171 @@ function setupCreateButton() {
     }
   });
 
+  function setupCustomFields() {
+    const addFieldBtn = document.getElementById('add-custom-field');
+    
+    addFieldBtn?.addEventListener('click', () => {
+      if (selectedCustomFields.length >= 3) {
+        alert('Maximum 3 custom fields allowed');
+        return;
+      }
+      showCustomFieldSelector();
+    });
+  }
+
+  function showCustomFieldSelector() {
+    // Filtrar campos que ya no están seleccionados
+    const availableFields = additionalFields.filter(field => 
+      !selectedCustomFields.includes(field.id)
+    );
+
+    if (availableFields.length === 0) {
+      alert('No more fields available');
+      return;
+    }
+
+    // Crear modal selector
+    const selectorHTML = `
+      <div id="field-selector-modal" class="modal is-active">
+        <div class="modal-content" style="max-width: 500px;">
+          <div class="modal-header">
+            <h3>Select Custom Field</h3>
+            <button class="modal-close" id="close-field-selector">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="field-options">
+              ${availableFields.map(field => `
+                <div class="field-option" data-field-id="${field.id}">
+                  <h4>${field.name}</h4>
+                  <p><strong>Type:</strong> ${field.type}</p>
+                  <p><strong>Required:</strong> ${field.validationrules?.required ? 'Yes' : 'No'}</p>
+                  ${field.options ? `<p><strong>Options:</strong> ${field.options.join(', ')}</p>` : ''}
+                  <button class="btn btn-sm btn-primary select-field-btn" data-field-id="${field.id}">
+                    Select
+                  </button>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Agregar al DOM
+    document.body.insertAdjacentHTML('beforeend', selectorHTML);
+
+    // Configurar eventos
+    const selectorModal = document.getElementById('field-selector-modal');
+    const closeSelectorBtn = document.getElementById('close-field-selector');
+    const selectBtns = document.querySelectorAll('.select-field-btn');
+
+    closeSelectorBtn?.addEventListener('click', () => {
+      selectorModal?.remove();
+    });
+
+    selectorModal?.addEventListener('click', (e) => {
+      if (e.target === selectorModal) {
+        selectorModal.remove();
+      }
+    });
+
+    selectBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const fieldId = (e.target as HTMLElement).getAttribute('data-field-id');
+        if (fieldId) {
+          addCustomFieldToForm(fieldId);
+          selectorModal?.remove();
+        }
+      });
+    });
+  }
+
+  function addCustomFieldToForm(fieldId: string) {
+    const field = additionalFields.find(f => f.id === fieldId);
+    if (!field) return;
+
+    selectedCustomFields.push(fieldId);
+    const container = document.getElementById('custom-fields-container');
+    
+    const fieldHTML = createFieldHTML(field);
+    container?.insertAdjacentHTML('beforeend', fieldHTML);
+
+    const addBtn = document.getElementById('add-custom-field');
+    if (selectedCustomFields.length >= 3 && addBtn) {
+      addBtn.style.display = 'none';
+    }
+  }
+
+  function createFieldHTML(field: any): string {
+    const fieldContainer = `
+      <div class="custom-field-item" data-field-id="${field.id}">
+        <div class="custom-field-header">
+          <label>${field.name}${field.validationrules?.required ? ' *' : ''}</label>
+          <button type="button" class="remove-field-btn" data-field-id="${field.id}">&times;</button>
+        </div>
+        ${createFieldInput(field)}
+      </div>
+    `;
+    setTimeout(() => {
+      const removeBtn = document.querySelector(`[data-field-id="${field.id}"] .remove-field-btn`);
+      removeBtn?.addEventListener('click', () => removeCustomField(field.id));
+    }, 0);
+
+    return fieldContainer;
+  }
+
+  function createFieldInput(field: any): string {
+    switch (field.type) {
+      case 'text':
+        return `<input type="text" name="custom_${field.id}" placeholder="${field.placeholder}" 
+                ${field.validationrules?.required ? 'required' : ''} 
+                ${field.validationrules?.maxLength ? `maxlength="${field.validationrules.maxLength}"` : ''}>`;
+      
+      case 'number':
+        return `<input type="number" name="custom_${field.id}" placeholder="${field.placeholder}"
+                ${field.validationrules?.required ? 'required' : ''}
+                ${field.validationrules?.min !== undefined ? `min="${field.validationrules.min}"` : ''}
+                ${field.validationrules?.max !== undefined ? `max="${field.validationrules.max}"` : ''}>`;
+      
+      case 'date':
+        return `<input type="date" name="custom_${field.id}" 
+                ${field.validationrules?.required ? 'required' : ''}>`;
+      
+      case 'dropdown':
+        const options = field.options?.map((option: string) => 
+          `<option value="${option}">${option}</option>`
+        ).join('') || '';
+        return `<select name="custom_${field.id}" ${field.validationrules?.required ? 'required' : ''}>
+                  <option value="">${field.placeholder}</option>
+                  ${options}
+                </select>`;
+      
+      case 'checkbox':
+        return `<input type="checkbox" name="custom_${field.id}">`;
+      
+      default:
+        return `<input type="text" name="custom_${field.id}" placeholder="${field.placeholder}">`;
+    }
+  }
+
+  function removeCustomField(fieldId: string) {
+    selectedCustomFields = selectedCustomFields.filter(id => id !== fieldId);
+    const fieldElement = document.querySelector(`[data-field-id="${fieldId}"]`);
+    fieldElement?.remove();
+    const addBtn = document.getElementById('add-custom-field');
+    if (addBtn && selectedCustomFields.length < 3) {
+      addBtn.style.display = 'inline-block';
+    }
+  }
+
   function closeModal() {
     modalNewInventory?.classList.remove('is-active');
     form?.reset();
+    selectedCustomFields = [];
+    const container = document.getElementById('custom-fields-container');
+    if (container) container.innerHTML = '';
+    const addBtn = document.getElementById('add-custom-field');
+    if (addBtn) addBtn.style.display = 'inline-block';
   }
 
   function handleCreateInventory() {
@@ -272,39 +541,72 @@ function setupCreateButton() {
       description: formData.get('description') as string,
       category: formData.get('category') as string,
       isPublic: formData.get('isPublic') === 'on',
-      tags: (formData.get('tags') as string)?.split(',').map(tag => tag.trim()).filter(tag => tag)
+      tags: (formData.get('tags') as string)?.split(',').map(tag => tag.trim()).filter(tag => tag),
+      customFields: {} as any
     };
 
-    // Validación básica
+    // Recopilar datos de campos personalizados
+    selectedCustomFields.forEach(fieldId => {
+      const field = additionalFields.find(f => f.id === fieldId);
+      if (field) {
+        const fieldName = `custom_${fieldId}`;
+        let value: any = formData.get(fieldName);
+        if (field.type === 'checkbox') {
+          value = value === 'on';
+        }
+        
+        inventoryData.customFields[fieldId] = {
+          name: field.name,
+          type: field.type,
+          value: value,
+          showInTable: field.showintable,
+          sortOrder: field.sortorder
+        };
+      }
+    });
+
+    // Validacion, usar zod en un futuro
     if (!inventoryData.title.trim()) {
-      alert('El título es requerido');
+      alert('Title is required');
       return;
     }
 
-    console.log('Crear inventario:', inventoryData);
+    // Validar campos personalizados requeridos
+    for (const fieldId of selectedCustomFields) {
+      const field = additionalFields.find(f => f.id === fieldId);
+      if (field?.validationrules?.required) {
+        const value = inventoryData.customFields[fieldId]?.value;
+        if (!value || (typeof value === 'string' && !value.trim())) {
+          alert(`${field.name} is required`);
+          return;
+        }
+      }
+    }
+
+    console.log('Create inventory:', inventoryData);
     
-    // TODO: Enviar datos al backend
-    // Aquí irá la llamada a la API para crear el inventario
+    // TODO: Send data to backend
+    // API call to create inventory will go here
     
-    // Simulación de éxito por ahora
-    alert('Inventario creado exitosamente!');
+    // Success simulation for now
+    alert('Inventory created successfully!');
     closeModal();
     
-    // Recargar la lista de inventarios
+    // Reload inventory list
     loadInventories();
   }
 }
 
 // Utility function for debouncing
 function debounce(func: Function, wait: number) {
-  let timeout: NodeJS.Timeout;
+  let timeout: number;
   return function executedFunction(...args: any[]) {
     const later = () => {
       clearTimeout(timeout);
       func(...args);
     };
     clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
+    timeout = setTimeout(later, wait) as any;
   };
 }
 

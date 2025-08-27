@@ -2,7 +2,7 @@ import { Router } from './modules/router/router';
 import { createLayout, initializeTheme, initializeLanguage, initializeLayout } from './modules/layout/layout';
 import { homePage, initializeHome } from './modules/home/home';
 import { loginPage, initializeLogin } from './modules/login/views/login';
-import { inventoriesPage, initializeInventories } from './modules/inventories/inventories';
+import { inventoriesPage, initializeInventories } from './modules/inventories/views/inventories';
 import { searchPage, initializeSearch } from './modules/search/search';
 import { profilePage, initializeProfile } from './modules/profile/profile';
 import { AuthService } from './modules/login/services/auth';

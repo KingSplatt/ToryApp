@@ -12,16 +12,16 @@ CREATE TABLE categories (
 );
 
 INSERT INTO categories (Name, Description, SortOrder) VALUES
-('Electrónicos', 'Dispositivos electrónicos y tecnología', 1),
-('Herramientas', 'Herramientas de trabajo y bricolaje', 2),
-('Libros', 'Libros y material educativo', 3),
-('Hogar', 'Artículos para el hogar', 4),
-('Colección', 'Artículos de colección', 5),
-('Oficina', 'Material de oficina', 6),
-('Deportes', 'Equipamiento deportivo', 7),
-('Música', 'Instrumentos y equipo musical', 8),
-('Arte', 'Materiales y obras de arte', 9),
-('Otros', 'Categoría general', 10);
+('Electronics', 'Electronic devices and technology', 1),
+('Tools', 'Work and DIY tools', 2),
+('Books', 'Books and educational materials', 3),
+('Home', 'Home articles and household items', 4),
+('Collectibles', 'Collectible items', 5),
+('Office', 'Office supplies and materials', 6),
+('Sports', 'Sports equipment', 7),
+('Music', 'Musical instruments and equipment', 8),
+('Art', 'Art materials and artwork', 9),
+('Other', 'General category', 10);
 
 CREATE TABLE inventories (
     Id INT PRIMARY KEY AUTO_INCREMENT,
@@ -45,16 +45,16 @@ CREATE TABLE tags (
 );
 
 INSERT INTO tags (Name, UsageCount) VALUES
-('programación', 15),
+('programming', 15),
 ('vintage', 12),
-('colección', 18),
-('profesional', 10),
-('hogar', 8),
-('electrónico', 22),
+('collectible', 18),
+('professional', 10),
+('home', 8),
+('electronic', 22),
 ('manual', 6),
-('raro', 4),
-('nuevo', 25),
-('usado', 15);
+('rare', 4),
+('new', 25),
+('used', 15);
 
 CREATE TABLE inventory_tags (
     InventoryId INT NOT NULL,

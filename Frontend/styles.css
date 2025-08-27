@@ -436,26 +436,7 @@ body {
   flex: 1;
 }
 
-.search-filters {
-  margin-bottom: 2rem;
-}
 
-.filter-row {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.filter-group label {
-  font-size: 0.9rem;
-  font-weight: 500;
-}
 
 /* Responsive */
 @media (max-width: 768px) {

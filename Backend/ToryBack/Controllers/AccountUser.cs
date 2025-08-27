@@ -372,7 +372,6 @@ namespace ToryBack.Controllers
             return Ok(new { message = "User deleted successfully", userId });
         }
 
-        //borrar lista de usuarios
         [HttpDelete("user/DeleteUsers")]
         public async Task<IActionResult> DeleteUsers([FromBody] List<string> userIds)
         {
@@ -390,7 +389,6 @@ namespace ToryBack.Controllers
             return Ok(new { message = "Users deleted successfully", userIds });
         }
 
-        // Endpoints para gestión de roles
         [HttpGet("user/{userId}/roles")]
         public async Task<IActionResult> GetUserRoles(string userId)
         {
@@ -433,8 +431,6 @@ namespace ToryBack.Controllers
             return Ok(roles);
         }
 
-
-        // Endpoints para bloquear/desbloquear usuarios
         [HttpPost("user/{userId}/block")]
         public async Task<IActionResult> BlockUser(string userId)
         {

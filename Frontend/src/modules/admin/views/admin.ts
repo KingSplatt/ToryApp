@@ -1,5 +1,6 @@
+import { User } from "../../login/interfaces/UserInterface";
 import { Route } from "../../router/router";
-import { getUsers, deleteUsers, blockUser, unblockUser, blockUsers, unblockUsers } from "../services/UserServices";
+import { getUsers, deleteUsers, blockUsers, unblockUsers,assignRoles,removeRoles } from "../services/UserServices";
 import "./admin.css";
 
 export function adminPage(){
@@ -82,10 +83,16 @@ export function toolBar() {
           Delete Selected (<span class="admin-selected-count" id="selected-count">0</span>)
         </button>
         <button class="admin-btn admin-btn-warning" id="block-selected-btn" onclick="blockSelectedUsers()" disabled>
-          Block Selected
+          🚫🔒
         </button>
         <button class="admin-btn admin-btn-success" id="unblock-selected-btn" onclick="unblockSelectedUsers()" disabled>
-          Unblock Selected
+          🔐
+        </button>
+        <button class="admin-btn admin-btn-info" id="assign-role-btn" onclick="assignRolesToUser()" disabled>
+          🔧
+        </button>
+        <button class="admin-btn admin-btn-danger" id="remove-role-btn" onclick="removeRolesFromUser()" disabled>
+          🔧❌
         </button>
       </div>
       <div class="admin-btn-group">
@@ -119,6 +126,8 @@ export function updateToolBar() {
   const deleteSelectedBtn = document.getElementById("delete-selected-btn") as HTMLButtonElement;
   const blockSelectedBtn = document.getElementById("block-selected-btn") as HTMLButtonElement;
   const unblockSelectedBtn = document.getElementById("unblock-selected-btn") as HTMLButtonElement;
+  const assignRoleBtn = document.getElementById("assign-role-btn") as HTMLButtonElement;
+  const removeRoleBtn = document.getElementById("remove-role-btn") as HTMLButtonElement;
   const selectedCountSpan = document.getElementById("selected-count");
 
   if (deleteSelectedBtn) {
@@ -141,6 +150,15 @@ export function updateToolBar() {
   if (selectedCountSpan) {
     selectedCountSpan.textContent = checkedBoxes.length.toString();
   }
+
+  if (assignRoleBtn) {
+    assignRoleBtn.disabled = !hasSelection;
+  }
+
+  if (removeRoleBtn) {
+    removeRoleBtn.disabled = !hasSelection;
+  }
+
   const userCheckboxes = document.querySelectorAll(".admin-user-checkbox") as NodeListOf<HTMLInputElement>;
   const allChecked = Array.from(userCheckboxes).every(checkbox => checkbox.checked);
   const selectAllCheckbox = document.getElementById("select-all") as HTMLInputElement;
@@ -214,31 +232,7 @@ export function getSelectedUserIds(): string[] {
   const checkedBoxes = document.querySelectorAll(".admin-user-checkbox:checked") as NodeListOf<HTMLInputElement>;
   return Array.from(checkedBoxes).map(checkbox => checkbox.value);
 }
-
-// Functions for blocking/unblocking individual users
-export async function blockSingleUser(userId: string) {
   
-  try {
-    await blockUser(userId);
-    alert("User blocked successfully");
-    await showUserManagement();
-  } catch (error) {
-    console.error("Error blocking user:", error);
-    alert("Failed to block user. Please try again.");
-  }
-}
-
-export async function unblockSingleUser(userId: string) {
-  try {
-    await unblockUser(userId);
-    alert("User unblocked successfully");
-    await showUserManagement();
-  } catch (error) {
-    console.error("Error unblocking user:", error);
-    alert("Failed to unblock user. Please try again.");
-  }
-}
-
 export async function blockSelectedUsers() {
   const selectedUserIds = getSelectedUserIds();
   
@@ -282,6 +276,42 @@ export async function unblockSelectedUsers() {
   }
 }
 
+export async function assignRolesToUser() {
+  const selectedUser = getSelectedUserIds();
+  const roleAdmin = ["Admin"];
+  if (selectedUser.length === 0) {
+    alert("No users selected for role assignment.");
+    return;
+  }
+
+  try {
+    await assignRoles(selectedUser, roleAdmin);
+    alert(`Successfully assigned role ${roleAdmin.join(", ")} to user ${selectedUser.join(", ")}`);
+    await showUserManagement();
+  } catch (error) {
+    console.error("Error assigning roles to user:", error);
+    alert("Failed to assign roles to user. Please try again.");
+  }
+}
+
+export async function removeRolesFromUser() {
+  const selectedUserIds = getSelectedUserIds();
+  const roleAdmin = ["Admin"];
+  if (selectedUserIds.length === 0) {
+    alert("No users selected for role removal.");
+    return;
+  }
+
+  try {
+    await removeRoles(selectedUserIds, roleAdmin);
+    alert(`Successfully removed roles ${roleAdmin.join(", ")} from users ${selectedUserIds.join(", ")}`);
+    await showUserManagement();
+  } catch (error) {
+    console.error("Error removing roles from user:", error);
+    alert("Failed to remove roles from user. Please try again.");
+  }
+}
+
 export function initAdminPage(){
     showUserManagement();
     
@@ -291,8 +321,8 @@ export function initAdminPage(){
     (window as any).toggleSelectAllUsers = toggleSelectAllUsers;
     (window as any).clearSelection = clearSelection;
     (window as any).deleteSelectedUsers = deleteSelectedUsers;
-    (window as any).blockSingleUser = blockSingleUser;
-    (window as any).unblockSingleUser = unblockSingleUser;
     (window as any).blockSelectedUsers = blockSelectedUsers;
     (window as any).unblockSelectedUsers = unblockSelectedUsers;
+    (window as any).assignRolesToUser = assignRolesToUser;
+    (window as any).removeRolesFromUser = removeRolesFromUser;
 }

@@ -268,7 +268,7 @@ namespace ToryBack.Controllers
                     var userRoles = await _roleService.GetUserRolesAsync(existingUser.Id);
                     var isBlocked = existingUser.IsBlocked;
                     var blockedAt = existingUser.BlockedAt;
-                    
+
                     if (!userRoles.Contains("AuthUser"))
                     {
                         await _roleService.AssignRoleToUserAsync(existingUser.Id, "AuthUser");
@@ -280,7 +280,7 @@ namespace ToryBack.Controllers
                         existingUser.IsOAuthUser = true;
                         await _userManager.UpdateAsync(existingUser);
                     }
-                    
+
                     if (isBlocked)
                     {
                         return Redirect($"http://localhost:5173/login?error=account_blocked&blockedAt={blockedAt?.ToString("o")}");
@@ -398,18 +398,32 @@ namespace ToryBack.Controllers
             return Ok(new { userId, roles });
         }
 
-        [HttpPost("user/{userId}/roles/{roleName}")]
+        [HttpPost("user/{userId}/role/{roleName}")]
         public async Task<IActionResult> AssignRole(string userId, string roleName)
         {
             await _roleService.AssignRoleToUserAsync(userId, roleName);
             return Ok(new { message = $"Role {roleName} assigned to user {userId}" });
         }
 
-        [HttpDelete("user/{userId}/roles/{roleName}")]
+        [HttpPost("user/roles")]
+        public async Task<IActionResult> AssignRolesToUsers([FromBody] AssignRolesRequest request)
+        {
+            await _roleService.AssignRolesToUsersAsync(request.UserIds, request.RoleNames);
+            return Ok(new { message = $"Roles {string.Join(", ", request.RoleNames)} assigned to users {string.Join(", ", request.UserIds)}" });
+        }
+
+        [HttpDelete("user/{userId}/role/{roleName}")]
         public async Task<IActionResult> RemoveRole(string userId, string roleName)
         {
             await _roleService.RemoveUserFromRoleAsync(userId, roleName);
             return Ok(new { message = $"Role {roleName} removed from user {userId}" });
+        }
+
+        [HttpDelete("user/roles")]
+        public async Task<IActionResult> RemoveRolesFromUsers([FromBody] AssignRolesRequest request)
+        {
+            await _roleService.RemoveRolesFromUsersAsync(request.UserIds, request.RoleNames);
+            return Ok(new { message = $"Roles {string.Join(", ", request.RoleNames)} removed from users {string.Join(", ", request.UserIds)}" });
         }
 
         [HttpGet("roles")]
@@ -418,8 +432,8 @@ namespace ToryBack.Controllers
             var roles = new[] { "Admin", "AuthUser", "Public" };
             return Ok(roles);
         }
-        
-        
+
+
         // Endpoints para bloquear/desbloquear usuarios
         [HttpPost("user/{userId}/block")]
         public async Task<IActionResult> BlockUser(string userId)
@@ -515,7 +529,7 @@ namespace ToryBack.Controllers
         }
     }
 
-    
+
     public class BlockUsersRequest
     {
         public List<string> UserIds { get; set; } = new();
@@ -533,5 +547,11 @@ namespace ToryBack.Controllers
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         public bool RememberMe { get; set; } = false;
+    }
+
+    public class AssignRolesRequest
+    {
+        public List<string> UserIds { get; set; } = new();
+        public List<string> RoleNames { get; set; } = new();
     }
 }

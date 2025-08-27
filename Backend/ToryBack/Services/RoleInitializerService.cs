@@ -39,6 +39,17 @@ namespace ToryBack.Services
             }
         }
 
+        public async Task AssignRolesToUsersAsync(List<string> userIds, List<string> roleNames)
+        {
+            foreach (var userId in userIds)
+            {
+                foreach (var roleName in roleNames)
+                {
+                    await AssignRoleToUserAsync(userId, roleName);
+                }
+            }
+        }
+
         public async Task<List<string>> GetUserRolesAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
@@ -56,6 +67,17 @@ namespace ToryBack.Services
             if (user != null && await _roleManager.RoleExistsAsync(roleName))
             {
                 await _userManager.RemoveFromRoleAsync(user, roleName);
+            }
+        }
+
+        public async Task RemoveRolesFromUsersAsync(List<string> userIds, List<string> roleNames)
+        {
+            foreach (var userId in userIds)
+            {
+                foreach (var roleName in roleNames)
+                {
+                    await RemoveUserFromRoleAsync(userId, roleName);
+                }
             }
         }
 

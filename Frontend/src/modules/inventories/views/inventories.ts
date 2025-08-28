@@ -1,17 +1,7 @@
 import "./inventories.css"
-
-const categories = [
-  { id: "electronica", name: "Electronics" },
-  { id: "herramientas", name: "Tools" },
-  { id: "libros", name: "Books" },
-  { id: "hogar", name: "Home" },
-  { id: "coleccion", name: "Collectibles" },
-  { id: "office", name: "Office" },
-  { id: "sports", name: "Sports" },
-  { id: "music", name: "Music" },
-  { id: "art", name: "Art" },
-  { id: "others", name: "Others" },
-];
+import { categories } from "../additions/categoriesContainer"
+import { AuthService } from "../../login/services/auth";
+import { getInventories } from "../services/inventoryServices";
 
 const additionalFields = [
   {
@@ -106,7 +96,10 @@ const additionalFields = [
   }
 ];
 
+const inventories = await getInventories();
+
 export function inventoriesPage() {
+  console.log('Inventories:', inventories);
   return `
     <div class="inventories-container">
       <div class="page-header">
@@ -337,30 +330,38 @@ function setupCreateButton() {
   const cancelBtn = document.getElementById('cancel-create');
   const saveBtn = document.getElementById('save-inventory');
   const form = document.getElementById('create-inventory-form') as HTMLFormElement;
+  
   let selectedCustomFields: string[] = []; // Array para almacenar los IDs de campos seleccionados
+
   createBtn?.addEventListener('click', () => {
     modalNewInventory?.classList.add('is-active');
     setupCustomFields(); // Configurar los campos personalizados al abrir el modal
   });
+
   closeModalBtn?.addEventListener('click', () => {
     closeModal();
   });
+
   cancelBtn?.addEventListener('click', () => {
     closeModal();
   });
+
   modalNewInventory?.addEventListener('click', (e) => {
     if (e.target === modalNewInventory) {
       closeModal();
     }
   });
+
   saveBtn?.addEventListener('click', (e) => {
     e.preventDefault();
     handleCreateInventory();
   });
+
   form?.addEventListener('submit', (e) => {
     e.preventDefault();
     handleCreateInventory();
   });
+
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && modalNewInventory?.classList.contains('is-active')) {
       closeModal();
@@ -456,6 +457,7 @@ function setupCreateButton() {
     const fieldHTML = createFieldHTML(field);
     container?.insertAdjacentHTML('beforeend', fieldHTML);
 
+    // Actualizar botón si se alcanza el límite
     const addBtn = document.getElementById('add-custom-field');
     if (selectedCustomFields.length >= 3 && addBtn) {
       addBtn.style.display = 'none';
@@ -472,6 +474,8 @@ function setupCreateButton() {
         ${createFieldInput(field)}
       </div>
     `;
+
+    // Agregar event listener para el botón de eliminar después de que se agregue al DOM
     setTimeout(() => {
       const removeBtn = document.querySelector(`[data-field-id="${field.id}"] .remove-field-btn`);
       removeBtn?.addEventListener('click', () => removeCustomField(field.id));
@@ -515,9 +519,14 @@ function setupCreateButton() {
   }
 
   function removeCustomField(fieldId: string) {
+    // Remover del array
     selectedCustomFields = selectedCustomFields.filter(id => id !== fieldId);
+    
+    // Remover del DOM
     const fieldElement = document.querySelector(`[data-field-id="${fieldId}"]`);
     fieldElement?.remove();
+    
+    // Mostrar botón agregar si había llegado al límite
     const addBtn = document.getElementById('add-custom-field');
     if (addBtn && selectedCustomFields.length < 3) {
       addBtn.style.display = 'inline-block';
@@ -527,22 +536,37 @@ function setupCreateButton() {
   function closeModal() {
     modalNewInventory?.classList.remove('is-active');
     form?.reset();
+    
+    // Limpiar campos personalizados
     selectedCustomFields = [];
     const container = document.getElementById('custom-fields-container');
     if (container) container.innerHTML = '';
+    
     const addBtn = document.getElementById('add-custom-field');
     if (addBtn) addBtn.style.display = 'inline-block';
   }
 
   function handleCreateInventory() {
     const formData = new FormData(form);
+    
+    // Obtener usuario autenticado
+    const authService = AuthService.getInstance();
+    const currentUser = authService.getUser();
+    
+    if (!currentUser || !currentUser.id) {
+      alert('You must be logged in to create an inventory');
+      return;
+    }
+    
+    // Recopilar datos básicos del inventario
     const inventoryData = {
       title: formData.get('title') as string,
       description: formData.get('description') as string,
-      category: formData.get('category') as string,
+      categoryName: formData.get('category') as string, // Enviar nombre de categoría
       isPublic: formData.get('isPublic') === 'on',
       tags: (formData.get('tags') as string)?.split(',').map(tag => tag.trim()).filter(tag => tag),
-      customFields: {} as any
+      ownerId: currentUser.id, // Usar ID del usuario autenticado
+      customFields: [] as any[]
     };
 
     // Recopilar datos de campos personalizados
@@ -551,21 +575,27 @@ function setupCreateButton() {
       if (field) {
         const fieldName = `custom_${fieldId}`;
         let value: any = formData.get(fieldName);
+        
+        // Convertir checkbox a boolean
         if (field.type === 'checkbox') {
           value = value === 'on';
         }
         
-        inventoryData.customFields[fieldId] = {
+        // Preparar campo personalizado para envío al backend
+        const customFieldData = {
           name: field.name,
-          type: field.type,
-          value: value,
+          type: field.type.charAt(0).toUpperCase() + field.type.slice(1), // Capitalize first letter
           showInTable: field.showintable,
-          sortOrder: field.sortorder
+          sortOrder: field.sortorder,
+          validationRules: field.validationrules ? JSON.stringify(field.validationrules) : null,
+          options: field.options ? JSON.stringify(field.options) : null
         };
+        
+        inventoryData.customFields.push(customFieldData);
       }
     });
 
-    // Validacion, usar zod en un futuro
+    // Validación básica
     if (!inventoryData.title.trim()) {
       alert('Title is required');
       return;
@@ -575,7 +605,7 @@ function setupCreateButton() {
     for (const fieldId of selectedCustomFields) {
       const field = additionalFields.find(f => f.id === fieldId);
       if (field?.validationrules?.required) {
-        const value = inventoryData.customFields[fieldId]?.value;
+        const value = formData.get(`custom_${fieldId}`);
         if (!value || (typeof value === 'string' && !value.trim())) {
           alert(`${field.name} is required`);
           return;
@@ -585,15 +615,34 @@ function setupCreateButton() {
 
     console.log('Create inventory:', inventoryData);
     
-    // TODO: Send data to backend
-    // API call to create inventory will go here
-    
-    // Success simulation for now
-    alert('Inventory created successfully!');
-    closeModal();
-    
-    // Reload inventory list
-    loadInventories();
+    // Send data to backend
+    createInventoryAPI(inventoryData);
+  }
+
+  async function createInventoryAPI(inventoryData: any) {
+    try {
+      const response = await fetch('http://localhost:5217/api/Inventories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include', // Include cookies for authentication
+        body: JSON.stringify(inventoryData)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert('Inventory created successfully!');
+        closeModal();
+        loadInventories(); // Reload inventory list
+      } else {
+        const error = await response.text();
+        alert(`Error creating inventory: ${error}`);
+      }
+    } catch (error) {
+      console.error('Error creating inventory:', error);
+      alert('Error creating inventory. Please try again.');
+    }
   }
 }
 

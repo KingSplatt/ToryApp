@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ToryBack.Data;
 using ToryBack.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace ToryBack.Controllers
 {
@@ -11,82 +12,44 @@ namespace ToryBack.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<InventoriesController> _logger;
+        private readonly UserManager<User> _userManager;
 
-        public InventoriesController(ApplicationDbContext context, ILogger<InventoriesController> logger)
+        public InventoriesController(ApplicationDbContext context, ILogger<InventoriesController> logger, UserManager<User> userManager)
         {
             _context = context;
             _logger = logger;
+            _userManager = userManager;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<InventoryDto>>> GetInventories(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 10,
-            [FromQuery] string? category = null,
-            [FromQuery] string? search = null,
-            [FromQuery] string? sort = "recent")
+        public async Task<ActionResult<IEnumerable<InventoryDto>>> GetInventories()
         {
-            var query = _context.Inventories
+            var inventories = await _context.Inventories
                 .Include(i => i.Category)
                 .Include(i => i.Owner)
                 .Include(i => i.InventoryTags)
                     .ThenInclude(it => it.Tag)
-                .AsQueryable();
-
-            // Filter by public inventories only for now (add auth later)
-            query = query.Where(i => i.IsPublic);
-
-            // Category filter
-            if (!string.IsNullOrEmpty(category))
-            {
-                query = query.Where(i => i.Category.Name.ToLower() == category.ToLower());
-            }
-
-            // Search filter
-            if (!string.IsNullOrEmpty(search))
-            {
-                query = query.Where(i => 
-                    i.Title.Contains(search) || 
-                    i.Description.Contains(search) ||
-                    i.InventoryTags.Any(it => it.Tag.Name.Contains(search)));
-            }
-
-            // Sorting
-            query = sort?.ToLower() switch
-            {
-                "popular" => query.OrderByDescending(i => i.Items.Count()),
-                "name" => query.OrderBy(i => i.Title),
-                "items" => query.OrderByDescending(i => i.Items.Count()),
-                _ => query.OrderByDescending(i => i.CreatedAt) // "recent" default
-            };
-
-            var totalCount = await query.CountAsync();
-            var inventories = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
+                .Include(i => i.Items)
+                .Where(i => !i.IsPublic || i.IsPublic)
+                .OrderByDescending(i => i.UpdatedAt)
                 .Select(i => new InventoryDto
                 {
                     Id = i.Id,
                     Title = i.Title,
                     Description = i.Description,
                     Category = i.Category.Name,
-                    ItemCount = i.Items.Count(),
+                    ItemCount = i.Items.Count,
                     IsPublic = i.IsPublic,
                     Owner = i.Owner.FullName,
+                    OwnerId = i.OwnerId,
                     LastUpdated = i.UpdatedAt,
                     Tags = i.InventoryTags.Select(it => it.Tag.Name).ToList(),
                     ImageUrl = i.ImageUrl
                 })
                 .ToListAsync();
 
-            return Ok(new
-            {
-                items = inventories,
-                totalCount,
-                page,
-                pageSize,
-                totalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
-            });
+            return Ok(inventories);
+
         }
 
         [HttpGet("{id}")]
@@ -104,7 +67,6 @@ namespace ToryBack.Controllers
             if (inventory == null)
                 return NotFound();
 
-            // Check if user has access (public or owned by user - add auth later)
             if (!inventory.IsPublic)
             {
                 // TODO: Check if user has access
@@ -172,24 +134,178 @@ namespace ToryBack.Controllers
         }
         //pendiente
         [HttpPost]
-        public async Task<ActionResult<InventoryDto>> CreateInventory(InventoryDto inventoryDto)
+        public async Task<ActionResult<InventoryDto>> CreateInventory(CreateInventoryDto createDto)
         {
-            var inventory = new Inventory
+            try
             {
-                Title = inventoryDto.Title,
-                Description = inventoryDto.Description,
-                CategoryId = int.Parse(inventoryDto.CategoryId),
-                IsPublic = inventoryDto.IsPublic,
-                OwnerId = inventoryDto.OwnerId,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+                _logger.LogInformation("Creating inventory with data: {@CreateDto}", createDto);
+                string? currentUserId = null;
 
-            _context.Inventories.Add(inventory);
-            await _context.SaveChangesAsync();
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    var currentUser = await _userManager.FindByNameAsync(User.Identity.Name!);
+                    if (currentUser != null)
+                    {
+                        currentUserId = currentUser.Id;
+                        _logger.LogInformation("Authenticated user found: {UserId}", currentUserId);
+                    }
+                    else
+                    {
+                        _logger.LogInformation("Creating OAuth user for: {UserName}", User.Identity.Name);
+                        var newUser = new User
+                        {
+                            UserName = User.Identity.Name,
+                            Email = User.Identity.Name,
+                            FullName = User.FindFirst("name")?.Value ?? User.Identity.Name ?? "Unknown User",
+                            IsOAuthUser = true,
+                            RegistrationTime = DateTime.UtcNow,
+                            ProfilePictureUrl = User.FindFirst("picture")?.Value
+                        };
+                        var createResult = await _userManager.CreateAsync(newUser);
+                        if (createResult.Succeeded)
+                        {
+                            currentUserId = newUser.Id;
+                            _logger.LogInformation("OAuth user created successfully: {UserId}", currentUserId);
+                        }
+                        else
+                        {
+                            _logger.LogError("Failed to create OAuth user: {Errors}", string.Join(", ", createResult.Errors.Select(e => e.Description)));
+                            return BadRequest("Failed to create user account");
+                        }
+                    }
+                }
+                else
+                {
+                    currentUserId = createDto.OwnerId;
+                    _logger.LogWarning("User not authenticated, using provided OwnerId: {OwnerId}", currentUserId);
+                    var userExists = await _context.Users.AnyAsync(u => u.Id == currentUserId);
+                    if (!userExists)
+                    {
+                        _logger.LogWarning("User not found: {OwnerId}", currentUserId);
+                        return BadRequest($"User not found: {currentUserId}");
+                    }
+                }
 
-            inventoryDto.Id = inventory.Id;
-            return CreatedAtAction(nameof(GetInventory), new { id = inventory.Id }, inventoryDto);
+                if (string.IsNullOrEmpty(currentUserId))
+                {
+                    return BadRequest("Unable to determine user identity");
+                }
+                var categoryNameMapping = new Dictionary<string, string>
+                {
+                    ["electronic"] = "Electronics",
+                    ["tools"] = "Tools",
+                    ["books"] = "Books",
+                    ["home"] = "Home",
+                    ["collectibles"] = "Collectibles",
+                    ["office"] = "Office",
+                    ["sports"] = "Sports",
+                    ["music"] = "Music",
+                    ["art"] = "Art",
+                    ["others"] = "Other"
+                };
+                var mappedCategoryName = categoryNameMapping.GetValueOrDefault(createDto.CategoryName.ToLower(), createDto.CategoryName);
+                var category = await _context.Categories.FirstOrDefaultAsync(c => c.Name == mappedCategoryName);
+                if (category == null)
+                {
+                    _logger.LogWarning("Category not found: {CategoryName}", createDto.CategoryName);
+                    return BadRequest($"Invalid category: {createDto.CategoryName}");
+                }
+                var inventory = new Inventory
+                {
+                    Title = createDto.Title,
+                    Description = createDto.Description ?? string.Empty,
+                    CategoryId = category.Id,
+                    IsPublic = createDto.IsPublic,
+                    OwnerId = currentUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _context.Inventories.Add(inventory);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Inventory created with ID: {InventoryId}", inventory.Id);
+                // Handle tags
+                if (createDto.Tags != null && createDto.Tags.Any())
+                {
+                    var tagsToProcess = new List<Tag>();
+                    foreach (var tagName in createDto.Tags)
+                    {
+                        var trimmedTagName = tagName.Trim();
+                        if (string.IsNullOrEmpty(trimmedTagName)) continue;
+                        var normalizedTagName = trimmedTagName.ToLower();
+                        // Find or create tag
+                        var tag = await _context.Tags.FirstOrDefaultAsync(t => t.Name.ToLower() == normalizedTagName);
+                        if (tag == null)
+                        {
+                            tag = new Tag
+                            {
+                                Name = trimmedTagName,
+                                UsageCount = 1,
+                                CreatedAt = DateTime.UtcNow
+                            };
+                            _context.Tags.Add(tag);
+                        }
+                        else
+                        {
+                            tag.UsageCount++;
+                        }
+                        tagsToProcess.Add(tag);
+                    }
+                    await _context.SaveChangesAsync();
+                    foreach (var tag in tagsToProcess)
+                    {
+                        var inventoryTag = new InventoryTag
+                        {
+                            InventoryId = inventory.Id,
+                            TagId = tag.Id,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        _context.InventoryTags.Add(inventoryTag);
+                    }
+                }
+                // Handle custom fields
+                if (createDto.CustomFields != null && createDto.CustomFields.Any())
+                {
+                    foreach (var customFieldDto in createDto.CustomFields)
+                    {
+                        var customField = new CustomField
+                        {
+                            InventoryId = inventory.Id,
+                            Name = customFieldDto.Name,
+                            Type = Enum.Parse<FieldType>(customFieldDto.Type, true),
+                            ShowInTable = customFieldDto.ShowInTable,
+                            SortOrder = customFieldDto.SortOrder,
+                            ValidationRules = customFieldDto.ValidationRules,
+                            Options = customFieldDto.Options,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        _context.CustomFields.Add(customField);
+                    }
+                }
+                await _context.SaveChangesAsync();
+                // Return created inventory
+                var result = new InventoryDto
+                {
+                    Id = inventory.Id,
+                    Title = inventory.Title,
+                    Description = inventory.Description,
+                    Category = category.Name,
+                    CategoryId = category.Id.ToString(),
+                    ItemCount = 0,
+                    IsPublic = inventory.IsPublic,
+                    Owner = "Current User", // TODO: Get from auth
+                    OwnerId = inventory.OwnerId,
+                    LastUpdated = inventory.UpdatedAt,
+                    Tags = createDto.Tags ?? new List<string>(),
+                    ImageUrl = inventory.ImageUrl
+                };
+
+                return CreatedAtAction(nameof(GetInventory), new { id = inventory.Id }, result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating inventory");
+                return StatusCode(500, "Internal server error");
+            }
         }
     }
 
@@ -236,5 +352,26 @@ namespace ToryBack.Controllers
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public int UsageCount { get; set; }
+    }
+
+    public class CreateInventoryDto
+    {
+        public string Title { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string CategoryName { get; set; } = string.Empty;
+        public bool IsPublic { get; set; }
+        public string OwnerId { get; set; } = string.Empty;
+        public List<string>? Tags { get; set; }
+        public List<CreateCustomFieldDto>? CustomFields { get; set; }
+    }
+
+    public class CreateCustomFieldDto
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public bool ShowInTable { get; set; }
+        public int SortOrder { get; set; }
+        public string? ValidationRules { get; set; }
+        public string? Options { get; set; }
     }
 }

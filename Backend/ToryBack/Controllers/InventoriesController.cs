@@ -22,7 +22,7 @@ namespace ToryBack.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<InventoryDto>>> GetInventories()
+        public async Task<ActionResult<IEnumerable<InventoryDetailDto>>> GetInventories()
         {
             var inventories = await _context.Inventories
                 .Include(i => i.Category)
@@ -30,9 +30,10 @@ namespace ToryBack.Controllers
                 .Include(i => i.InventoryTags)
                     .ThenInclude(it => it.Tag)
                 .Include(i => i.Items)
+                .Include(i => i.CustomFields)
                 .Where(i => !i.IsPublic || i.IsPublic)
                 .OrderByDescending(i => i.UpdatedAt)
-                .Select(i => new InventoryDto
+                .Select(i => new InventoryDetailDto
                 {
                     Id = i.Id,
                     Title = i.Title,
@@ -42,9 +43,17 @@ namespace ToryBack.Controllers
                     IsPublic = i.IsPublic,
                     Owner = i.Owner.FullName,
                     OwnerId = i.OwnerId,
+                    CreatedAt = i.CreatedAt,
                     LastUpdated = i.UpdatedAt,
                     Tags = i.InventoryTags.Select(it => it.Tag.Name).ToList(),
-                    ImageUrl = i.ImageUrl
+                    ImageUrl = i.ImageUrl,
+                    CustomFields = i.CustomFields.Select(cf => new CustomFieldDto
+                    {
+                        Id = cf.Id,
+                        Name = cf.Name,
+                        Type = cf.Type.ToString(),
+                        ShowInTable = cf.ShowInTable
+                    }).ToList()
                 })
                 .ToListAsync();
 
@@ -97,6 +106,45 @@ namespace ToryBack.Controllers
 
             return Ok(result);
         }
+        [HttpGet("user/{userId}")]
+        public async Task<ActionResult<IEnumerable<InventoryDetailDto>>> GetUserInventories(string userId)
+        {
+            var inventories = await _context.Inventories
+                .Include(i => i.Category)
+                .Include(i => i.Owner)
+                .Include(i => i.InventoryTags)
+                    .ThenInclude(it => it.Tag)
+                .Include(i => i.Items)
+                .Include(i => i.CustomFields)
+                .Where(i => i.OwnerId == userId && (i.IsPublic || !i.IsPublic))
+                .OrderByDescending(i => i.UpdatedAt)
+                .Select(i => new InventoryDetailDto
+                {
+                    Id = i.Id,
+                    Title = i.Title,
+                    Description = i.Description,
+                    Category = i.Category.Name,
+                    ItemCount = i.Items.Count,
+                    IsPublic = i.IsPublic,
+                    Owner = i.Owner.FullName,
+                    OwnerId = i.OwnerId,
+                    CreatedAt = i.CreatedAt,
+                    LastUpdated = i.UpdatedAt,
+                    Tags = i.InventoryTags.Select(it => it.Tag.Name).ToList(),
+                    ImageUrl = i.ImageUrl,
+                    CustomFields = i.CustomFields.Select(cf => new CustomFieldDto
+                    {
+                        Id = cf.Id,
+                        Name = cf.Name,
+                        Type = cf.Type.ToString(),
+                        ShowInTable = cf.ShowInTable
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            return Ok(inventories);
+        }   
+
 
         [HttpGet("categories")]
         public async Task<ActionResult<IEnumerable<CategoryDto>>> GetCategories()

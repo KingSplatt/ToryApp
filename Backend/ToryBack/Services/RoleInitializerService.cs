@@ -16,7 +16,7 @@ namespace ToryBack.Services
 
         public async Task InitializeRolesAsync()
         {
-            string[] roleNames = { "Admin", "AuthUser", "Public" };
+            string[] roleNames = { "Admin", "AuthUser", "Public","Creator", "Writer" };
 
             foreach (var roleName in roleNames)
             {

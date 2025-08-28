@@ -1,5 +1,9 @@
-import { UIUtils } from '../utils/ui';
-import { User } from '../login/interfaces/UserInterface';
+import { UIUtils } from '../../utils/ui';
+import { User } from '../../login/interfaces/UserInterface';
+import "./profile.css"
+import { Router } from '../../router/router';
+import { getUserInventories } from '../../inventories/services/inventoryServices';
+import { AuthService } from '../../login/services/auth';
 
 export function profilePage() {
   const currentUser = UIUtils.getCurrentUser();
@@ -20,7 +24,10 @@ export function profilePage() {
     <div class="profile-container">
       <div class="page-header">
         <h1>Your profile</h1>
-        <p>Edit your personal information and preferences</p>
+        <section class="section-inventories">
+          <button class="btn btn-primary" id="Your-Inventories-Btn">Your Inventories</button>
+          <button class="btn btn-secondary" id="Shared-Inventories-Btn">Inventories with Write Access</button>
+        </section>
       </div>
       
       <div class="profile-content">
@@ -109,7 +116,12 @@ export function profilePage() {
 
 export function initializeProfile() {
   const currentUser = UIUtils.getCurrentUser();
-  
+  const authService = AuthService.getInstance();
+  const user = authService.getUser();
+  const userInventories = getUserInventories(user?.id || '');
+  console.log('User Inventories:', userInventories);
+  const router = Router.getInstance();
+
   if (!currentUser) {
     return;
   }
@@ -118,10 +130,16 @@ export function initializeProfile() {
   setupProfileEventListeners();
   UIUtils.listenToAuthChanges((user) => {
     if (!user) {
-      // User logged out, redirect to home
-      window.history.pushState({}, '', '/');
-      window.dispatchEvent(new PopStateEvent('popstate'));
+      router.navigate('/');
     }
+  });
+  const yourInventoriesBtn = document.getElementById('Your-Inventories-Btn');
+  const sharedInventoriesBtn = document.getElementById('Shared-Inventories-Btn');
+  yourInventoriesBtn?.addEventListener('click', () => {
+    router.navigate('/your-inventories');
+  });
+  sharedInventoriesBtn?.addEventListener('click', () => {
+    router.navigate('/shared-inventories');
   });
 }
 

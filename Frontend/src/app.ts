@@ -3,8 +3,10 @@ import { createLayout, initializeTheme, initializeLanguage, initializeLayout } f
 import { homePage, initializeHome } from './modules/home/home';
 import { loginPage, initializeLogin } from './modules/login/views/login';
 import { inventoriesPage, initializeInventories } from './modules/inventories/views/inventories';
+import { ownInventory, initOwnInventory } from './modules/profile/views/ownInventory';
+import { sharedInventory, initSharedInventory } from './modules/profile/views/sharedInventory';
 import { searchPage, initializeSearch } from './modules/search/search';
-import { profilePage, initializeProfile } from './modules/profile/profile';
+import { profilePage, initializeProfile } from './modules/profile/views/profile';
 import { AuthService } from './modules/login/services/auth';
 import { Register } from './modules/login/views/register';
 import { adminPage, initAdminPage } from './modules/admin/views/admin';
@@ -70,6 +72,26 @@ router.addRoute({
   component: () => {
     const content = profilePage();
     setTimeout(initializeProfile, 0);
+    return createLayout(content, router.getCurrentPath());
+  }
+});
+
+router.addRoute({
+  path:'/your-inventories',
+  title: 'Your Inventories',
+  component: () => {
+    const content = ownInventory();
+    setTimeout(initOwnInventory, 0);
+    return createLayout(content, router.getCurrentPath());
+  }
+})
+
+router.addRoute({
+  path: '/shared-inventories',
+  title: 'Shared Inventories',
+  component: () => {
+    const content = sharedInventory();
+    setTimeout(initSharedInventory, 0);
     return createLayout(content, router.getCurrentPath());
   }
 });

@@ -24,18 +24,18 @@ export function createLayout(content: string, currentPath: string) {
         </div>
         <div class="nav-tools">
           <a href="/logout" data-navigate="/logout" class="btn btn-secondary">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Log outs
           </a>
         </div>
       </nav>
       <main class="main-content">
         <div class="blocked-user-message">
           <div class="alert alert-danger">
-            <h2>🚫 Cuenta Bloqueada</h2>
-            <p>Tu cuenta ha sido bloqueada. No puedes acceder a las funcionalidades de la aplicación.</p>
-            <p>Si crees que esto es un error, contacta al administrador.</p>
-            <p><strong>Usuario:</strong> ${currentUser?.fullName}</p>
-            <p><strong>Bloqueado desde:</strong> ${currentUser?.blockedAt ? new Date(currentUser.blockedAt).toLocaleDateString() : 'N/A'}</p>
+            <h2>🚫 Account Blocked</h2>
+            <p>Your account has been blocked. You cannot access the application's features.</p>
+            <p>If you believe this is an error, please contact the administrator.</p>
+            <p><strong>User:</strong> ${currentUser?.fullName}</p>
+            <p><strong>Blocked Since:</strong> ${currentUser?.blockedAt ? new Date(currentUser.blockedAt).toLocaleDateString() : 'N/A'}</p>
           </div>
         </div>
       </main>
@@ -63,13 +63,13 @@ export function createLayout(content: string, currentPath: string) {
         ` : ''}
         ${isAuthenticated && !isBlocked ? `
           <div class="user-info-nav">
-            <span class="user-welcome">Bienvenido, ${currentUser?.fullName} </span>
+            <span class="user-welcome">Welcome, ${currentUser?.fullName} </span>
           </div>
           <a href="/logout" data-navigate="/logout" class="btn btn-secondary">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Log out
           </a>
         ` : `
-          <a href="/login" data-navigate="/login" class="btn btn-success">Iniciar sesión</a>
+          <a href="/login" data-navigate="/login" class="btn btn-success">Log in</a>
         `}
       </div>
     </nav>

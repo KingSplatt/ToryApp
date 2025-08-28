@@ -33,6 +33,14 @@ export const getInventory = async (id: number): Promise<InventoryDto> => {
   return await response.json();
 };
 
+export const getUserInventories = async (userId: string): Promise<InventoryDto[]> => {
+  const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}/user/${userId}`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch user inventories");
+  }
+  return await response.json();
+};
+
 export const getTags = async (): Promise<string[]> => {
   const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.GET_TAGS}`);
   if (!response.ok) {

@@ -2,13 +2,14 @@ import { getUserInventories } from "../../inventories/services/inventoryServices
 import { AuthService } from "../../login/services/auth";
 import { Router } from "../../router/router";
 import { InventoryDto } from "../../inventories/interfaces/InventoryDtoInterface";
+import "./ownInventory.css"
 
 export function ownInventory(){
     return `
     <div class="inventory-container">
-      <h1>Your Inventory</h1>
-      <div class="inventory-items">
-        <!-- Inventory items will be dynamically loaded here -->
+      <h1>Your Inventories</h1>
+      <div class="inventories-list">
+
       </div>
     </div>
     `
@@ -21,20 +22,34 @@ export function initOwnInventory() {
 }
 
 export function loadTableOfInventories(){
-  const inventoryItemsContainer = document.querySelector('.inventory-items');
+  const inventoryItemsContainer = document.querySelector('.inventories-list');
   if (!inventoryItemsContainer) return;
 
   inventoryItemsContainer.innerHTML = '';
 
   loadUserInventories().then(InventoryDto => {
-    InventoryDto.forEach(item => {
-      const itemElement = document.createElement('div');
-      itemElement.classList.add('inventory-item');
-      itemElement.innerHTML = `
-        <h2>${item.title}</h2>
-        <p>${item.description}</p>
+    InventoryDto.forEach(tory => {
+      const tableElement = document.createElement('table');
+      tableElement.classList.add('table-inventories');
+      tableElement.innerHTML = `
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Description</th>
+          <th>Category</th>
+          <th>Total Custom Fields</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>${tory.title}</td>
+          <td>${tory.description}</td>
+          <td>${tory.category}</td>
+          <td>${tory.customFields.length}</td>
+        </tr>
+      </tbody>
       `;
-      inventoryItemsContainer.appendChild(itemElement);
+      inventoryItemsContainer.appendChild(tableElement);
     });
   });
 }

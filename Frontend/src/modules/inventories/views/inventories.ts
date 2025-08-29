@@ -2,7 +2,9 @@ import "./inventories.css"
 import { categories } from "../additions/categoriesContainer"
 import { AuthService } from "../../login/services/auth";
 import { getInventories } from "../services/inventoryServices";
-
+import { CreateInventoryDto } from "../interfaces/CreateInventoryDto";
+import { CreateCustomFieldDto } from "../interfaces/CreateInventoryDto";
+import { createInventory } from "../services/inventoryServices";
 const additionalFields = [
   {
     id: "inventory-serial-number",
@@ -566,7 +568,7 @@ function setupCreateButton() {
       isPublic: formData.get('isPublic') === 'on',
       tags: (formData.get('tags') as string)?.split(',').map(tag => tag.trim()).filter(tag => tag),
       ownerId: currentUser.id, // Usar ID del usuario autenticado
-      customFields: [] as any[]
+      customFields: [] as any[] // Ensure this is always initialized as an array
     };
 
     // Recopilar datos de campos personalizados
@@ -582,13 +584,13 @@ function setupCreateButton() {
         }
         
         // Preparar campo personalizado para envío al backend
-        const customFieldData = {
-          name: field.name,
+        const customFieldData: CreateCustomFieldDto = {
+          name: field.name ,
           type: field.type.charAt(0).toUpperCase() + field.type.slice(1), // Capitalize first letter
           showInTable: field.showintable,
           sortOrder: field.sortorder,
-          validationRules: field.validationrules ? JSON.stringify(field.validationrules) : null,
-          options: field.options ? JSON.stringify(field.options) : null
+          validationRules: field.validationrules ? JSON.stringify(field.validationrules) : undefined,
+          options: field.options ? JSON.stringify(field.options) : undefined
         };
         
         inventoryData.customFields.push(customFieldData);
@@ -616,33 +618,8 @@ function setupCreateButton() {
     console.log('Create inventory:', inventoryData);
     
     // Send data to backend
-    createInventoryAPI(inventoryData);
-  }
-
-  async function createInventoryAPI(inventoryData: any) {
-    try {
-      const response = await fetch('http://localhost:5217/api/Inventories', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include', // Include cookies for authentication
-        body: JSON.stringify(inventoryData)
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        alert('Inventory created successfully!');
-        closeModal();
-        loadInventories(); // Reload inventory list
-      } else {
-        const error = await response.text();
-        alert(`Error creating inventory: ${error}`);
-      }
-    } catch (error) {
-      console.error('Error creating inventory:', error);
-      alert('Error creating inventory. Please try again.');
-    }
+    createInventory(inventoryData);
+    closeModal();
   }
 }
 

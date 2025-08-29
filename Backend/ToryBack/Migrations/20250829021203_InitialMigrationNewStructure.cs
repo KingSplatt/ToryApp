@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ToryBack.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigration : Migration
+    public partial class InitialMigrationNewStructure : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -54,6 +54,8 @@ namespace ToryBack.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     IsOAuthUser = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     LastLoginTime = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    IsBlocked = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    BlockedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     UserName = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     NormalizedUserName = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: true)
@@ -99,25 +101,6 @@ namespace ToryBack.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_categories", x => x.Id);
-                })
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.CreateTable(
-                name: "items",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    CustomId = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    InventoryId = table.Column<int>(type: "int", nullable: false),
-                    Name = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    CreateAt = table.Column<DateTime>(type: "datetime(6)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_items", x => x.Id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -283,7 +266,52 @@ namespace ToryBack.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
-                    RowVersion = table.Column<DateTime>(type: "timestamp(6)", rowVersion: true, nullable: false)
+                    RowVersion = table.Column<DateTime>(type: "timestamp(6)", rowVersion: true, nullable: false),
+                    custom_string1_state = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    custom_string1_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_string2_state = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    custom_string2_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_string3_state = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    custom_string3_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_int1_state = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    custom_int1_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_int2_state = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    custom_int2_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_int3_state = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    custom_int3_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_bool1_state = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    custom_bool1_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_bool2_state = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    custom_bool2_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_bool3_state = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    custom_bool3_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_date1_state = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    custom_date1_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_date2_state = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    custom_date2_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_date3_state = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    custom_date3_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_decimal1_state = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    custom_decimal1_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_decimal2_state = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    custom_decimal2_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_decimal3_state = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    custom_decimal3_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
                 {
@@ -298,37 +326,6 @@ namespace ToryBack.Migrations
                         name: "FK_inventories_categories_CategoryId",
                         column: x => x.CategoryId,
                         principalTable: "categories",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                })
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.CreateTable(
-                name: "custom_fields",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    InventoryId = table.Column<int>(type: "int", nullable: false),
-                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Type = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    ShowInTable = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
-                    SortOrder = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
-                    ValidationRules = table.Column<string>(type: "longtext", nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Options = table.Column<string>(type: "longtext", nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_custom_fields", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_custom_fields_inventories_InventoryId",
-                        column: x => x.InventoryId,
-                        principalTable: "inventories",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
@@ -422,27 +419,45 @@ namespace ToryBack.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "InventoryItems",
+                name: "items",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    CustomId = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     InventoryId = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Description = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    CustomId = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
                     CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
-                    RowVersion = table.Column<DateTime>(type: "timestamp(6)", rowVersion: true, nullable: false)
+                    RowVersion = table.Column<DateTime>(type: "timestamp(6)", rowVersion: true, nullable: false),
+                    custom_string1_value = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_string2_value = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_string3_value = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_int1_value = table.Column<int>(type: "int", nullable: true),
+                    custom_int2_value = table.Column<int>(type: "int", nullable: true),
+                    custom_int3_value = table.Column<int>(type: "int", nullable: true),
+                    custom_bool1_value = table.Column<bool>(type: "tinyint(1)", nullable: true),
+                    custom_bool2_value = table.Column<bool>(type: "tinyint(1)", nullable: true),
+                    custom_bool3_value = table.Column<bool>(type: "tinyint(1)", nullable: true),
+                    custom_date1_value = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    custom_date2_value = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    custom_date3_value = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    custom_decimal1_value = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: true),
+                    custom_decimal2_value = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: true),
+                    custom_decimal3_value = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_InventoryItems", x => x.Id);
+                    table.PrimaryKey("PK_items", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_InventoryItems_inventories_InventoryId",
+                        name: "FK_items_inventories_InventoryId",
                         column: x => x.InventoryId,
                         principalTable: "inventories",
                         principalColumn: "Id",
@@ -472,38 +487,6 @@ namespace ToryBack.Migrations
                         name: "FK_post_likes_discussion_posts_PostId",
                         column: x => x.PostId,
                         principalTable: "discussion_posts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                })
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.CreateTable(
-                name: "custom_field_values",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    ItemId = table.Column<int>(type: "int", nullable: false),
-                    CustomFieldId = table.Column<int>(type: "int", nullable: false),
-                    TextValue = table.Column<string>(type: "longtext", nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    NumberValue = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: true),
-                    BooleanValue = table.Column<bool>(type: "tinyint(1)", nullable: true),
-                    DateValue = table.Column<DateTime>(type: "datetime(6)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_custom_field_values", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_custom_field_values_InventoryItems_ItemId",
-                        column: x => x.ItemId,
-                        principalTable: "InventoryItems",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_custom_field_values_custom_fields_CustomFieldId",
-                        column: x => x.CustomFieldId,
-                        principalTable: "custom_fields",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
@@ -553,22 +536,6 @@ namespace ToryBack.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_custom_field_values_CustomFieldId",
-                table: "custom_field_values",
-                column: "CustomFieldId");
-
-            migrationBuilder.CreateIndex(
-                name: "unique_item_field",
-                table: "custom_field_values",
-                columns: new[] { "ItemId", "CustomFieldId" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_custom_fields_InventoryId",
-                table: "custom_fields",
-                column: "InventoryId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_discussion_posts_AuthorId",
                 table: "discussion_posts",
                 column: "AuthorId");
@@ -597,11 +564,6 @@ namespace ToryBack.Migrations
                 name: "IX_inventory_tags_TagId",
                 table: "inventory_tags",
                 column: "TagId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_InventoryItems_InventoryId",
-                table: "InventoryItems",
-                column: "InventoryId");
 
             migrationBuilder.CreateIndex(
                 name: "unique_custom_id_per_inventory",
@@ -640,9 +602,6 @@ namespace ToryBack.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "custom_field_values");
-
-            migrationBuilder.DropTable(
                 name: "inventory_access");
 
             migrationBuilder.DropTable(
@@ -656,12 +615,6 @@ namespace ToryBack.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
-
-            migrationBuilder.DropTable(
-                name: "InventoryItems");
-
-            migrationBuilder.DropTable(
-                name: "custom_fields");
 
             migrationBuilder.DropTable(
                 name: "tags");

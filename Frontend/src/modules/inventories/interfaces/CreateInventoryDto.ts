@@ -11,8 +11,8 @@ export interface CreateInventoryDto {
   description?: string;
   categoryName: string;
   isPublic: boolean;
-  ownerId: string;
   tags?: string[];
+  ownerId: string;
   customFields?: CreateCustomFieldDto[];
 }
 

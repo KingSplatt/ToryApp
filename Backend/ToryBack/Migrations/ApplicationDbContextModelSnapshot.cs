@@ -189,90 +189,6 @@ namespace ToryBack.Migrations
                     b.ToTable("categories", (string)null);
                 });
 
-            modelBuilder.Entity("ToryBack.Models.CustomField", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("InventoryId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("Options")
-                        .HasColumnType("longtext");
-
-                    b.Property<bool>("ShowInTable")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("tinyint(1)")
-                        .HasDefaultValue(false);
-
-                    b.Property<int>("SortOrder")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("ValidationRules")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("InventoryId");
-
-                    b.ToTable("custom_fields", (string)null);
-                });
-
-            modelBuilder.Entity("ToryBack.Models.CustomFieldValue", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool?>("BooleanValue")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<int>("CustomFieldId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("DateValue")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("ItemId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal?>("NumberValue")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<string>("TextValue")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomFieldId");
-
-                    b.HasIndex("ItemId", "CustomFieldId")
-                        .IsUnique()
-                        .HasDatabaseName("unique_item_field");
-
-                    b.ToTable("custom_field_values", (string)null);
-                });
-
             modelBuilder.Entity("ToryBack.Models.DiscussionPost", b =>
                 {
                     b.Property<int>("Id")
@@ -325,6 +241,171 @@ namespace ToryBack.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("CustomBool1Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("custom_bool1_name");
+
+                    b.Property<bool>("CustomBool1State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("custom_bool1_state");
+
+                    b.Property<string>("CustomBool2Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("custom_bool2_name");
+
+                    b.Property<bool>("CustomBool2State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("custom_bool2_state");
+
+                    b.Property<string>("CustomBool3Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("custom_bool3_name");
+
+                    b.Property<bool>("CustomBool3State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("custom_bool3_state");
+
+                    b.Property<string>("CustomDate1Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("custom_date1_name");
+
+                    b.Property<bool>("CustomDate1State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("custom_date1_state");
+
+                    b.Property<string>("CustomDate2Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("custom_date2_name");
+
+                    b.Property<bool>("CustomDate2State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("custom_date2_state");
+
+                    b.Property<string>("CustomDate3Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("custom_date3_name");
+
+                    b.Property<bool>("CustomDate3State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("custom_date3_state");
+
+                    b.Property<string>("CustomDecimal1Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("custom_decimal1_name");
+
+                    b.Property<bool>("CustomDecimal1State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("custom_decimal1_state");
+
+                    b.Property<string>("CustomDecimal2Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("custom_decimal2_name");
+
+                    b.Property<bool>("CustomDecimal2State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("custom_decimal2_state");
+
+                    b.Property<string>("CustomDecimal3Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("custom_decimal3_name");
+
+                    b.Property<bool>("CustomDecimal3State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("custom_decimal3_state");
+
+                    b.Property<string>("CustomInt1Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("custom_int1_name");
+
+                    b.Property<bool>("CustomInt1State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("custom_int1_state");
+
+                    b.Property<string>("CustomInt2Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("custom_int2_name");
+
+                    b.Property<bool>("CustomInt2State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("custom_int2_state");
+
+                    b.Property<string>("CustomInt3Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("custom_int3_name");
+
+                    b.Property<bool>("CustomInt3State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("custom_int3_state");
+
+                    b.Property<string>("CustomString1Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("custom_string1_name");
+
+                    b.Property<bool>("CustomString1State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("custom_string1_state");
+
+                    b.Property<string>("CustomString2Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("custom_string2_name");
+
+                    b.Property<bool>("CustomString2State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("custom_string2_state");
+
+                    b.Property<string>("CustomString3Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("custom_string3_name");
+
+                    b.Property<bool>("CustomString3State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("custom_string3_state");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -391,47 +472,6 @@ namespace ToryBack.Migrations
                     b.ToTable("inventory_access", (string)null);
                 });
 
-            modelBuilder.Entity("ToryBack.Models.InventoryItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CustomId")
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("InventoryId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.Property<DateTime>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("timestamp(6)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("InventoryId");
-
-                    b.ToTable("InventoryItems");
-                });
-
             modelBuilder.Entity("ToryBack.Models.InventoryTag", b =>
                 {
                     b.Property<int>("InventoryId")
@@ -459,14 +499,81 @@ namespace ToryBack.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreateAt")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)")
-                        .HasColumnName("CreateAt");
+                        .HasColumnName("CreatedAt");
+
+                    b.Property<bool?>("CustomBool1Value")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("custom_bool1_value");
+
+                    b.Property<bool?>("CustomBool2Value")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("custom_bool2_value");
+
+                    b.Property<bool?>("CustomBool3Value")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("custom_bool3_value");
+
+                    b.Property<DateTime?>("CustomDate1Value")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("custom_date1_value");
+
+                    b.Property<DateTime?>("CustomDate2Value")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("custom_date2_value");
+
+                    b.Property<DateTime?>("CustomDate3Value")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("custom_date3_value");
+
+                    b.Property<decimal?>("CustomDecimal1Value")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("custom_decimal1_value");
+
+                    b.Property<decimal?>("CustomDecimal2Value")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("custom_decimal2_value");
+
+                    b.Property<decimal?>("CustomDecimal3Value")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("custom_decimal3_value");
 
                     b.Property<string>("CustomId")
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)")
                         .HasColumnName("CustomId");
+
+                    b.Property<int?>("CustomInt1Value")
+                        .HasColumnType("int")
+                        .HasColumnName("custom_int1_value");
+
+                    b.Property<int?>("CustomInt2Value")
+                        .HasColumnType("int")
+                        .HasColumnName("custom_int2_value");
+
+                    b.Property<int?>("CustomInt3Value")
+                        .HasColumnType("int")
+                        .HasColumnName("custom_int3_value");
+
+                    b.Property<string>("CustomString1Value")
+                        .HasColumnType("longtext")
+                        .HasColumnName("custom_string1_value");
+
+                    b.Property<string>("CustomString2Value")
+                        .HasColumnType("longtext")
+                        .HasColumnName("custom_string2_value");
+
+                    b.Property<string>("CustomString3Value")
+                        .HasColumnType("longtext")
+                        .HasColumnName("custom_string3_value");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("longtext")
+                        .HasColumnName("Description");
 
                     b.Property<int>("InventoryId")
                         .HasColumnType("int")
@@ -477,6 +584,15 @@ namespace ToryBack.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)")
                         .HasColumnName("Name");
+
+                    b.Property<DateTime>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp(6)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("UpdatedAt");
 
                     b.HasKey("Id");
 
@@ -689,36 +805,6 @@ namespace ToryBack.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ToryBack.Models.CustomField", b =>
-                {
-                    b.HasOne("ToryBack.Models.Inventory", "Inventory")
-                        .WithMany("CustomFields")
-                        .HasForeignKey("InventoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Inventory");
-                });
-
-            modelBuilder.Entity("ToryBack.Models.CustomFieldValue", b =>
-                {
-                    b.HasOne("ToryBack.Models.CustomField", "CustomField")
-                        .WithMany("Values")
-                        .HasForeignKey("CustomFieldId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ToryBack.Models.InventoryItem", "Item")
-                        .WithMany("CustomFieldValues")
-                        .HasForeignKey("ItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CustomField");
-
-                    b.Navigation("Item");
-                });
-
             modelBuilder.Entity("ToryBack.Models.DiscussionPost", b =>
                 {
                     b.HasOne("ToryBack.Models.User", "Author")
@@ -776,17 +862,6 @@ namespace ToryBack.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("ToryBack.Models.InventoryItem", b =>
-                {
-                    b.HasOne("ToryBack.Models.Inventory", "Inventory")
-                        .WithMany("Items")
-                        .HasForeignKey("InventoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Inventory");
-                });
-
             modelBuilder.Entity("ToryBack.Models.InventoryTag", b =>
                 {
                     b.HasOne("ToryBack.Models.Inventory", "Inventory")
@@ -804,6 +879,17 @@ namespace ToryBack.Migrations
                     b.Navigation("Inventory");
 
                     b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("ToryBack.Models.Item", b =>
+                {
+                    b.HasOne("ToryBack.Models.Inventory", "Inventory")
+                        .WithMany("Items")
+                        .HasForeignKey("InventoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Inventory");
                 });
 
             modelBuilder.Entity("ToryBack.Models.PostLike", b =>
@@ -830,11 +916,6 @@ namespace ToryBack.Migrations
                     b.Navigation("Inventories");
                 });
 
-            modelBuilder.Entity("ToryBack.Models.CustomField", b =>
-                {
-                    b.Navigation("Values");
-                });
-
             modelBuilder.Entity("ToryBack.Models.DiscussionPost", b =>
                 {
                     b.Navigation("Likes");
@@ -844,18 +925,11 @@ namespace ToryBack.Migrations
                 {
                     b.Navigation("AccessList");
 
-                    b.Navigation("CustomFields");
-
                     b.Navigation("DiscussionPosts");
 
                     b.Navigation("InventoryTags");
 
                     b.Navigation("Items");
-                });
-
-            modelBuilder.Entity("ToryBack.Models.InventoryItem", b =>
-                {
-                    b.Navigation("CustomFieldValues");
                 });
 
             modelBuilder.Entity("ToryBack.Models.Tag", b =>

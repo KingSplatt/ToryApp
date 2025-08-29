@@ -13,14 +13,11 @@ namespace ToryBack.Data
 
         // DbSets for all entities
         public DbSet<Item> Items { get; set; } = null!;
-        public DbSet<InventoryItem> InventoryItems { get; set; } = null!;
         public DbSet<Inventory> Inventories { get; set; } = null!;
         public DbSet<Category> Categories { get; set; } = null!;
         public DbSet<Tag> Tags { get; set; } = null!;
         public DbSet<InventoryTag> InventoryTags { get; set; } = null!;
         public DbSet<InventoryAccess> InventoryAccess { get; set; } = null!;
-        public DbSet<CustomField> CustomFields { get; set; } = null!;
-        public DbSet<CustomFieldValue> CustomFieldValues { get; set; } = null!;
         public DbSet<DiscussionPost> DiscussionPosts { get; set; } = null!;
         public DbSet<PostLike> PostLikes { get; set; } = null!;
         
@@ -37,12 +34,41 @@ namespace ToryBack.Data
                 entity.Property(e => e.CustomId).HasColumnName("CustomId").HasMaxLength(100);
                 entity.Property(e => e.InventoryId).HasColumnName("InventoryId").IsRequired();
                 entity.Property(e => e.Name).HasColumnName("Name").HasMaxLength(200).IsRequired();
-                entity.Property(e => e.CreateAt).HasColumnName("CreateAt").IsRequired();
+                entity.Property(e => e.Description).HasColumnName("Description");
+                entity.Property(e => e.CreatedAt).HasColumnName("CreatedAt").IsRequired();
+                entity.Property(e => e.UpdatedAt).HasColumnName("UpdatedAt").IsRequired();
+                
+                // Custom field value mappings
+                entity.Property(e => e.CustomString1Value).HasColumnName("custom_string1_value");
+                entity.Property(e => e.CustomString2Value).HasColumnName("custom_string2_value");
+                entity.Property(e => e.CustomString3Value).HasColumnName("custom_string3_value");
+                
+                entity.Property(e => e.CustomInt1Value).HasColumnName("custom_int1_value");
+                entity.Property(e => e.CustomInt2Value).HasColumnName("custom_int2_value");
+                entity.Property(e => e.CustomInt3Value).HasColumnName("custom_int3_value");
+                
+                entity.Property(e => e.CustomBool1Value).HasColumnName("custom_bool1_value");
+                entity.Property(e => e.CustomBool2Value).HasColumnName("custom_bool2_value");
+                entity.Property(e => e.CustomBool3Value).HasColumnName("custom_bool3_value");
+                
+                entity.Property(e => e.CustomDate1Value).HasColumnName("custom_date1_value");
+                entity.Property(e => e.CustomDate2Value).HasColumnName("custom_date2_value");
+                entity.Property(e => e.CustomDate3Value).HasColumnName("custom_date3_value");
+                
+                entity.Property(e => e.CustomDecimal1Value).HasColumnName("custom_decimal1_value").HasPrecision(18, 4);
+                entity.Property(e => e.CustomDecimal2Value).HasColumnName("custom_decimal2_value").HasPrecision(18, 4);
+                entity.Property(e => e.CustomDecimal3Value).HasColumnName("custom_decimal3_value").HasPrecision(18, 4);
                 
                 // Add unique constraint for CustomId per Inventory
                 entity.HasIndex(e => new { e.InventoryId, e.CustomId })
                       .HasDatabaseName("unique_custom_id_per_inventory")
                       .IsUnique();
+                      
+                // Foreign key relationship
+                entity.HasOne(e => e.Inventory)
+                      .WithMany(i => i.Items)
+                      .HasForeignKey(e => e.InventoryId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Configure Inventories table
@@ -56,6 +82,42 @@ namespace ToryBack.Data
                 entity.Property(e => e.IsPublic).HasDefaultValue(true);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
                 entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+                
+                // Custom field state and name mappings
+                entity.Property(e => e.CustomString1State).HasColumnName("custom_string1_state").HasDefaultValue(false);
+                entity.Property(e => e.CustomString1Name).HasColumnName("custom_string1_name").HasMaxLength(100);
+                entity.Property(e => e.CustomString2State).HasColumnName("custom_string2_state").HasDefaultValue(false);
+                entity.Property(e => e.CustomString2Name).HasColumnName("custom_string2_name").HasMaxLength(100);
+                entity.Property(e => e.CustomString3State).HasColumnName("custom_string3_state").HasDefaultValue(false);
+                entity.Property(e => e.CustomString3Name).HasColumnName("custom_string3_name").HasMaxLength(100);
+                
+                entity.Property(e => e.CustomInt1State).HasColumnName("custom_int1_state").HasDefaultValue(false);
+                entity.Property(e => e.CustomInt1Name).HasColumnName("custom_int1_name").HasMaxLength(100);
+                entity.Property(e => e.CustomInt2State).HasColumnName("custom_int2_state").HasDefaultValue(false);
+                entity.Property(e => e.CustomInt2Name).HasColumnName("custom_int2_name").HasMaxLength(100);
+                entity.Property(e => e.CustomInt3State).HasColumnName("custom_int3_state").HasDefaultValue(false);
+                entity.Property(e => e.CustomInt3Name).HasColumnName("custom_int3_name").HasMaxLength(100);
+                
+                entity.Property(e => e.CustomBool1State).HasColumnName("custom_bool1_state").HasDefaultValue(false);
+                entity.Property(e => e.CustomBool1Name).HasColumnName("custom_bool1_name").HasMaxLength(100);
+                entity.Property(e => e.CustomBool2State).HasColumnName("custom_bool2_state").HasDefaultValue(false);
+                entity.Property(e => e.CustomBool2Name).HasColumnName("custom_bool2_name").HasMaxLength(100);
+                entity.Property(e => e.CustomBool3State).HasColumnName("custom_bool3_state").HasDefaultValue(false);
+                entity.Property(e => e.CustomBool3Name).HasColumnName("custom_bool3_name").HasMaxLength(100);
+                
+                entity.Property(e => e.CustomDate1State).HasColumnName("custom_date1_state").HasDefaultValue(false);
+                entity.Property(e => e.CustomDate1Name).HasColumnName("custom_date1_name").HasMaxLength(100);
+                entity.Property(e => e.CustomDate2State).HasColumnName("custom_date2_state").HasDefaultValue(false);
+                entity.Property(e => e.CustomDate2Name).HasColumnName("custom_date2_name").HasMaxLength(100);
+                entity.Property(e => e.CustomDate3State).HasColumnName("custom_date3_state").HasDefaultValue(false);
+                entity.Property(e => e.CustomDate3Name).HasColumnName("custom_date3_name").HasMaxLength(100);
+                
+                entity.Property(e => e.CustomDecimal1State).HasColumnName("custom_decimal1_state").HasDefaultValue(false);
+                entity.Property(e => e.CustomDecimal1Name).HasColumnName("custom_decimal1_name").HasMaxLength(100);
+                entity.Property(e => e.CustomDecimal2State).HasColumnName("custom_decimal2_state").HasDefaultValue(false);
+                entity.Property(e => e.CustomDecimal2Name).HasColumnName("custom_decimal2_name").HasMaxLength(100);
+                entity.Property(e => e.CustomDecimal3State).HasColumnName("custom_decimal3_state").HasDefaultValue(false);
+                entity.Property(e => e.CustomDecimal3Name).HasColumnName("custom_decimal3_name").HasMaxLength(100);
                 
                 // Foreign key relationships
                 entity.HasOne(e => e.Category)
@@ -145,44 +207,6 @@ namespace ToryBack.Data
                 entity.HasOne(e => e.Post)
                       .WithMany(p => p.Likes)
                       .HasForeignKey(e => e.PostId)
-                      .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // Configure CustomFields table
-            builder.Entity<CustomField>(entity =>
-            {
-                entity.ToTable("custom_fields");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
-                entity.Property(e => e.Type).HasConversion<string>();
-                entity.Property(e => e.ShowInTable).HasDefaultValue(false);
-                entity.Property(e => e.SortOrder).HasDefaultValue(0);
-                
-                entity.HasOne(e => e.Inventory)
-                      .WithMany(i => i.CustomFields)
-                      .HasForeignKey(e => e.InventoryId)
-                      .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // Configure CustomFieldValues table
-            builder.Entity<CustomFieldValue>(entity =>
-            {
-                entity.ToTable("custom_field_values");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.NumberValue).HasPrecision(18, 4);
-                
-                entity.HasIndex(e => new { e.ItemId, e.CustomFieldId })
-                      .HasDatabaseName("unique_item_field")
-                      .IsUnique();
-                      
-                entity.HasOne(e => e.Item)
-                      .WithMany(i => i.CustomFieldValues)
-                      .HasForeignKey(e => e.ItemId)
-                      .OnDelete(DeleteBehavior.Cascade);
-                      
-                entity.HasOne(e => e.CustomField)
-                      .WithMany(cf => cf.Values)
-                      .HasForeignKey(e => e.CustomFieldId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
         }

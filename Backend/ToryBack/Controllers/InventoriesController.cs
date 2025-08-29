@@ -30,35 +30,76 @@ namespace ToryBack.Controllers
                 .Include(i => i.InventoryTags)
                     .ThenInclude(it => it.Tag)
                 .Include(i => i.Items)
-                .Include(i => i.CustomFields)
                 .Where(i => !i.IsPublic || i.IsPublic)
                 .OrderByDescending(i => i.UpdatedAt)
-                .Select(i => new InventoryDetailDto
-                {
-                    Id = i.Id,
-                    Title = i.Title,
-                    Description = i.Description,
-                    Category = i.Category.Name,
-                    ItemCount = i.Items.Count,
-                    IsPublic = i.IsPublic,
-                    Owner = i.Owner.FullName,
-                    OwnerId = i.OwnerId,
-                    CreatedAt = i.CreatedAt,
-                    LastUpdated = i.UpdatedAt,
-                    Tags = i.InventoryTags.Select(it => it.Tag.Name).ToList(),
-                    ImageUrl = i.ImageUrl,
-                    CustomFields = i.CustomFields.Select(cf => new CustomFieldDto
-                    {
-                        Id = cf.Id,
-                        Name = cf.Name,
-                        Type = cf.Type.ToString(),
-                        ShowInTable = cf.ShowInTable
-                    }).ToList()
-                })
                 .ToListAsync();
 
-            return Ok(inventories);
+            var result = inventories.Select(i => new InventoryDetailDto
+            {
+                Id = i.Id,
+                Title = i.Title,
+                Description = i.Description,
+                Category = i.Category.Name,
+                ItemCount = i.Items.Count,
+                IsPublic = i.IsPublic,
+                Owner = i.Owner.FullName,
+                OwnerId = i.OwnerId,
+                CreatedAt = i.CreatedAt,
+                LastUpdated = i.UpdatedAt,
+                Tags = i.InventoryTags.Select(it => it.Tag.Name).ToList(),
+                ImageUrl = i.ImageUrl,
+                CustomFields = GetInventoryCustomFields(i)
+            }).ToList();
 
+            return Ok(result);
+        }
+
+        // Helper method to convert inventory fixed fields to CustomFieldDto list
+        private static List<CustomFieldDto> GetInventoryCustomFields(Inventory inventory)
+        {
+            var customFields = new List<CustomFieldDto>();
+            
+            // String fields
+            if (inventory.CustomString1State && !string.IsNullOrEmpty(inventory.CustomString1Name))
+                customFields.Add(new CustomFieldDto { Id = 1, Name = inventory.CustomString1Name, Type = "Text", ShowInTable = false });
+            if (inventory.CustomString2State && !string.IsNullOrEmpty(inventory.CustomString2Name))
+                customFields.Add(new CustomFieldDto { Id = 2, Name = inventory.CustomString2Name, Type = "Text", ShowInTable = false });
+            if (inventory.CustomString3State && !string.IsNullOrEmpty(inventory.CustomString3Name))
+                customFields.Add(new CustomFieldDto { Id = 3, Name = inventory.CustomString3Name, Type = "Text", ShowInTable = false });
+                
+            // Integer fields
+            if (inventory.CustomInt1State && !string.IsNullOrEmpty(inventory.CustomInt1Name))
+                customFields.Add(new CustomFieldDto { Id = 4, Name = inventory.CustomInt1Name, Type = "Number", ShowInTable = false });
+            if (inventory.CustomInt2State && !string.IsNullOrEmpty(inventory.CustomInt2Name))
+                customFields.Add(new CustomFieldDto { Id = 5, Name = inventory.CustomInt2Name, Type = "Number", ShowInTable = false });
+            if (inventory.CustomInt3State && !string.IsNullOrEmpty(inventory.CustomInt3Name))
+                customFields.Add(new CustomFieldDto { Id = 6, Name = inventory.CustomInt3Name, Type = "Number", ShowInTable = false });
+                
+            // Boolean fields
+            if (inventory.CustomBool1State && !string.IsNullOrEmpty(inventory.CustomBool1Name))
+                customFields.Add(new CustomFieldDto { Id = 7, Name = inventory.CustomBool1Name, Type = "Checkbox", ShowInTable = false });
+            if (inventory.CustomBool2State && !string.IsNullOrEmpty(inventory.CustomBool2Name))
+                customFields.Add(new CustomFieldDto { Id = 8, Name = inventory.CustomBool2Name, Type = "Checkbox", ShowInTable = false });
+            if (inventory.CustomBool3State && !string.IsNullOrEmpty(inventory.CustomBool3Name))
+                customFields.Add(new CustomFieldDto { Id = 9, Name = inventory.CustomBool3Name, Type = "Checkbox", ShowInTable = false });
+                
+            // Date fields
+            if (inventory.CustomDate1State && !string.IsNullOrEmpty(inventory.CustomDate1Name))
+                customFields.Add(new CustomFieldDto { Id = 10, Name = inventory.CustomDate1Name, Type = "Date", ShowInTable = false });
+            if (inventory.CustomDate2State && !string.IsNullOrEmpty(inventory.CustomDate2Name))
+                customFields.Add(new CustomFieldDto { Id = 11, Name = inventory.CustomDate2Name, Type = "Date", ShowInTable = false });
+            if (inventory.CustomDate3State && !string.IsNullOrEmpty(inventory.CustomDate3Name))
+                customFields.Add(new CustomFieldDto { Id = 12, Name = inventory.CustomDate3Name, Type = "Date", ShowInTable = false });
+                
+            // Decimal fields
+            if (inventory.CustomDecimal1State && !string.IsNullOrEmpty(inventory.CustomDecimal1Name))
+                customFields.Add(new CustomFieldDto { Id = 13, Name = inventory.CustomDecimal1Name, Type = "Decimal", ShowInTable = false });
+            if (inventory.CustomDecimal2State && !string.IsNullOrEmpty(inventory.CustomDecimal2Name))
+                customFields.Add(new CustomFieldDto { Id = 14, Name = inventory.CustomDecimal2Name, Type = "Decimal", ShowInTable = false });
+            if (inventory.CustomDecimal3State && !string.IsNullOrEmpty(inventory.CustomDecimal3Name))
+                customFields.Add(new CustomFieldDto { Id = 15, Name = inventory.CustomDecimal3Name, Type = "Decimal", ShowInTable = false });
+                
+            return customFields;
         }
 
         [HttpGet("{id}")]
@@ -70,7 +111,6 @@ namespace ToryBack.Controllers
                 .Include(i => i.InventoryTags)
                     .ThenInclude(it => it.Tag)
                 .Include(i => i.Items)
-                .Include(i => i.CustomFields)
                 .FirstOrDefaultAsync(i => i.Id == id);
 
             if (inventory == null)
@@ -95,13 +135,7 @@ namespace ToryBack.Controllers
                 LastUpdated = inventory.UpdatedAt,
                 Tags = inventory.InventoryTags.Select(it => it.Tag.Name).ToList(),
                 ImageUrl = inventory.ImageUrl,
-                CustomFields = inventory.CustomFields.Select(cf => new CustomFieldDto
-                {
-                    Id = cf.Id,
-                    Name = cf.Name,
-                    Type = cf.Type.ToString(),
-                    ShowInTable = cf.ShowInTable
-                }).ToList()
+                CustomFields = GetInventoryCustomFields(inventory)
             };
 
             return Ok(result);
@@ -115,34 +149,28 @@ namespace ToryBack.Controllers
                 .Include(i => i.InventoryTags)
                     .ThenInclude(it => it.Tag)
                 .Include(i => i.Items)
-                .Include(i => i.CustomFields)
                 .Where(i => i.OwnerId == userId && (i.IsPublic || !i.IsPublic))
                 .OrderByDescending(i => i.UpdatedAt)
-                .Select(i => new InventoryDetailDto
-                {
-                    Id = i.Id,
-                    Title = i.Title,
-                    Description = i.Description,
-                    Category = i.Category.Name,
-                    ItemCount = i.Items.Count,
-                    IsPublic = i.IsPublic,
-                    Owner = i.Owner.FullName,
-                    OwnerId = i.OwnerId,
-                    CreatedAt = i.CreatedAt,
-                    LastUpdated = i.UpdatedAt,
-                    Tags = i.InventoryTags.Select(it => it.Tag.Name).ToList(),
-                    ImageUrl = i.ImageUrl,
-                    CustomFields = i.CustomFields.Select(cf => new CustomFieldDto
-                    {
-                        Id = cf.Id,
-                        Name = cf.Name,
-                        Type = cf.Type.ToString(),
-                        ShowInTable = cf.ShowInTable
-                    }).ToList()
-                })
                 .ToListAsync();
 
-            return Ok(inventories);
+            var result = inventories.Select(i => new InventoryDetailDto
+            {
+                Id = i.Id,
+                Title = i.Title,
+                Description = i.Description,
+                Category = i.Category.Name,
+                ItemCount = i.Items.Count,
+                IsPublic = i.IsPublic,
+                Owner = i.Owner.FullName,
+                OwnerId = i.OwnerId,
+                CreatedAt = i.CreatedAt,
+                LastUpdated = i.UpdatedAt,
+                Tags = i.InventoryTags.Select(it => it.Tag.Name).ToList(),
+                ImageUrl = i.ImageUrl,
+                CustomFields = GetInventoryCustomFields(i)
+            }).ToList();
+
+            return Ok(result);
         }   
 
 
@@ -310,23 +338,122 @@ namespace ToryBack.Controllers
                         _context.InventoryTags.Add(inventoryTag);
                     }
                 }
-                // Handle custom fields
+                // Handle custom fields (new fixed field approach)
                 if (createDto.CustomFields != null && createDto.CustomFields.Any())
                 {
+                    int stringFieldIndex = 1;
+                    int intFieldIndex = 1;
+                    int boolFieldIndex = 1;
+                    int dateFieldIndex = 1;
+                    int decimalFieldIndex = 1;
+
                     foreach (var customFieldDto in createDto.CustomFields)
                     {
-                        var customField = new CustomField
+                        switch (customFieldDto.Type.ToLower())
                         {
-                            InventoryId = inventory.Id,
-                            Name = customFieldDto.Name,
-                            Type = Enum.Parse<FieldType>(customFieldDto.Type, true),
-                            ShowInTable = customFieldDto.ShowInTable,
-                            SortOrder = customFieldDto.SortOrder,
-                            ValidationRules = customFieldDto.ValidationRules,
-                            Options = customFieldDto.Options,
-                            CreatedAt = DateTime.UtcNow
-                        };
-                        _context.CustomFields.Add(customField);
+                            case "text":
+                            case "string":
+                                if (stringFieldIndex == 1)
+                                {
+                                    inventory.CustomString1State = true;
+                                    inventory.CustomString1Name = customFieldDto.Name;
+                                }
+                                else if (stringFieldIndex == 2)
+                                {
+                                    inventory.CustomString2State = true;
+                                    inventory.CustomString2Name = customFieldDto.Name;
+                                }
+                                else if (stringFieldIndex == 3)
+                                {
+                                    inventory.CustomString3State = true;
+                                    inventory.CustomString3Name = customFieldDto.Name;
+                                }
+                                stringFieldIndex++;
+                                break;
+                                
+                            case "number":
+                            case "int":
+                            case "integer":
+                                if (intFieldIndex == 1)
+                                {
+                                    inventory.CustomInt1State = true;
+                                    inventory.CustomInt1Name = customFieldDto.Name;
+                                }
+                                else if (intFieldIndex == 2)
+                                {
+                                    inventory.CustomInt2State = true;
+                                    inventory.CustomInt2Name = customFieldDto.Name;
+                                }
+                                else if (intFieldIndex == 3)
+                                {
+                                    inventory.CustomInt3State = true;
+                                    inventory.CustomInt3Name = customFieldDto.Name;
+                                }
+                                intFieldIndex++;
+                                break;
+                                
+                            case "checkbox":
+                            case "bool":
+                            case "boolean":
+                                if (boolFieldIndex == 1)
+                                {
+                                    inventory.CustomBool1State = true;
+                                    inventory.CustomBool1Name = customFieldDto.Name;
+                                }
+                                else if (boolFieldIndex == 2)
+                                {
+                                    inventory.CustomBool2State = true;
+                                    inventory.CustomBool2Name = customFieldDto.Name;
+                                }
+                                else if (boolFieldIndex == 3)
+                                {
+                                    inventory.CustomBool3State = true;
+                                    inventory.CustomBool3Name = customFieldDto.Name;
+                                }
+                                boolFieldIndex++;
+                                break;
+                                
+                            case "date":
+                            case "datetime":
+                                if (dateFieldIndex == 1)
+                                {
+                                    inventory.CustomDate1State = true;
+                                    inventory.CustomDate1Name = customFieldDto.Name;
+                                }
+                                else if (dateFieldIndex == 2)
+                                {
+                                    inventory.CustomDate2State = true;
+                                    inventory.CustomDate2Name = customFieldDto.Name;
+                                }
+                                else if (dateFieldIndex == 3)
+                                {
+                                    inventory.CustomDate3State = true;
+                                    inventory.CustomDate3Name = customFieldDto.Name;
+                                }
+                                dateFieldIndex++;
+                                break;
+                                
+                            case "decimal":
+                            case "money":
+                            case "currency":
+                                if (decimalFieldIndex == 1)
+                                {
+                                    inventory.CustomDecimal1State = true;
+                                    inventory.CustomDecimal1Name = customFieldDto.Name;
+                                }
+                                else if (decimalFieldIndex == 2)
+                                {
+                                    inventory.CustomDecimal2State = true;
+                                    inventory.CustomDecimal2Name = customFieldDto.Name;
+                                }
+                                else if (decimalFieldIndex == 3)
+                                {
+                                    inventory.CustomDecimal3State = true;
+                                    inventory.CustomDecimal3Name = customFieldDto.Name;
+                                }
+                                decimalFieldIndex++;
+                                break;
+                        }
                     }
                 }
                 await _context.SaveChangesAsync();

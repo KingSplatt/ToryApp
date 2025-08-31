@@ -1,4 +1,8 @@
 // Search page component
+import { loadTagCloud } from "../home/home";
+import { getTags } from "../inventories/services/inventoryServices";
+import { getPopularTags } from "../inventories/services/inventoryServices";
+
 export function searchPage() {
   const urlParams = new URLSearchParams(window.location.search);
   const initialTag = urlParams.get('tag') || '';
@@ -65,7 +69,8 @@ export function searchPage() {
 export function initializeSearch() {
   setupSearchForm();
   loadPopularTags();
-  
+  loadTagCloud();
+
   // If there's an initial search query, perform the search
   const urlParams = new URLSearchParams(window.location.search);
   const initialTag = urlParams.get('tag');
@@ -212,17 +217,18 @@ async function performSearch(query: string) {
     ` : ''}
   `;
 }
+function loadPopularTags() {
+  const tagsContainer = document.getElementById('popular-search-tags');
+  if (!tagsContainer) return;
 
-async function loadPopularTags() {
-  const container = document.getElementById('popular-search-tags');
-  if (!container) return;
-  
-  const popularTags = [
-    'programación', 'herramientas', 'electrónicos', 'libros', 
-    'vintage', 'colección', 'hogar', 'oficina'
-  ];
-  
-  container.innerHTML = popularTags.map(tag => `
-    <a href="/search?tag=${tag}" data-navigate="/search?tag=${tag}" class="tag-item">${tag}</a>
-  `).join('');
+  getPopularTags().then(tags => {
+    tagsContainer.innerHTML = tags.map(tag => `
+      <a href="/search?tag=${tag.id}" data-navigate="/search?tag=${tag.name}" class="tag-item">
+        ${tag.name} (${tag.usageCount})
+      </a>
+    `).join('');
+  }).catch(error => {
+    console.error("Error loading popular tags:", error);
+  });
 }
+

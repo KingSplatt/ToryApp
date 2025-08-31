@@ -216,19 +216,37 @@ namespace ToryBack.Controllers
         }
 
         [HttpGet("user/writeAccess/{userId}")]
-        public async Task<ActionResult<IEnumerable<InventoryDetailDto>>> GetUserInventoriesWriteA(string userId)
+        public async Task<ActionResult<IEnumerable<InventoryDetailDto>>> GetUserInventoriesWithWriteAccess(string userId)
         {
-            var inventories = await _context.Inventories
-            .Include(i => i.Category)
-            .Include(i => i.Owner)
-            .Include(i => i.InventoryTags)
-                .ThenInclude(it => it.Tag)
-            .Include(i => i.Items)
-            .Where(i => i.OwnerId == userId && (i.IsPublic || !i.IsPublic))
-            .OrderByDescending(i => i.UpdatedAt)
-            .ToListAsync();
+            // Obtener todos los inventarios donde el usuario es owner O tiene acceso de escritura
+            var ownedInventories = await _context.Inventories
+                .Include(i => i.Category)
+                .Include(i => i.Owner)
+                .Include(i => i.InventoryTags)
+                    .ThenInclude(it => it.Tag)
+                .Include(i => i.Items)
+                .Where(i => i.OwnerId == userId)
+                .ToListAsync();
 
-            var result = inventories.Select(i => new InventoryDetailDto
+            // Obtener inventarios donde tiene acceso de escritura (no es owner)
+            var sharedInventories = await _context.Inventories
+                .Include(i => i.Category)
+                .Include(i => i.Owner)
+                .Include(i => i.InventoryTags)
+                    .ThenInclude(it => it.Tag)
+                .Include(i => i.Items)
+                .Where(i => i.OwnerId != userId && 
+                           _context.InventoryAccess.Any(ia => ia.InventoryId == i.Id && 
+                                                             ia.UserId == userId && 
+                                                             (ia.AccessLevel == AccessLevel.Write)))
+                .ToListAsync();
+
+            // Combinar ambas listas
+            var allInventories = ownedInventories.Concat(sharedInventories)
+                .OrderByDescending(i => i.UpdatedAt)
+                .ToList();
+
+            var result = allInventories.Select(i => new InventoryDetailDto
             {
                 Id = i.Id,
                 Title = i.Title,
@@ -340,8 +358,6 @@ namespace ToryBack.Controllers
                 // Check if access already exists
                 var existingAccess = await _context.InventoryAccess
                     .FirstOrDefaultAsync(ia => ia.InventoryId == id && ia.UserId == grantDto.UserId);
-                Console.WriteLine("Existing access: ", existingAccess);
-                Console.WriteLine("Datos", grantDto.AccessLevel);
                 if (existingAccess != null)
                 {
                     // Update existing access level

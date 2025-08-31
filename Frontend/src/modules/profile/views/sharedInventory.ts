@@ -1,3 +1,7 @@
+import { getUserInventoriesWithWriteAccess } from "../../inventories/services/inventoryServices";
+import { AuthService } from "../../login/services/auth";
+import { InventoryDto } from "../../inventories/interfaces/InventoryDtoInterface";
+
 export function sharedInventory() {
   return `
     <div class="inventory-container">
@@ -11,4 +15,70 @@ export function sharedInventory() {
 
 export function initSharedInventory() {
     sharedInventory();
+    const user = loadUser();
+    if (user?.id) {
+        loadSharedInventories(user.id);
+    }
+    loadTableSharedInventories();
+}
+
+function loadUser(){
+  const authService = AuthService.getInstance();
+  const user = authService.getUser();
+  return user;
+}
+
+async function loadSharedInventories(userId: string) {
+  try {
+    const inventories = await getUserInventoriesWithWriteAccess(userId);
+    console.log("Shared inventories loaded:", inventories);
+    return inventories;
+    // Render the inventories in the shared inventory section
+  } catch (error) {
+    console.error("Error loading shared inventories:", error);
+  }
+}
+
+function loadTableSharedInventories(){
+  const inventoryItemsShared = document.querySelector('.inventory-items');
+  if(!inventoryItemsShared){
+    return;
+  }
+  inventoryItemsShared.innerHTML = ``;
+  const user = loadUser();
+  if (!user?.id) {
+    return;
+  }
+  loadSharedInventories(user.id).then(InventoryDto => {
+    const tableElement = document.createElement('table');
+    tableElement.classList.add('table-inventories');
+    tableElement.innerHTML = `
+    <thead>
+      <tr>
+        <th>Inventory Name</th>
+        <th>Description</th>
+        <th>Category</th>
+        <th>Total Custom Fields</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+    `;
+
+    const tbody = tableElement.querySelector('tbody');
+    if(tbody && InventoryDto){
+      InventoryDto.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item.title}</td>
+          <td>${item.description}</td>
+          <td>${item.category}</td>
+          <td>${item.customFields.length}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+    inventoryItemsShared.appendChild(tableElement);
+    inventoryItemsShared.classList.add('table-inventories');
+  });
+
 }

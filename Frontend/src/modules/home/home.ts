@@ -1,4 +1,6 @@
 import { UIUtils } from '../utils/ui';
+import { getPopularTags } from '../inventories/services/inventoryServices';
+import { Tag } from '../inventories/interfaces/TagInterface';
 
 export function homePage() {
   const isAuthenticated = UIUtils.isUserAuthenticated();
@@ -142,25 +144,18 @@ async function loadPopularInventories() {
   `).join('');
 }
 
-async function loadTagCloud() {
+export async function loadTagCloud() {
   const container = document.getElementById('tag-cloud');
   if (!container) return;
-  
-  // Mock tags
-  const mockTags = [
-    { name: 'electrónicos', count: 45 },
-    { name: 'libros', count: 32 },
-    { name: 'herramientas', count: 28 },
-    { name: 'vintage', count: 24 },
-    { name: 'colección', count: 18 },
-    { name: 'hogar', count: 15 },
-    { name: 'oficina', count: 12 }
-  ];
-  
-  container.innerHTML = mockTags.map(tag => `
-    <a href="/search?tag=${tag.name}" data-navigate="/search?tag=${tag.name}" 
-       class="tag-item" style="font-size: ${Math.min(2, 1 + tag.count / 20)}em">
-      ${tag.name} (${tag.count})
-    </a>
-  `).join('');
+
+  try {
+    const tags = await getPopularTags();
+    container.innerHTML = tags.map(tag => `
+      <a href="/search?tag=${tag.id}" data-navigate="/search?tag=${tag.name}" class="tag-item">
+        ${tag.name} (${tag.usageCount})
+      </a>
+    `).join('');
+  } catch (error) {
+    console.error("Error loading tag cloud:", error);
+  }
 }

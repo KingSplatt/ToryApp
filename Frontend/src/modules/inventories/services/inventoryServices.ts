@@ -1,6 +1,7 @@
 import { CreateInventoryDto } from "../interfaces/CreateInventoryDto";
 import { InventoryDto } from "../interfaces/InventoryDtoInterface";
 import { GrantAccess } from "../interfaces/GrantAccessInterface";
+import { Tag } from "../interfaces/TagInterface";
 
 export const INVENTORY_API_URL = "http://localhost:5217/api/Inventories";
 export const API_CONFIG_INVENTORIES = {
@@ -8,6 +9,7 @@ export const API_CONFIG_INVENTORIES = {
   ENDPOINTS:{
     GET_INVENTORIES: "/",
     GET_INVENTORY: (id: number) => `/${id}`,
+    GET_INVENTORIES_WITH_WRITE_ACCESS: (userId: string) => `/user/writeAccess/${userId}`,
     CREATE_INVENTORY: "/",
     UPDATE_INVENTORY: (id: number) => `/${id}`,
     DELETE_INVENTORY: (id: number) => `/${id}`,
@@ -18,6 +20,14 @@ export const API_CONFIG_INVENTORIES = {
   headers: {
     "Content-Type": "application/json"
   }
+};
+
+export const getPopularTags = async (): Promise<Tag[]> => {
+  const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.GET_TAGS}`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch tags");
+  }
+  return await response.json();
 };
 
 export const getInventories = async (): Promise<InventoryDto[]> => {
@@ -50,6 +60,16 @@ export const getTags = async (): Promise<string[]> => {
   const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.GET_TAGS}`);
   if (!response.ok) {
     throw new Error("Failed to fetch tags");
+  }
+  return await response.json();
+};
+
+export const getUserInventoriesWithWriteAccess = async (userId: string): Promise<InventoryDto[]> => {
+  const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.GET_INVENTORIES_WITH_WRITE_ACCESS(userId)}`, {
+    credentials: 'include'
+  });
+  if (!response.ok) {
+    throw new Error("Failed to fetch user inventories");
   }
   return await response.json();
 };

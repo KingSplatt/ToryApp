@@ -1,5 +1,6 @@
 import { CreateInventoryDto } from "../interfaces/CreateInventoryDto";
 import { InventoryDto } from "../interfaces/InventoryDtoInterface";
+import { GrantAccess } from "../interfaces/GrantAccessInterface";
 
 export const INVENTORY_API_URL = "http://localhost:5217/api/Inventories";
 export const API_CONFIG_INVENTORIES = {
@@ -11,6 +12,8 @@ export const API_CONFIG_INVENTORIES = {
     UPDATE_INVENTORY: (id: number) => `/${id}`,
     DELETE_INVENTORY: (id: number) => `/${id}`,
     GET_TAGS: "/tags",
+    GRANT_WRITER_ACCESS: (id: number) => `/${id}/grant-access`,
+    REVOKE_WRITER_ACCESS: (id: number, userId: string) => `/${id}/revoke-access/${userId}`
   },
   headers: {
     "Content-Type": "application/json"
@@ -34,7 +37,9 @@ export const getInventory = async (id: number): Promise<InventoryDto> => {
 };
 
 export const getUserInventories = async (userId: string): Promise<InventoryDto[]> => {
-  const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}/user/${userId}`);
+  const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}/user/${userId}`, {
+    credentials: 'include'
+  });
   if (!response.ok) {
     throw new Error("Failed to fetch user inventories");
   }
@@ -55,6 +60,7 @@ export const createInventory = async(createDto: CreateInventoryDto): Promise<Inv
   
   const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.CREATE_INVENTORY}`, {
     method: "POST",
+    credentials: 'include',
     headers: API_CONFIG_INVENTORIES.headers,
     body: JSON.stringify(createDto),
   });
@@ -71,4 +77,36 @@ export const createInventory = async(createDto: CreateInventoryDto): Promise<Inv
   const result = await response.json();
   console.log('Success response:', result);
   return result;
+};
+
+export const grantWriterAccess = async (inventoryId: number, grantAccess: GrantAccess) => {
+  console.log('Granting access with data:', grantAccess);
+  const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.GRANT_WRITER_ACCESS(inventoryId)}`, {
+    method: "POST",
+    credentials: 'include',
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(grantAccess)
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Error response body:', errorText);
+    throw new Error('Failed to grant access' + errorText);
+  }
+};
+
+export const revokeWriterAccess = async (inventoryId: number, userId: string) => {
+  const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.REVOKE_WRITER_ACCESS(inventoryId, userId)}`, {
+    method: "DELETE",
+    credentials: 'include',
+    headers: {
+      "Content-Type": "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to revoke access');
+  }
 };

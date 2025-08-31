@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using ToryBack.Data;
 using ToryBack.Models;
 using Microsoft.AspNetCore.Identity;
+using ToryBack.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ToryBack.Controllers
 {
@@ -13,12 +15,18 @@ namespace ToryBack.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<InventoriesController> _logger;
         private readonly UserManager<User> _userManager;
+        private readonly IInventoryAuthorizationService _authorizationService;
 
-        public InventoriesController(ApplicationDbContext context, ILogger<InventoriesController> logger, UserManager<User> userManager)
+        public InventoriesController(
+            ApplicationDbContext context, 
+            ILogger<InventoriesController> logger, 
+            UserManager<User> userManager,
+            IInventoryAuthorizationService authorizationService)
         {
             _context = context;
             _logger = logger;
             _userManager = userManager;
+            _authorizationService = authorizationService;
         }
 
         [HttpGet]
@@ -116,10 +124,24 @@ namespace ToryBack.Controllers
             if (inventory == null)
                 return NotFound();
 
-            if (!inventory.IsPublic)
+            // Get current user ID
+            string? currentUserId = null;
+            if (User.Identity?.IsAuthenticated == true)
             {
-                // TODO: Check if user has access
-                return Forbid();
+                var currentUser = await _userManager.FindByNameAsync(User.Identity.Name!);
+                currentUserId = currentUser?.Id;
+            }
+
+            // Check if user can access this inventory
+            if (currentUserId != null)
+            {
+                var canAccess = await _authorizationService.CanUserAccessInventoryAsync(currentUserId, id, AccessLevel.Read);
+                if (!canAccess)
+                    return Forbid("You don't have permission to access this inventory");
+            }
+            else if (!inventory.IsPublic)
+            {
+                return Forbid("This inventory is private");
             }
 
             var result = new InventoryDetailDto
@@ -131,6 +153,7 @@ namespace ToryBack.Controllers
                 ItemCount = inventory.Items.Count,
                 IsPublic = inventory.IsPublic,
                 Owner = inventory.Owner.FullName,
+                OwnerId = inventory.OwnerId,
                 CreatedAt = inventory.CreatedAt,
                 LastUpdated = inventory.UpdatedAt,
                 Tags = inventory.InventoryTags.Select(it => it.Tag.Name).ToList(),
@@ -192,6 +215,39 @@ namespace ToryBack.Controllers
             return Ok(categories);
         }
 
+        [HttpGet("user/writeAccess/{userId}")]
+        public async Task<ActionResult<IEnumerable<InventoryDetailDto>>> GetUserInventoriesWriteA(string userId)
+        {
+            var inventories = await _context.Inventories
+            .Include(i => i.Category)
+            .Include(i => i.Owner)
+            .Include(i => i.InventoryTags)
+                .ThenInclude(it => it.Tag)
+            .Include(i => i.Items)
+            .Where(i => i.OwnerId == userId && (i.IsPublic || !i.IsPublic))
+            .OrderByDescending(i => i.UpdatedAt)
+            .ToListAsync();
+
+            var result = inventories.Select(i => new InventoryDetailDto
+            {
+                Id = i.Id,
+                Title = i.Title,
+                Description = i.Description,
+                Category = i.Category.Name,
+                ItemCount = i.Items.Count,
+                IsPublic = i.IsPublic,
+                Owner = i.Owner.FullName,
+                OwnerId = i.OwnerId,
+                CreatedAt = i.CreatedAt,
+                LastUpdated = i.UpdatedAt,
+                Tags = i.InventoryTags.Select(it => it.Tag.Name).ToList(),
+                ImageUrl = i.ImageUrl,
+                CustomFields = GetInventoryCustomFields(i)
+            }).ToList();
+
+            return Ok(result);
+        }
+
         [HttpGet("tags")]
         public async Task<ActionResult<IEnumerable<TagDto>>> GetPopularTags([FromQuery] int limit = 20)
         {
@@ -208,6 +264,162 @@ namespace ToryBack.Controllers
 
             return Ok(tags);
         }
+
+        [HttpGet("{id}/permissions")]
+        public async Task<ActionResult<UserInventoryPermissionsDto>> GetUserInventoryPermissions(int id)
+        {
+            // Get current user ID
+            string? currentUserId = null;
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var currentUser = await _userManager.FindByNameAsync(User.Identity.Name!);
+                currentUserId = currentUser?.Id;
+            }
+
+            if (currentUserId == null)
+                return Unauthorized();
+
+            var inventory = await _context.Inventories.FirstOrDefaultAsync(i => i.Id == id);
+            if (inventory == null)
+                return NotFound();
+
+            var accessLevel = await _authorizationService.GetUserAccessLevelAsync(currentUserId, id);
+            var isOwner = await _authorizationService.IsInventoryOwnerAsync(currentUserId, id);
+
+            var permissions = new UserInventoryPermissionsDto
+            {
+                InventoryId = id,
+                UserId = currentUserId,
+                IsOwner = isOwner,
+                AccessLevel = accessLevel?.ToString(),
+                CanRead = accessLevel.HasValue,
+                CanWrite = accessLevel >= AccessLevel.Write,
+                CanCreateItems = await _authorizationService.CanUserCreateItemsAsync(currentUserId, id),
+                CanEditItems = await _authorizationService.CanUserEditItemsAsync(currentUserId, id),
+                CanDeleteItems = await _authorizationService.CanUserDeleteItemsAsync(currentUserId, id),
+                CanManageInventory = accessLevel >= AccessLevel.Admin || isOwner
+            };
+
+            return Ok(permissions);
+        }
+
+        [HttpPost("{id}/grant-access")]
+        [Authorize]
+        public async Task<ActionResult> GrantInventoryAccess(int id, GrantAccessDto grantDto)
+        {
+            try
+            {
+                // Get current user ID
+                string? currentUserId = null;
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    var currentUser = await _userManager.FindByNameAsync(User.Identity.Name!);
+                    currentUserId = currentUser?.Id;
+                }
+
+                if (currentUserId == null)
+                    return Unauthorized("You must be logged in to grant access");
+
+                // Check if user is owner or has admin access
+                var isOwner = await _authorizationService.IsInventoryOwnerAsync(currentUserId, id);
+                var userAccessLevel = await _authorizationService.GetUserAccessLevelAsync(currentUserId, id);
+
+                if (!isOwner && userAccessLevel != AccessLevel.Admin)
+                    return Forbid("You don't have permission to grant access to this inventory");
+
+                // Verify target user exists
+                var targetUser = await _userManager.FindByIdAsync(grantDto.UserId);
+                if (targetUser == null)
+                    return NotFound("Target user not found");
+
+                // Verify inventory exists
+                var inventory = await _context.Inventories.FirstOrDefaultAsync(i => i.Id == id);
+                if (inventory == null)
+                    return NotFound("Inventory not found");
+
+                // Check if access already exists
+                var existingAccess = await _context.InventoryAccess
+                    .FirstOrDefaultAsync(ia => ia.InventoryId == id && ia.UserId == grantDto.UserId);
+                Console.WriteLine("Existing access: ", existingAccess);
+                Console.WriteLine("Datos", grantDto.AccessLevel);
+                if (existingAccess != null)
+                {
+                    // Update existing access level
+                    existingAccess.AccessLevel = grantDto.AccessLevel;
+                    existingAccess.GrantedAt = DateTime.UtcNow;
+                }
+                else
+                {
+                    // Create new access record
+                    var newAccess = new InventoryAccess
+                    {
+                        InventoryId = id,
+                        UserId = grantDto.UserId,
+                        AccessLevel = grantDto.AccessLevel,
+                        GrantedAt = DateTime.UtcNow
+                    };
+                    _context.InventoryAccess.Add(newAccess);
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Access granted successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error granting inventory access");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpDelete("{id}/revoke-access/{userId}")]
+        [Authorize]
+        public async Task<ActionResult> RevokeInventoryAccess(int id, string userId)
+        {
+            try
+            {
+                // Get current user ID
+                string? currentUserId = null;
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    var currentUser = await _userManager.FindByNameAsync(User.Identity.Name!);
+                    currentUserId = currentUser?.Id;
+                }
+
+                if (currentUserId == null)
+                    return Unauthorized("You must be logged in to revoke access");
+
+                // Check if user is owner or has admin access
+                var isOwner = await _authorizationService.IsInventoryOwnerAsync(currentUserId, id);
+                var userAccessLevel = await _authorizationService.GetUserAccessLevelAsync(currentUserId, id);
+                
+                if (!isOwner && userAccessLevel != AccessLevel.Admin)
+                    return Forbid("You don't have permission to revoke access to this inventory");
+
+                // Cannot revoke access from owner
+                var inventory = await _context.Inventories.FirstOrDefaultAsync(i => i.Id == id);
+                if (inventory?.OwnerId == userId)
+                    return BadRequest("Cannot revoke access from inventory owner");
+
+                // Find and remove access record
+                var accessRecord = await _context.InventoryAccess
+                    .FirstOrDefaultAsync(ia => ia.InventoryId == id && ia.UserId == userId);
+
+                if (accessRecord == null)
+                    return NotFound("Access record not found");
+
+                _context.InventoryAccess.Remove(accessRecord);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Access revoked successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error revoking inventory access");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         //pendiente
         [HttpPost]
         public async Task<ActionResult<InventoryDto>> CreateInventory(CreateInventoryDto createDto)
@@ -457,6 +669,10 @@ namespace ToryBack.Controllers
                     }
                 }
                 await _context.SaveChangesAsync();
+                
+                // Grant creator access to the inventory
+                await _authorizationService.GrantCreatorAccessAsync(currentUserId, inventory.Id);
+                
                 // Return created inventory
                 var result = new InventoryDto
                 {
@@ -548,5 +764,25 @@ namespace ToryBack.Controllers
         public int SortOrder { get; set; }
         public string? ValidationRules { get; set; }
         public string? Options { get; set; }
+    }
+
+    public class UserInventoryPermissionsDto
+    {
+        public int InventoryId { get; set; }
+        public string UserId { get; set; } = string.Empty;
+        public bool IsOwner { get; set; }
+        public string? AccessLevel { get; set; }
+        public bool CanRead { get; set; }
+        public bool CanWrite { get; set; }
+        public bool CanCreateItems { get; set; }
+        public bool CanEditItems { get; set; }
+        public bool CanDeleteItems { get; set; }
+        public bool CanManageInventory { get; set; }
+    }
+
+    public class GrantAccessDto
+    {
+        public string UserId { get; set; } = string.Empty;
+        public AccessLevel AccessLevel { get; set; } = AccessLevel.Read;
     }
 }

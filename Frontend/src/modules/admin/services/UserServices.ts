@@ -14,7 +14,9 @@ export const API_CONFIG = {
 };
 
 export const getUsers = async (): Promise<User[]> => {
-    const response = await fetch(USERS_API_URL);
+    const response = await fetch(USERS_API_URL, {
+        credentials: 'include'
+    });
     if (!response.ok) {
         throw new Error("Failed to fetch users");
     }

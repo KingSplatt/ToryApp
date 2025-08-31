@@ -121,6 +121,8 @@ namespace ToryBack.Models
     {
         Read = 1,
         Write = 2,
-        Admin = 3
+
+        Creator = 3,
+        Admin = 4
     }
 }

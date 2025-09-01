@@ -231,6 +231,27 @@ body {
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
+input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  appearance: none;
+  &::checked {
+    background-color: var(--primary-color);
+  }
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--primary-color);
+    border-radius: 0.25rem;
+  }
+}
+
 /* Home page */
 .hero {
   text-align: center;

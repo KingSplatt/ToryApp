@@ -1,6 +1,8 @@
 import { UIUtils } from '../utils/ui';
 import { getPopularTags } from '../inventories/services/inventoryServices';
 import { Tag } from '../inventories/interfaces/TagInterface';
+import { getInventories } from '../inventories/services/inventoryServices';
+import { InventoryDto } from '../inventories/interfaces/InventoryDtoInterface';
 
 export function homePage() {
   const isAuthenticated = UIUtils.isUserAuthenticated();
@@ -34,7 +36,7 @@ export function homePage() {
       
       <section class="featured-section">
         <div class="section-header">
-          <h2>${isAuthenticated ? 'Your Recent Inventories' : 'Recent Inventories'}</h2>
+          <h2>${isAuthenticated ? 'Recent Inventories' : 'Recent Inventories'}</h2>
           <a href="/inventories" data-navigate="/inventories">View All</a>
         </div>
         <div class="inventory-grid" id="recent-inventories">
@@ -44,10 +46,10 @@ export function homePage() {
       
       <section class="featured-section">
         <div class="section-header">
-          <h2>Popular Inventories</h2>
+          <h2>Inventories with more tags</h2>
           <a href="/inventories?sort=popular" data-navigate="/inventories">View All</a>
         </div>
-        <div class="inventory-grid" id="popular-inventories">
+        <div class="inventory-grid" id="tags-inventories">
           <!-- Dynamic content will be loaded here -->
         </div>
       </section>
@@ -65,7 +67,7 @@ export function homePage() {
 // Initialize home page functionality
 export function initializeHome() {
   loadRecentInventories();
-  loadPopularInventories();
+  loadTagsInventories();
   loadTagCloud();
   
   // Listen for authentication state changes
@@ -99,17 +101,13 @@ async function loadRecentInventories() {
   const container = document.getElementById('recent-inventories');
   if (!container) return;
   
-  // Mock data - will be replaced with actual API calls
-  const mockInventories = [
-    { id: 1, title: 'Libros de Programación', category: 'Educación', itemCount: 25, image: null },
-    { id: 2, title: 'Herramientas de Taller', category: 'Herramientas', itemCount: 18, image: null },
-    { id: 3, title: 'Equipo de Fotografía', category: 'Electrónicos', itemCount: 12, image: null }
-  ];
-  
-  container.innerHTML = mockInventories.map(inv => `
+  const inventories = await getInventories();
+  inventories.length = 3;
+
+  container.innerHTML = inventories.map((inv: InventoryDto) => `
     <div class="inventory-card">
       <div class="inventory-image">
-        ${inv.image ? `<img src="${inv.image}" alt="${inv.title}">` : '<div class="image-placeholder">📦 </div>'}
+        ${inv.imageUrl ? `<img src="${inv.imageUrl}" alt="${inv.title}">` : '<div class="image-placeholder">📦 </div>'}
       </div>
       <div class="inventory-info">
         <h3><a href="/inventory/${inv.id}" data-navigate="/inventory/${inv.id}">${inv.title}</a></h3>
@@ -120,28 +118,34 @@ async function loadRecentInventories() {
   `).join('');
 }
 
-async function loadPopularInventories() {
-  const container = document.getElementById('popular-inventories');
+async function loadTagsInventories() {
+  const container = document.getElementById('tags-inventories');
   if (!container) return;
-  
-  // Mock data
-  const mockInventories = [
-    { id: 4, title: 'Colección de Vinilos', category: 'Música', itemCount: 150, image: null },
-    { id: 5, title: 'Plantas del Jardín', category: 'Jardinería', itemCount: 35, image: null }
-  ];
-  
-  container.innerHTML = mockInventories.map(inv => `
-    <div class="inventory-card">
-      <div class="inventory-image">
-        ${inv.image ? `<img src="${inv.image}" alt="${inv.title}">` : '<div class="image-placeholder">📦</div>'}
+
+  const inventories = await getInventories();
+  inventories.length = 3;
+  inventories.sort((a, b) => b.tags.length - a.tags.length);
+
+  container.innerHTML = inventories.map(inv => {
+    const tagsToShow = inv.tags.slice(0, 3);
+    const extraTags = inv.tags.length > 3 ? `<span class="tag">+${inv.tags.length - 3}</span>` : '';
+    return `
+      <div class="inventory-card">
+        <div class="inventory-image">
+          ${inv.imageUrl ? `<img src="${inv.imageUrl}" alt="${inv.title}">` : '<div class="image-placeholder">📦</div>'}
+        </div>
+        <div class="inventory-info">
+          <h3><a href="/inventory/${inv.id}" data-navigate="/inventory/${inv.id}">${inv.title}</a></h3>
+          <p class="inventory-category">${inv.category}</p>
+          <p class="inventory-count">Tags count: ${inv.tags.length}</p>
+          <div class="inventory-tags">
+            ${tagsToShow.map(tag => `<span class="tag">${tag}</span>`).join('')}
+            ${extraTags}
+          </div>
+        </div>
       </div>
-      <div class="inventory-info">
-        <h3><a href="/inventory/${inv.id}" data-navigate="/inventory/${inv.id}">${inv.title}</a></h3>
-        <p class="inventory-category">${inv.category}</p>
-        <p class="inventory-count">${inv.itemCount} elementos</p>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 export async function loadTagCloud() {

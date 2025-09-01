@@ -8,7 +8,7 @@ export interface InventoryDto {
   itemCount: number;
   isPublic: boolean;
   ownerId: number;
-  ownerName: string;
+  owner: string;
   lastUpdated: Date;
   tags: string[];
   customFields: customFieldData[];

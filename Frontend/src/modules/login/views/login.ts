@@ -32,7 +32,7 @@ export function loginPage() {
             </label>
           </div>
           
-          <button type="submit" class="btn btn-primary btn-full">Log In</button>
+          <button type="submit" class="btn-login">Log In</button>
         </form>
         
         <div class="login-span">
@@ -40,11 +40,11 @@ export function loginPage() {
         </div>
         
         <div class="social-login">
-          <button class="btn btn-social btn-google" id="google-login">
+          <button class="btn-google" id="google-login">
             <img src="/assets/icongoogle.png" alt="Google" class="social-icon">
             Google
           </button>
-          <button class="btn btn-social btn-facebook" id="facebook-login">
+          <button class="btn-facebook" id="facebook-login">
             <img src="/assets/iconfacebook2.png" alt="Facebook" class="social-icon">
             Facebook
           </button>

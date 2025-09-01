@@ -63,39 +63,70 @@
   margin-bottom: 1.5rem;
 }
 
-.btn-social {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1;
-  border-color: #3b5998;
-  border-width: 4px;
-  transition: 0.3s;
-}
-
-.btn-google:hover {
-  background-color: #3b5998;
-  border-color: white;
-  color: white;
-  transition: 0.3s;
+.btn-google{
+  box-shadow: 0px 0px 24px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  background-color: #ffffff;
+  color: rgb(1, 51, 189);
+  border: none;
+  padding: 12px 16px;
+  border-radius: 5px;
+  transition: .3s;
+  cursor: pointer;
+  &:hover {
+    background-color: #3b5998;
+    color: white;
+    border: 0px solid rgb(255, 255, 255);
+    border-style: solid;
+    transition: .3s;
+  }
+  & img {
+    margin-right: 0.5rem;
+    align-items: center;
+    vertical-align: middle;
+  }
 }
 
 .btn-facebook {
-  border-color: #3b5998;
+  box-shadow: 0px 0px 24px rgba(0, 0, 0, 0.1);
+  width: 100%;
   background-color: #3b5998;
   color: white;
-}
-
-.btn-facebook img{
+  border: none;
+  padding: 12px 16px;
   border-radius: 5px;
+  transition: .3s;
+  cursor: pointer;
+  &:hover {
+    background-color: white;
+    color: #3b5998;
+    border: 0px solid #3b5998;
+    transition: .3s;
+  }
+  & img {
+    margin-right: 0.5rem;
+    align-items: center;
+    vertical-align: middle;
+  }
 }
 
-.btn-facebook:hover {
-  background-color: #ffffff;
-  border-color: #2d4373;
-  color: rgb(0, 0, 0);
-  transition: 0.3s;
+.btn-login {
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  box-shadow: 0px 0px 24px rgba(0, 0, 0, 0.1);
+  background-color: #28a745;
+  color: white;
+  transition: .3s;
+  &:hover {
+    background-color: white;
+    color: #28a745;
+    border: 1px solid #28a745;
+    transition: .3s;
+  }
 }
+
 
 .login-footer {
   text-align: center;
@@ -154,6 +185,13 @@
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+
+
+input[type="checkbox"]:hover {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
 }
 
 .social-icon{

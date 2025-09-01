@@ -5,6 +5,8 @@ import { getInventories } from "../services/inventoryServices";
 import { CreateInventoryDto } from "../interfaces/CreateInventoryDto";
 import { CreateCustomFieldDto } from "../interfaces/CreateInventoryDto";
 import { createInventory } from "../services/inventoryServices";
+import { UIUtils } from "../../utils/ui";
+import { InventoryDto } from "../interfaces/InventoryDtoInterface";
 const additionalFields = [
   {
     id: "inventory-serial-number",
@@ -102,6 +104,11 @@ const inventories = await getInventories();
 
 export function inventoriesPage() {
   console.log('Inventories:', inventories);
+  // Obtener categorías únicas de los inventarios
+  const uniqueCategories = Array.from(
+    new Set(inventories.map((inv: any) => inv.category).filter(Boolean))
+  );
+
   return `
     <div class="inventories-container">
       <div class="page-header">
@@ -113,42 +120,21 @@ export function inventoriesPage() {
       
       <div class="filters-bar">
         <div class="filter-group">
-          <label for="category-filter">Category:</label>
+          <label for="category-filter">Serach by Category:</label>
           <select id="category-filter">
             <option value="">All</option>
-            ${categories.map(category => `
-              <option value="${category.id}">${category.name}</option>
+            ${uniqueCategories.map(category => `
+              <option value="${category}">${category}</option>
             `).join('')}
           </select>
         </div>
 
         <div class="filter-group">
-          <label for="subcategory-filter">Subcategoría:</label>
-          <select id="subcategory-filter">
-            <option value="">Todas</option>
-            ${categories.map(category => `
-              <option value="${category.id}">${category.name}</option>
-            `).join('')}
-          </select>
-        </div>
-
-        <div class="filter-group">
-          <label for="sort-filter">Ordenar por:</label>
+          <label for="sort-filter">Ordering by:</label>
           <select id="sort-filter">
-            <option value="recent">Más recientes</option>
-            <option value="popular">Más populares</option>
-            <option value="name">Nombre A-Z</option>
-            <option value="others">Others</option>
-          </select>
-        </div>
-        
-        <div class="filter-group">
-          <label for="sort-filter">Ordenar por:</label>
-          <select id="sort-filter">
-            <option value="recent">Más recientes</option>
-            <option value="popular">Más populares</option>
-            <option value="name">Nombre A-Z</option>
-            <option value="items">Número de elementos</option>
+            <option value="recent">Recent</option>
+            <option value="tags">Per tags</option>
+            <option value="name">Name A-Z</option>
           </select>
         </div>
         
@@ -227,103 +213,106 @@ export function inventoriesPage() {
 
 export function initializeInventories() {
   loadInventories();
-  setupFilters();
   setupCreateButton();
 }
 
 async function loadInventories() {
   const container = document.getElementById('inventories-list');
   if (!container) return;
-  
-  // Mock data
-  const mockInventories = [
-    {
-      id: 1,
-      title: 'Libros de Programación',
-      description: 'Colección de libros técnicos y manuales de programación',
-      category: 'Educación',
-      itemCount: 25,
-      isPublic: true,
-      owner: 'usuario1',
-      lastUpdated: '2025-08-10',
-      tags: ['programación', 'libros', 'técnico']
-    },
-    {
-      id: 2,
-      title: 'Herramientas de Taller',
-      description: 'Inventario completo de herramientas para carpintería',
-      category: 'Herramientas',
-      itemCount: 18,
-      isPublic: false,
-      owner: 'usuario2',
-      lastUpdated: '2025-08-12',
-      tags: ['herramientas', 'carpintería', 'taller']
-    },
-    {
-      id: 3,
-      title: 'Equipo de Fotografía',
-      description: 'Cámaras, lentes y accesorios fotográficos',
-      category: 'Electrónicos',
-      itemCount: 12,
-      isPublic: true,
-      owner: 'usuario3',
-      lastUpdated: '2025-08-11',
-      tags: ['fotografía', 'cámaras', 'electrónicos']
+
+  let inventarios = await getInventories();
+  const sortFilter = document.getElementById('sort-filter') as HTMLSelectElement;
+  const sortCategory = document.getElementById('category-filter') as HTMLSelectElement;
+  const searchInput = document.getElementById('search-inventories') as HTMLInputElement;
+
+  // Helper: filtra por categoría
+  function filterByCategory(list: any[], category: string) {
+    if (!category) return list;
+    return list.filter(inv => inv.category === category);
+  }
+
+  // Helper: filtra por búsqueda
+  function filterBySearch(list: any[], search: string) {
+    if (!search) return list;
+    const s = search.toLowerCase();
+    return list.filter(inv =>
+      inv.title.toLowerCase().includes(s) ||
+      (inv.description && inv.description.toLowerCase().includes(s)) ||
+      (inv.tags && inv.tags.some((tag: string) => tag.toLowerCase().includes(s)))
+    );
+  }
+
+  // Helper: ordena
+  function sortInventories(list: any[], option: string) {
+    let sorted = [...list];
+    if (option === 'recent') {
+      sorted.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
+    } else if (option === 'name') {
+      sorted.sort((a, b) => a.title.localeCompare(b.title));
+    } else if (option === 'tags') {
+      sorted.sort((a, b) => (b.tags?.length || 0) - (a.tags?.length || 0));
     }
-  ];
-  
-  container.innerHTML = mockInventories.map(inv => `
-    <div class="inventory-card-full">
-      <div class="inventory-header">
-        <h3><a href="/inventory/${inv.id}" data-navigate="/inventory/${inv.id}">${inv.title}</a></h3>
-        <div class="inventory-meta">
-          <span class="access-type ${inv.isPublic ? 'public' : 'private'}">
-            ${inv.isPublic ? '🌐 Público' : '🔒 Privado'}
-          </span>
+    return sorted;
+  }
+
+  function renderInventories(list: any[]) {
+    if (!container) return;
+    if (!list.length) {
+      container.innerHTML = `<div class="empty-message">No inventories found.</div>`;
+      return;
+    }
+    container.innerHTML = list.map((inv) => `
+      <div class="inventory-card-full">
+        <div class="inventory-header">
+          <h3><a href="/inventory/${inv.id}" data-navigate="/inventory/${inv.id}">${inv.title}</a></h3>
+          <div class="inventory-meta">
+            <span class="access-type ${inv.isPublic ? 'public' : 'private'}">
+              ${inv.isPublic ? '🌐 Público' : '🔒 Privado'}
+            </span>
+          </div>
+        </div>
+        <div class="inventory-content">
+          <p class="inventory-description">${inv.description}</p>
+          <div class="inventory-stats">
+            <span class="stat">📦 ${inv.itemCount} elementos</span>
+            <span class="stat">📂 ${inv.category}</span>
+            <span class="stat">👤 ${inv.owner}</span>
+            <span class="stat">📅 ${new Date(inv.lastUpdated).toLocaleDateString()}</span>
+          </div>
+          <div class="inventory-tags">
+            ${inv.tags.map((tag: any) => `<span class="tag">${tag}</span>`).join('')}
+          </div>
+        </div>
+        <div class="inventory-actions">
+          <a href="/inventory/${inv.id}" data-navigate="/inventory/${inv.id}" class="btn btn-sm">Ver</a>
+          <button class="btn btn-sm btn-secondary" onclick="shareInventory(${inv.id})">Compartir</button>
         </div>
       </div>
-      
-      <div class="inventory-content">
-        <p class="inventory-description">${inv.description}</p>
-        <div class="inventory-stats">
-          <span class="stat">📦 ${inv.itemCount} elementos</span>
-          <span class="stat">📂 ${inv.category}</span>
-          <span class="stat">👤 ${inv.owner}</span>
-          <span class="stat">📅 ${new Date(inv.lastUpdated).toLocaleDateString()}</span>
-        </div>
-        <div class="inventory-tags">
-          ${inv.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-        </div>
-      </div>
-      
-      <div class="inventory-actions">
-        <a href="/inventory/${inv.id}" data-navigate="/inventory/${inv.id}" class="btn btn-sm">Ver</a>
-        <button class="btn btn-sm btn-secondary" onclick="shareInventory(${inv.id})">Compartir</button>
-      </div>
-    </div>
-  `).join('');
+    `).join('');
+  }
+
+  // Aplica todos los filtros y ordenamientos
+  function applyFiltersAndSorting() {
+    let filtered = [...inventarios];
+    const selectedCategory = sortCategory.value;
+    const selectedSort = sortFilter.value;
+    const search = searchInput?.value || '';
+
+    filtered = filterByCategory(filtered, selectedCategory);
+    filtered = filterBySearch(filtered, search);
+    filtered = sortInventories(filtered, selectedSort);
+
+    renderInventories(filtered);
+  }
+
+  // Inicializa con los valores actuales
+  applyFiltersAndSorting();
+
+  sortFilter.addEventListener('change', applyFiltersAndSorting);
+  sortCategory.addEventListener('change', applyFiltersAndSorting);
+  searchInput?.addEventListener('input', debounce(applyFiltersAndSorting, 150));
 }
 
-function setupFilters() {
-  const categoryFilter = document.getElementById('category-filter') as HTMLSelectElement;
-  const sortFilter = document.getElementById('sort-filter') as HTMLSelectElement;
-  const searchInput = document.getElementById('search-inventories') as HTMLInputElement;
-  
-  categoryFilter?.addEventListener('change', () => {
-    console.log('Category filter changed:', categoryFilter.value);
-    // TODO: Implement filtering logic
-  });
-  
-  sortFilter?.addEventListener('change', () => {
-    console.log('Sort filter changed:', sortFilter.value);
-    // TODO: Implement sorting logic
-  });
-  
-  searchInput?.addEventListener('input', debounce(() => {
-    console.log('Search input:', searchInput.value);
-    // TODO: Implement search logic
-  }, 300));
-}
 
 function setupCreateButton() {
   const createBtn = document.getElementById('create-inventory');
@@ -622,7 +611,6 @@ function setupCreateButton() {
     closeModal();
   }
 }
-
 // Utility function for debouncing
 function debounce(func: Function, wait: number) {
   let timeout: number;

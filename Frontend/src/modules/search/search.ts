@@ -2,6 +2,8 @@
 import { loadTagCloud } from "../home/home";
 import { getTags } from "../inventories/services/inventoryServices";
 import { getPopularTags } from "../inventories/services/inventoryServices";
+import { getInventories } from "../inventories/services/inventoryServices";
+import "./search.css"
 
 export function searchPage() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -45,15 +47,16 @@ export function searchPage() {
             </div>
             
             <div class="filter-group">
-              <label>
-                <input type="checkbox" id="public-only"> Solo públicos
-              </label>
+                <label>Only Public</label>
+                <input type="checkbox" id="public-only"> 
             </div>
           </div>
         </div>
       </div>
       
       <div class="search-results" id="search-results">
+        <div class="card-inventories">🔍 Buscando...
+        </div>
         <div class="search-placeholder">
           <p>🔍 Ingresa un término para buscar</p>
           <p>O explora por tags populares:</p>
@@ -69,7 +72,7 @@ export function searchPage() {
 export function initializeSearch() {
   setupSearchForm();
   loadPopularTags();
-  loadTagCloud();
+  loadCardInventories();
 
   // If there's an initial search query, perform the search
   const urlParams = new URLSearchParams(window.location.search);
@@ -232,3 +235,25 @@ function loadPopularTags() {
   });
 }
 
+async function loadCardInventories() {
+  const inventoriesContainer = document.getElementById('card-inventories');
+  if (!inventoriesContainer) return;
+
+  try {
+    const inventories = await getInventories();
+    inventoriesContainer.innerHTML = inventories.map(inv => `
+      <div class="inventory-card">
+        <div class="inventory-image">
+          ${inv.imageUrl ? `<img src="${inv.imageUrl}" alt="${inv.title}">` : '<div class="image-placeholder">📦</div>'}
+        </div>
+        <div class="inventory-info">
+          <h3><a href="/inventory/${inv.id}" data-navigate="/inventory/${inv.id}">${inv.title}</a></h3>
+          <p class="inventory-category">${inv.category}</p>
+          <p class="inventory-count">${inv.itemCount} elementos</p>
+        </div>
+      </div>
+    `).join('');
+  } catch (error) {
+    console.error("Error loading card inventories:", error);
+  }
+}

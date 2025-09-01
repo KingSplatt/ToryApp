@@ -9,9 +9,6 @@ export function createLayout(content: string, currentPath: string) {
   const currentUser = authService.getUser();
   const isAuthenticated = authService.isAuthenticated();
   const isBlocked = authService.isBlocked();
-  console.log(currentUser)
-  console.log('isAuthenticated at layout:', isAuthenticated);
-  console.log('isBlocked at layout:', isBlocked);
 
   if (isAuthenticated && isBlocked) {
     console.log('Rendering blocked user message');
@@ -39,6 +36,7 @@ export function createLayout(content: string, currentPath: string) {
           </div>
         </div>
       </main>
+      ${loadFooter()}
     `;
   }
 
@@ -76,6 +74,7 @@ export function createLayout(content: string, currentPath: string) {
     <main class="main-content">
       ${content}
     </main>
+    ${loadFooter()}
   `;
 }
 
@@ -98,6 +97,14 @@ export function initializeTheme() {
 // Initialize layout with auth state management
 export function initializeLayout() {
   const authService = AuthService.getInstance();
+  
+  // Initialize theme and language
+  initializeTheme();
+  initializeLanguage();
+  
+  // Attach navigation listeners including footer links
+  attachNavigationListeners();
+  attachFooterListeners();
 }
 
 // Attach navigation event listeners
@@ -115,6 +122,21 @@ function attachNavigationListeners() {
   }
 }
 
+// Attach footer navigation event listeners
+function attachFooterListeners() {
+  const footerLinks = document.querySelectorAll('.footer a[data-navigate]');
+  footerLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const href = link.getAttribute('data-navigate');
+      if (href) {
+        window.history.pushState({}, '', href);
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
+    });
+  });
+}
+
 export function initializeLanguage() {
   const langToggle = document.getElementById('lang-toggle');
   const currentLang = localStorage.getItem('language') || 'es';
@@ -128,6 +150,49 @@ export function initializeLanguage() {
     
     console.log('Language switched to:', newLang);
   });
+}
+
+function loadFooter(){
+  return `
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>ToryApp</h4>
+          <p>ToryApp is your solution for managing inventories with ease.
+          Developed by <a href="https://github.com/KingSplatt" target="_blank">Splatt</a>
+          </p>
+        </div>
+        <div class="footer-section">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="/" data-navigate="/">Home</a></li>
+            <li><a href="/inventories" data-navigate="/inventories">Inventories</a></li>
+            <li><a href="/search" data-navigate="/search">Search</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Contact Me</h4>
+          <div class="social-links">
+            <a href="https://www.facebook.com/miguel.lopez.885937" target="_blank" title="Facebook">
+              <i class="fab fa-facebook"></i>
+            </a>
+            <a href="https://www.instagram.com/reels/DIr2CBrNQPS/" target="_blank" title="Instagram">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://www.linkedin.com/in/miguellopez17/" target="_blank" title="LinkedIn">
+              <i class="fab fa-linkedin"></i>
+            </a>
+            <a href="https://github.com/KingSplatt" target="_blank" title="GitHub">
+              <i class="fab fa-github"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; ${new Date().getFullYear()} ToryApp. All rights reserved.</p>
+      </div>
+    </footer>
+  `;
 }
 
 export function userAtLayout() {

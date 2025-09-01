@@ -21,16 +21,9 @@ export function homePage() {
           <h1>¡Welcome, ${displayName}!</h1>
           <p>Management your inventories easily and collaboratively</p>
           <div class="hero-actions">
-            <a href="/inventories" data-navigate="/inventories" class="btn btn-primary">Watch my inventories</a>
-            <a href="/search" data-navigate="/search" class="btn btn-secondary">Search Items</a>
           </div>
         ` : `
-          <h1>Welcome to ToryApp</h1>
-          <p>Management your inventories easily and collaboratively</p>
-          <div class="hero-actions">
-            <a href="/inventories" data-navigate="/inventories" class="btn btn-primary">Watch inventories</a>
-            <a href="/login" data-navigate="/login" class="btn btn-success">Log In</a>
-          </div>
+          
         `}
       </section>
       
@@ -82,15 +75,11 @@ export function initializeHome() {
         <h1>¡Welcome, ${displayName}!</h1>
         <p>Management your inventories easily and collaboratively</p>
         <div class="hero-actions">
-          <a href="/inventories" data-navigate="/inventories" class="btn btn-primary">Watch my inventories</a>
-          <a href="/search" data-navigate="/search" class="btn btn-secondary">Search Items</a>
         </div>
       ` : `
         <h1>Welcome to ToryApp</h1>
         <p>Management your inventories easily and collaboratively</p>
         <div class="hero-actions">
-          <a href="/inventories" data-navigate="/inventories" class="btn btn-primary">Watch inventories</a>
-          <a href="/login" data-navigate="/login" class="btn btn-success">Log In</a>
         </div>
       `;
     }

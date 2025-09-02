@@ -1,6 +1,8 @@
 import { AuthService } from "../login/services/auth";
 import { User } from "../login/interfaces/UserInterface";
 import { UIUtils } from "../utils/ui";
+import { Theme } from "../utils/theme";
+import { Language } from "../utils/language";
 import "./layout.css"
 
 export function createLayout(content: string, currentPath: string) {
@@ -80,29 +82,15 @@ export function createLayout(content: string, currentPath: string) {
 
 // Theme and language management
 export function initializeTheme() {
-  const themeToggle = document.getElementById('theme-toggle');
-  const currentTheme = localStorage.getItem('theme') || 'light';
-  
-  document.documentElement.setAttribute('data-theme', currentTheme);
-  
-  themeToggle?.addEventListener('click', () => {
-    const newTheme = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-    const button = themeToggle as HTMLButtonElement;
-    button.textContent = newTheme === 'light' ? '🌙' : '☀️';
-  });
+  Theme.initializeTheme();
+  Theme.attachThemeButton();
 }
 
 // Initialize layout with auth state management
 export function initializeLayout() {
   const authService = AuthService.getInstance();
-  
-  // Initialize theme and language
   initializeTheme();
   initializeLanguage();
-  
-  // Attach navigation listeners including footer links
   attachNavigationListeners();
   attachFooterListeners();
 }
@@ -138,18 +126,6 @@ function attachFooterListeners() {
 }
 
 export function initializeLanguage() {
-  const langToggle = document.getElementById('lang-toggle');
-  const currentLang = localStorage.getItem('language') || 'es';
-  
-  langToggle?.addEventListener('click', () => {
-    const newLang = currentLang === 'es' ? 'en' : 'es';
-    localStorage.setItem('language', newLang);
-    
-    const button = langToggle as HTMLButtonElement;
-    button.textContent = newLang.toUpperCase();
-    
-    console.log('Language switched to:', newLang);
-  });
 }
 
 function loadFooter(){

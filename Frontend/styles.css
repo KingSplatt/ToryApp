@@ -1,8 +1,10 @@
 :root {
   --bg-primary: #ffffff;
   --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
   --text-primary: #212529;
   --text-secondary: #6c757d;
+  --text-muted: #868e96;
   --border-color: #dee2e6;
   --primary-color: #007bff;
   --secondary-color: #6c757d;
@@ -10,17 +12,32 @@
   --danger-color: #dc3545;
   --warning-color: #ffc107;
   --info-color: #17a2b8;
-  color-scheme: light dark;
+  --light-color: #f8f9fa;
+  --dark-color: #343a40;
+  --shadow: rgba(0, 0, 0, 0.1);
+  --shadow-hover: rgba(0, 0, 0, 0.15);
+  color-scheme: light;
 }
 
 [data-theme="dark"] {
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #2d2d2d;
+  --bg-primary: #121212;
+  --bg-secondary: #1e1e1e;
+  --bg-tertiary: #2d2d2d;
   --text-primary: #ffffff;
-  --text-secondary: #b0b0b0;
+  --text-secondary: #b3b3b3;
+  --text-muted: #8a8a8a;
   --border-color: #404040;
-  --primary-color: #0d6efd;
-  --secondary-color: #6c757d;
+  --primary-color: #4dabf7;
+  --secondary-color: #868e96;
+  --success-color: #51cf66;
+  --danger-color: #ff6b6b;
+  --warning-color: #ffd43b;
+  --info-color: #74c0fc;
+  --light-color: #2d2d2d;
+  --dark-color: #121212;
+  --shadow: rgba(0, 0, 0, 0.3);
+  --shadow-hover: rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
 }
 
 * {
@@ -389,4 +406,158 @@ input[type="checkbox"] {
   .social-auth {
     flex-direction: column;
   }
+}
+
+/* Theme toggle button styles */
+.btn-theme {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-theme:hover {
+  background: var(--primary-color);
+  color: white;
+  transform: scale(1.05);
+}
+
+/* Language toggle button styles */
+.btn-lang {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: bold;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-lang:hover {
+  background: var(--success-color);
+  color: white;
+}
+
+/* Enhanced form styles for theme support */
+input, textarea, select {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(var(--primary-color), 0.2);
+}
+
+/* Enhanced card styles */
+.card {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px var(--shadow);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 8px var(--shadow-hover);
+}
+
+/* Enhanced table styles */
+table {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+th {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-color);
+}
+
+td {
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Optimized scrollbar styling */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 6px;
+  border: 2px solid var(--bg-secondary);
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--primary-color);
+}
+
+/* Firefox scrollbar */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) var(--bg-secondary);
+}
+
+/* Selection styling */
+::selection {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* Smooth transitions for theme changes - OPTIMIZED */
+/* Remove global transitions that cause scroll lag */
+body, nav, main, footer, .card, .btn, input, textarea, select {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Improve scroll performance */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Enable hardware acceleration for better performance */
+body {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000;
+}
+
+/* Optimize scrolling for mobile devices */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Reduce paint operations during scroll */
+.main-content {
+  will-change: transform;
+  contain: layout style paint;
+}
+
+/* Use CSS containment for better performance */
+.card, .btn, .navbar {
+  contain: layout style;
 }

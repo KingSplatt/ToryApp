@@ -10,24 +10,30 @@
 
 .table-inventories {
   width: 100%;
-  border-collapse: collapse;
+    border-radius: 6px;
+
+    border: 3px solid var(--border-color);
+
   margin-bottom: 20px;
 }
 
 .table-inventories th,
 .table-inventories td {
-  border: 1px solid #ddd;
+  border: 0.5px solid var(--border-color);
   padding: 8px;
   text-align: center;
 }
 
 .table-inventories th {
-  background-color: #f2f2f2;
+  background-color: var(--bg-tertiary);
   text-align: center;
+  &:hover{
+    background-color: var(--bg-secondary);
+  }
 }
 
 .table-inventories tr:hover {
-  background-color: #f5f5f5;
+  background-color: var(--bg-tertiary);
 }
 
 .roles-inventories{
@@ -161,9 +167,9 @@
   align-items: center;
   margin-bottom: 20px;
   padding: 15px;
-  background-color: #f8f9fa;
+  background-color: var(--bg-primary);
   border-radius: 8px;
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--border-color);
 }
 
 .inventory-btn-group {

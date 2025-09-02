@@ -62,6 +62,7 @@ export class Router {
     appEl.innerHTML = route.component();
 
     this.attachEventListeners();
+    this.initializePageFeatures();
   }
 
   private attachEventListeners() {
@@ -71,6 +72,15 @@ export class Router {
         const path = (e.target as HTMLElement).getAttribute('data-navigate')!;
         this.navigate(path);
       });
+    });
+  }
+
+  private initializePageFeatures() {
+    // Import and initialize layout features after DOM is ready
+    import('../layout/layout').then(({ initializeLayout }) => {
+      initializeLayout();
+    }).catch(error => {
+      console.error('Failed to initialize layout features:', error);
     });
   }
   

@@ -24,17 +24,17 @@ select,::picker(select){
 }
 
 .filter-group option{
-  background-color: #1a1a1a;
+  background-color: var(--bg-primary);
   transition: 0.3s;
   &:hover {
-    background-color: #555;
+    background-color: var(--text-secondary);
     transition: 0.3s;
   }
   &:checked {
     background-color: #aaaaaa;
   }
   &:focus {
-    background-color: #333;
+    background-color: var(--text-secondary);
   }
 }
 

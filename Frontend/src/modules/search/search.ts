@@ -12,37 +12,37 @@ export function searchPage() {
   return `
     <div class="search-container">
       <div class="page-header">
-        <h1>Buscar</h1>
-        <p>Encuentra inventarios y elementos</p>
+        <h1>Search</h1>
+        <p>Find inventories and items</p>
       </div>
       
       <div class="search-form">
         <div class="search-input-group">
-          <input type="search" id="search-query" placeholder="Buscar inventarios, elementos, tags..." value="${initialTag}">
+          <input type="search" id="search-query" placeholder="Search inventories, items, tags..." value="${initialTag}">
           <button class="btn btn-primary" id="search-button">🔍</button>
         </div>
         
         <div class="search-filters">
           <div class="filter-row">
             <div class="filter-group">
-              <label for="search-type">Buscar en:</label>
+              <label for="search-type">Search in:</label>
               <select id="search-type">
-                <option value="all">Todo</option>
-                <option value="inventories">Solo Inventarios</option>
-                <option value="items">Solo Elementos</option>
-                <option value="tags">Solo Tags</option>
+                <option value="all">All</option>
+                <option value="inventories">Only Inventories</option>
+                <option value="items">Only Items</option>
+                <option value="tags">Only Tags</option>
               </select>
             </div>
             
             <div class="filter-group">
-              <label for="search-category">Categoría:</label>
+              <label for="search-category">Category:</label>
               <select id="search-category">
-                <option value="">Todas</option>
-                <option value="electronica">Electrónica</option>
-                <option value="herramientas">Herramientas</option>
-                <option value="libros">Libros</option>
-                <option value="hogar">Hogar</option>
-                <option value="coleccion">Colección</option>
+                <option value="">All</option>
+                <option value="electronica">Electronics</option>
+                <option value="herramientas">Tools</option>
+                <option value="libros">Books</option>
+                <option value="hogar">Home</option>
+                <option value="coleccion">Collection</option>
               </select>
             </div>
             
@@ -53,13 +53,14 @@ export function searchPage() {
           </div>
         </div>
       </div>
+
+      <div class="card-inventories" id="card-inventoriess">
+        <p>🔍 Searching for inventories...</p>
+      </div>
       
       <div class="search-results" id="search-results">
-        <div class="card-inventories">🔍 Buscando...
-        </div>
         <div class="search-placeholder">
-          <p>🔍 Ingresa un término para buscar</p>
-          <p>O explora por tags populares:</p>
+          <p>Or explore popular tags:</p>
           <div class="popular-tags" id="popular-search-tags">
             <!-- Popular tags will be loaded here -->
           </div>
@@ -236,7 +237,7 @@ function loadPopularTags() {
 }
 
 async function loadCardInventories() {
-  const inventoriesContainer = document.getElementById('card-inventories');
+  const inventoriesContainer = document.getElementById('card-inventoriess');
   if (!inventoriesContainer) return;
 
   try {

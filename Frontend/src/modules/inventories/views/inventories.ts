@@ -267,7 +267,7 @@ async function loadInventories() {
           <h3><a href="/inventory/${inv.id}" data-navigate="/inventory/${inv.id}">${inv.title}</a></h3>
           <div class="inventory-meta">
             <span class="access-type ${inv.isPublic ? 'public' : 'private'}">
-              ${inv.isPublic ? '🌐 Público' : '🔒 Privado'}
+              ${inv.isPublic ? '🌐 Public' : '🔒 Private'}
             </span>
           </div>
         </div>

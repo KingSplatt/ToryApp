@@ -218,7 +218,11 @@ export class UIUtils {
     }, autoCloseAfter);
   }
 
-  static ModalForConfirmation(message:string , onConfirm?: () => void, onCancel?: () => void): void {
+  static ModalForConfirmation(message: string, onConfirm?: () => void, onCancel?: () => void): void {
+    // Remover modales existentes de confirmación
+    const existingModals = document.querySelectorAll('.ui-modal');
+    existingModals.forEach(modal => modal.remove());
+
     const modal = document.createElement('div');
     modal.className = 'ui-modal';
 
@@ -237,6 +241,7 @@ export class UIUtils {
     confirmButton.className = 'btn btn-primary';
     confirmButton.addEventListener('click', () => {
       modal.remove();
+      document.removeEventListener('keydown', escapeHandler);
       onConfirm?.();
     });
 
@@ -245,8 +250,32 @@ export class UIUtils {
     cancelButton.className = 'btn btn-secondary';
     cancelButton.addEventListener('click', () => {
       modal.remove();
+      document.removeEventListener('keydown', escapeHandler);
       onCancel?.();
     });
+
+    // Handler para la tecla Escape
+    const escapeHandler = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        modal.remove();
+        document.removeEventListener('keydown', escapeHandler);
+        onCancel?.();
+      }
+    };
+
+    // Prevenir cierre al hacer clic fuera del modal
+    modal.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // No hacer nada - el modal solo se cierra con los botones
+    });
+
+    // Permitir que el contenido del modal no propague el click
+    modalContent.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    // Agregar listener para tecla Escape
+    document.addEventListener('keydown', escapeHandler);
 
     // Ensamblar modal
     buttonContainer.appendChild(confirmButton);
@@ -255,5 +284,10 @@ export class UIUtils {
     modalContent.appendChild(buttonContainer);
     modal.appendChild(modalContent);
     document.body.appendChild(modal);
+
+    // Enfocar el botón de cancelar por defecto
+    setTimeout(() => {
+      cancelButton.focus();
+    }, 100);
   }
 }

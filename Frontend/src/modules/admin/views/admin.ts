@@ -3,6 +3,9 @@ import { Route } from "../../router/router";
 import { getUsers, deleteUsers, blockUsers, unblockUsers,assignRoles,removeRoles } from "../services/UserServices";
 import "./admin.css";
 import { UIUtils } from "../../utils/ui";
+import { AuthService } from "../../login/services/auth";
+const authService = AuthService.getInstance();
+
 
 export function adminPage(){
     return `
@@ -200,23 +203,29 @@ export async function deleteSelectedUsers() {
   const selectedUserIds = Array.from(checkedBoxes).map(checkbox => checkbox.value);
   
   if (selectedUserIds.length === 0) {
-    alert("No users selected for deletion.");
+    UIUtils.showModalForMessages("No users selected for deletion.");
     return;
   }
   
   const confirmMessage = `Are you sure you want to delete ${selectedUserIds.length} user(s)? This action cannot be undone.`;
-  UIUtils.ModalForConfirmation(confirmMessage);
-
-  try {
-    UIUtils.showModalForMessages(`Deleting ${selectedUserIds.length} user(s)...`);
-    setTimeout(async () => {
-      await deleteUsers(selectedUserIds);
-    }, 1000);
-    await showUserManagement();
-    updateToolBar();
-  } catch (error) {
-    UIUtils.showModalForMessages("Failed to delete users. Please try again.");
-  }
+  
+  UIUtils.ModalForConfirmation(
+    confirmMessage,
+    async () => {
+      try {
+        UIUtils.showModalForMessages(`Deleting ${selectedUserIds.length} user(s)...`);
+        await deleteUsers(selectedUserIds);
+        await showUserManagement();
+        updateToolBar();
+        UIUtils.showModalForMessages(`Successfully deleted ${selectedUserIds.length} user(s).`);
+      } catch (error) {
+        console.error("Error deleting users:", error);
+        UIUtils.showModalForMessages("Failed to delete users. Please try again.");
+      }
+    },
+    () => {
+    }
+  );
 }
 
 // Helper function to get selected user IDs
@@ -229,85 +238,111 @@ export async function blockSelectedUsers() {
   const selectedUserIds = getSelectedUserIds();
   
   if (selectedUserIds.length === 0) {
-    alert("No users selected for blocking.");
+    UIUtils.showModalForMessages("No users selected for blocking.");
     return;
   }
   
-  try {
-    await blockUsers(selectedUserIds);
-    alert(`Successfully blocked ${selectedUserIds.length} user(s).`);
-    await showUserManagement();
-    updateToolBar();
-  } catch (error) {
-    console.error("Error blocking users:", error);
-    alert("Failed to block users. Please try again.");
-  }
+  const confirmMessage = `Are you sure you want to block ${selectedUserIds.length} user(s)?`;
+  
+  UIUtils.ModalForConfirmation(
+    confirmMessage,
+    async () => {
+      try {
+        await blockUsers(selectedUserIds);
+        UIUtils.showModalForMessages(`Successfully blocked ${selectedUserIds.length} user(s).`);
+        await showUserManagement();
+        updateToolBar();
+      } catch (error) {
+        console.error("Error blocking users:", error);
+        UIUtils.showModalForMessages("Failed to block users. Please try again.");
+      }
+    },
+    () => {
+    }
+  );
 }
 
 export async function unblockSelectedUsers() {
   const selectedUserIds = getSelectedUserIds();
   
   if (selectedUserIds.length === 0) {
-    alert("No users selected for unblocking.");
+    UIUtils.showModalForMessages("No users selected for unblocking.");
     return;
   }
   
   const confirmMessage = `Are you sure you want to unblock ${selectedUserIds.length} user(s)?`;
-  if (!confirm(confirmMessage)) {
-    return;
-  }
   
-  try {
-    await unblockUsers(selectedUserIds);
-    alert(`Successfully unblocked ${selectedUserIds.length} user(s).`);
-    await showUserManagement();
-    updateToolBar();
-  } catch (error) {
-    console.error("Error unblocking users:", error);
-    alert("Failed to unblock users. Please try again.");
-  }
+  UIUtils.ModalForConfirmation(
+    confirmMessage,
+    async () => {
+      try {
+        await unblockUsers(selectedUserIds);
+        UIUtils.showModalForMessages(`Successfully unblocked ${selectedUserIds.length} user(s).`);
+        await showUserManagement();
+        updateToolBar();
+      } catch (error) {
+        console.error("Error unblocking users:", error);
+        UIUtils.showModalForMessages("Failed to unblock users. Please try again.");
+      }
+    },
+    () => {
+    }
+  );
 }
 
 export async function assignRolesToUser() {
   const selectedUser = getSelectedUserIds();
   const roleAdmin = ["Admin"];
   if (selectedUser.length === 0) {
-    alert("No users selected for role assignment.");
+    UIUtils.showModalForMessages("No users selected for role assignment.");
     return;
   }
+  const confirmMessage = `Are you sure you want to assign ${roleAdmin.join(", ")} to ${selectedUser.length} users?`;
 
-  try {
-    await assignRoles(selectedUser, roleAdmin);
-    alert(`Successfully assigned role ${roleAdmin.join(", ")} to user ${selectedUser.join(", ")}`);
-    await showUserManagement();
-  } catch (error) {
-    console.error("Error assigning roles to user:", error);
-    alert("Failed to assign roles to user. Please try again.");
-  }
+  UIUtils.ModalForConfirmation(
+    confirmMessage,
+    async () => {
+      try {
+        await assignRoles(selectedUser, roleAdmin);
+        UIUtils.showModalForMessages(`Successfully assigned ${roleAdmin.join(", ")} to ${selectedUser.length} users.`);
+        await showUserManagement();
+      } catch (error) {
+        console.error(`Error assigning ${roleAdmin.join(", ")} to ${selectedUser.length} users:`, error);
+        UIUtils.showModalForMessages(`Failed to assign ${roleAdmin.join(", ")} to ${selectedUser.length} users. Please try again.`);
+      }
+    },
+    () => {
+    }
+  );
 }
 
 export async function removeRolesFromUser() {
   const selectedUserIds = getSelectedUserIds();
   const roleAdmin = ["Admin"];
   if (selectedUserIds.length === 0) {
-    alert("No users selected for role removal.");
+    UIUtils.showModalForMessages("No users selected for role removal.");
     return;
   }
 
-  try {
-    await removeRoles(selectedUserIds, roleAdmin);
-    alert(`Successfully removed roles ${roleAdmin.join(", ")} from users ${selectedUserIds.join(", ")}`);
-    await showUserManagement();
-  } catch (error) {
-    console.error("Error removing roles from user:", error);
-    alert("Failed to remove roles from user. Please try again.");
-  }
+  UIUtils.ModalForConfirmation(
+    `Are you sure you want to remove ${roleAdmin.join(", ")} from ${selectedUserIds.length} users?`,
+    async () => {
+      try {
+        await removeRoles(selectedUserIds, roleAdmin);
+        UIUtils.showModalForMessages(`Successfully removed ${roleAdmin.join(", ")} from ${selectedUserIds.length} users.`);
+        await showUserManagement();
+      } catch (error) {
+        console.error(`Error removing ${roleAdmin.join(", ")} to users ${selectedUserIds.length}:`, error);
+        UIUtils.showModalForMessages(`Failed to remove ${roleAdmin.join(", ")} to users ${selectedUserIds.length}. Please try again.`);
+      }
+    },
+    () => {
+    }
+  );
 }
 
 export function initAdminPage(){
     showUserManagement();
-    
-    // Make functions available globally for HTML onclick handlers
     (window as any).toggleSelectAll = toggleSelectAll;
     (window as any).updateToolBar = updateToolBar;
     (window as any).toggleSelectAllUsers = toggleSelectAllUsers;

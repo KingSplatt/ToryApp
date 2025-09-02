@@ -49,7 +49,7 @@ export function profilePage() {
             </div>
             <div class="info-item">
               <label>Account Type:</label>
-              <span>${currentUser.isOAuthUser ? 'Social Account' : 'Local Account'}</span>
+              <span>${currentUser.isOAuthUser ? 'Auth' : 'Local Account'}</span>
             </div>
             ${currentUser.profilePictureUrl ? `
             <div class="info-item">
@@ -59,10 +59,6 @@ export function profilePage() {
             ` : ''}
           </div>
           
-          <div class="profile-actions">
-            <button class="btn btn-primary" id="edit-profile-btn">Edit Profile</button>
-            <button class="btn btn-secondary" id="change-password-btn">Change Password</button>
-          </div>
         </div>
         
         
@@ -96,16 +92,14 @@ export function initializeProfile() {
   const authService = AuthService.getInstance();
   const user = authService.getUser();
   const userInventories = getUserInventories(user?.id || '');
-  console.log('User Inventories:', userInventories);
   const router = Router.getInstance();
 
   if (!currentUser) {
     return;
   }
-  loadUserStatistics();
   loadUserPreferences();
   setupProfileEventListeners();
-  setupThemeListener(); // Add theme synchronization listener
+  setupThemeListener(); 
   UIUtils.listenToAuthChanges((user) => {
     if (!user) {
       router.navigate('/');
@@ -120,11 +114,6 @@ export function initializeProfile() {
     router.navigate('/shared-inventories');
   });
 }
-
-async function loadUserStatistics() {
-  // Load user statistics from API
-}
-
 function loadUserPreferences() {
   // Load theme preference using the centralized Theme class
   const themePreference = Theme.getTheme();
@@ -138,38 +127,17 @@ function loadUserPreferences() {
   if (languageSelect) {
     languageSelect.value = languagePreference;
   }
-  
-  const emailNotifications = localStorage.getItem('emailNotifications') !== 'false';
-  const emailCheckbox = document.getElementById('email-notifications') as HTMLInputElement;
-  if (emailCheckbox) {
-    emailCheckbox.checked = emailNotifications;
-  }
 }
 
 function setupProfileEventListeners() {
-  // Edit profile button - waiting
-  const editProfileBtn = document.getElementById('edit-profile-btn');
-  editProfileBtn?.addEventListener('click', () => {
-    UIUtils.showMessage('Función de edición de perfil en desarrollo', 'info');
-  });
-  
-  // Change password button
-  const changePasswordBtn = document.getElementById('change-password-btn');
-  changePasswordBtn?.addEventListener('click', () => {
-    UIUtils.showMessage('Función de cambio de contraseña en desarrollo', 'info');
-  });
-  
-  // Save preferences button
   const savePreferencesBtn = document.getElementById('save-preferences-btn');
   savePreferencesBtn?.addEventListener('click', saveUserPreferences);
   
-  // Theme change handler - using the centralized Theme class
   const themeSelect = document.getElementById('theme-preference') as HTMLSelectElement;
   themeSelect?.addEventListener('change', (e) => {
     const newTheme = (e.target as HTMLSelectElement).value as 'light' | 'dark';
     Theme.setTheme(newTheme);
     
-    // Update the layout theme button if it exists
     const themeButton = document.getElementById('theme-toggle') as HTMLButtonElement;
     if (themeButton) {
       themeButton.textContent = newTheme === 'light' ? '🌙' : '☀️';
@@ -181,41 +149,29 @@ function setupProfileEventListeners() {
 
 function saveUserPreferences() {
   try {
-    // Save theme preference using the centralized Theme class
     const themeSelect = document.getElementById('theme-preference') as HTMLSelectElement;
     if (themeSelect) {
       const selectedTheme = themeSelect.value as 'light' | 'dark';
       Theme.setTheme(selectedTheme);
       
-      // Update the layout theme button if it exists
       const themeButton = document.getElementById('theme-toggle') as HTMLButtonElement;
       if (themeButton) {
         themeButton.textContent = selectedTheme === 'light' ? '🌙' : '☀️';
       }
     }
     
-    // Save language preference
     const languageSelect = document.getElementById('language-preference') as HTMLSelectElement;
     if (languageSelect) {
       localStorage.setItem('language', languageSelect.value);
     }
-    
-    // Save notification preference
-    const emailCheckbox = document.getElementById('email-notifications') as HTMLInputElement;
-    if (emailCheckbox) {
-      localStorage.setItem('emailNotifications', emailCheckbox.checked.toString());
-    }
-    
     UIUtils.showMessage('Preferencias guardadas exitosamente', 'success');
   } catch (error) {
-    console.error('Error saving preferences:', error);
     UIUtils.showMessage('Error al guardar las preferencias', 'error');
   }
 }
 
 // Function to sync theme changes from layout to profile page
 function setupThemeListener() {
-  // Listen for storage changes to sync theme across tabs/windows
   window.addEventListener('storage', (e) => {
     if (e.key === 'theme') {
       const themeSelect = document.getElementById('theme-preference') as HTMLSelectElement;
@@ -225,8 +181,6 @@ function setupThemeListener() {
     }
   });
   
-  // Also listen for theme changes within the same tab
-  // We can use a custom event or a MutationObserver to detect theme changes
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
@@ -239,7 +193,6 @@ function setupThemeListener() {
     });
   });
   
-  // Observe changes to the body's data-theme attribute
   observer.observe(document.body, {
     attributes: true,
     attributeFilter: ['data-theme']

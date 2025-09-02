@@ -92,9 +92,9 @@ export function initializeLogin() {
     } catch (error) {
       if (error instanceof ZodError) {
         const firstError = error.issues[0];
-        UIUtils.showMessage(firstError.message, 'error');
+        UIUtils.showModalForMessages(firstError.message);
       } else {
-        UIUtils.showMessage('Please check your input data.', 'error');
+        UIUtils.showModalForMessages('Please check your input data.');
       }
       return;
     }
@@ -108,14 +108,17 @@ export function initializeLogin() {
           Router.navigate('/blocked');
           return;
         }
-        Router.navigate('/');
+        UIUtils.showModalForMessages('Login successful! Redirecting...');
+        setTimeout(() => {
+          Router.navigate('/');
+        }, 2000);
         return;
       } else {
-        UIUtils.showMessage('Login failed. Please check your credentials.', 'error');
+        UIUtils.showModalForMessages('Login failed. Please check your credentials.');
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Login failed. Please try again.';
-      UIUtils.showMessage(errorMessage, 'error');
+      UIUtils.showModalForMessages(errorMessage);
     }
   });
   
@@ -127,8 +130,6 @@ export function initializeLogin() {
       apiService.loginWithGoogle();
     } catch (error) {
       console.error('Google login error:', error);
-      UIUtils.showMessage('Failed to initiate Google login. Please try again.', 'error');
-      UIUtils.hideLoading(googleBtn, 'Google');
     }
   });
   
@@ -140,7 +141,7 @@ export function initializeLogin() {
       apiService.loginWithFacebook();
     } catch (error) {
       console.error('Facebook login error:', error);
-      UIUtils.showMessage('Failed to initiate Facebook login. Please try again.', 'error');
+      UIUtils.showModalForMessages('Failed to initiate Facebook login. Please try again.');
       UIUtils.hideLoading(facebookBtn, 'Facebook');
     }
   });

@@ -180,4 +180,80 @@ export class UIUtils {
     console.error(errorMessage);
     UIUtils.showMessage(errorMessage, 'error');
   }
+
+  static showModalForMessages(message: string, autoCloseAfter: number = 2000): void {
+    // Remover modales existentes
+    const existingModals = document.querySelectorAll('.ui-modal');
+    existingModals.forEach(modal => modal.remove());
+
+    // Crear modal con clases CSS
+    const modal = document.createElement('div');
+    modal.className = 'ui-modal';
+    
+    // Crear contenido del modal
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-content';
+    const message_p = document.createElement('p');
+    message_p.textContent = message;
+  
+    // Ensamblar modal
+    modalContent.appendChild(message_p);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+  
+    // Auto-cerrar después del tiempo especificado
+    setTimeout(() => {
+      if (modal.parentNode) {
+        modal.remove();
+      }
+    }, autoCloseAfter);
+    
+    // Permitir cerrar haciendo clic fuera del contenido solo después del tiempo
+    setTimeout(() => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.remove();
+        }
+      });
+    }, autoCloseAfter);
+  }
+
+  static ModalForConfirmation(message:string , onConfirm?: () => void, onCancel?: () => void): void {
+    const modal = document.createElement('div');
+    modal.className = 'ui-modal';
+
+    // Crear contenido del modal
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-content';
+    const message_p = document.createElement('p');
+    message_p.textContent = message;
+
+    // Crear botones
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'button-container';
+
+    const confirmButton = document.createElement('button');
+    confirmButton.textContent = 'Confirmar';
+    confirmButton.className = 'btn btn-primary';
+    confirmButton.addEventListener('click', () => {
+      modal.remove();
+      onConfirm?.();
+    });
+
+    const cancelButton = document.createElement('button');
+    cancelButton.textContent = 'Cancelar';
+    cancelButton.className = 'btn btn-secondary';
+    cancelButton.addEventListener('click', () => {
+      modal.remove();
+      onCancel?.();
+    });
+
+    // Ensamblar modal
+    buttonContainer.appendChild(confirmButton);
+    buttonContainer.appendChild(cancelButton);
+    modalContent.appendChild(message_p);
+    modalContent.appendChild(buttonContainer);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+  }
 }

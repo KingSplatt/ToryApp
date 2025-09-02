@@ -2,6 +2,7 @@ import { User } from "../../login/interfaces/UserInterface";
 import { Route } from "../../router/router";
 import { getUsers, deleteUsers, blockUsers, unblockUsers,assignRoles,removeRoles } from "../services/UserServices";
 import "./admin.css";
+import { UIUtils } from "../../utils/ui";
 
 export function adminPage(){
     return `
@@ -17,9 +18,7 @@ export function adminPage(){
         
       </section>
       
-      <section class="admin-system-stats" id="system-stats">
-        <!-- System statistics content will be loaded here -->
-      </section>
+
     </div>
     `
 }
@@ -206,24 +205,17 @@ export async function deleteSelectedUsers() {
   }
   
   const confirmMessage = `Are you sure you want to delete ${selectedUserIds.length} user(s)? This action cannot be undone.`;
-  if (!confirm(confirmMessage)) {
-    return;
-  }
-  
+  UIUtils.ModalForConfirmation(confirmMessage);
+
   try {
-    console.log("Deleting users with IDs:", selectedUserIds);
-    
-    // Call the actual API to delete users
-    await deleteUsers(selectedUserIds);
-    
-    alert(`Successfully deleted ${selectedUserIds.length} user(s).`);
-    
-    // Refresh the user list
+    UIUtils.showModalForMessages(`Deleting ${selectedUserIds.length} user(s)...`);
+    setTimeout(async () => {
+      await deleteUsers(selectedUserIds);
+    }, 1000);
     await showUserManagement();
     updateToolBar();
   } catch (error) {
-    console.error("Error deleting users:", error);
-    alert("Failed to delete users. Please try again.");
+    UIUtils.showModalForMessages("Failed to delete users. Please try again.");
   }
 }
 

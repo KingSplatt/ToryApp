@@ -65,7 +65,6 @@ export function initializeHome() {
   
   // Listen for authentication state changes
   UIUtils.listenToAuthChanges((user) => {
-    // Update hero section when auth state changes
     const heroSection = document.querySelector('.hero');
     if (heroSection) {
       const isAuthenticated = user !== null;

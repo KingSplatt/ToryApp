@@ -250,7 +250,6 @@ body {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
-
 input[type="checkbox"] {
   width: 20px;
   height: 20px;
@@ -258,17 +257,23 @@ input[type="checkbox"] {
   border: 1px solid var(--border-color);
   border-radius: 0.25rem;
   appearance: none;
-  &::checked {
+  position: relative;
+  
+  &:checked { 
     background-color: var(--primary-color);
+    border-color: var(--primary-color); 
   }
-  &::after {
+  
+  &:checked::after { 
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: var(--primary-color);
-    border-radius: 0.25rem;
+    top: 3px; 
+    left: 6px;
+    width: 6px; 
+    height: 10px; 
+    border: solid white; 
+    border-width: 0 2px 2px 0; 
+    transform: rotate(45deg);
   }
 }
 
@@ -560,4 +565,111 @@ body {
 /* Use CSS containment for better performance */
 .card, .btn, .navbar {
   contain: layout style;
+}
+
+/* Modal styles */
+.ui-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+  backdrop-filter: blur(2px);
+}
+
+.ui-modal .modal-content {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 400px;
+  min-width: 300px;
+  margin: 20px;
+  box-shadow: 0 10px 25px var(--shadow-hover);
+  border: 1px solid var(--border-color);
+  animation: slideIn 0.3s ease-out;
+  position: relative;
+}
+
+.ui-modal .modal-content p {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.ui-modal .modal-content button {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  min-width: 80px;
+}
+
+.ui-modal .modal-content button:hover:not(:disabled) {
+  background: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.ui-modal .modal-content button:disabled {
+  background: var(--secondary-color);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ui-modal .modal-content button:active {
+  transform: translateY(0);
+}
+
+/* Modal animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Modal responsive design */
+@media (max-width: 480px) {
+  .ui-modal .modal-content {
+    margin: 10px;
+    padding: 20px;
+    max-width: calc(100% - 20px);
+    min-width: unset;
+  }
+  
+  .ui-modal .modal-content p {
+    font-size: 14px;
+  }
+  
+  .ui-modal .modal-content button {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
 }

@@ -1,6 +1,7 @@
 import { getUserInventoriesWithWriteAccess } from "../../inventories/services/inventoryServices";
 import { AuthService } from "../../login/services/auth";
 import { InventoryDto } from "../../inventories/interfaces/InventoryDtoInterface";
+import { UIUtils } from "../../utils/ui";
 
 export function sharedInventory() {
   return `
@@ -31,11 +32,9 @@ function loadUser(){
 async function loadSharedInventories(userId: string) {
   try {
     const inventories = await getUserInventoriesWithWriteAccess(userId);
-    console.log("Shared inventories loaded:", inventories);
     return inventories;
-    // Render the inventories in the shared inventory section
   } catch (error) {
-    console.error("Error loading shared inventories:", error);
+    UIUtils.showModalForMessages("Error loading shared inventories. Please try again.");
   }
 }
 

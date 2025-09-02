@@ -62,9 +62,7 @@ export class AuthService {
       const apiService = ApiService.getInstance();
       const response = await apiService.getAuthStatus();      
       if (response.user) {
-        // Verificar si el usuario está bloqueado
         if (response.user.isBlocked) {
-          // Si está bloqueado, hacer logout automáticamente
           await this.logout();
           return;
         }

@@ -7,6 +7,7 @@ import "./ownInventory.css"
 import { User } from "../../login/interfaces/UserInterface";
 import { grantWriterAccess, revokeWriterAccess } from "../../inventories/services/inventoryServices";
 import { GrantAccess, AccessLevel } from "../../inventories/interfaces/GrantAccessInterface";
+import { UIUtils } from "../../utils/ui";
 
 export function ownInventory(){
     return `
@@ -294,7 +295,7 @@ function updateInventoryToolBar() {
 // Funciones para abrir/cerrar modales
 function openGrantAccessModal() {
     if (selectedInventoryIds.length === 0) {
-        alert('Please select at least one inventory');
+        UIUtils.showModalForMessages('Please select at least one inventory');
         return;
     }
 
@@ -328,7 +329,7 @@ function closeGrantAccessModal() {
 
 function openRemoveAccessModal() {
     if (selectedInventoryIds.length === 0) {
-        alert('Please select at least one inventory');
+        UIUtils.showModalForMessages('Please select at least one inventory');
         return;
     }
 
@@ -363,12 +364,12 @@ function closeRemoveAccessModal() {
 // Funciones para manejar los permisos
 async function handleGrantAccess() {
     if (!selectedUser) {
-        alert('Please select a user from the search results');
+        UIUtils.showModalForMessages('Please select a user from the search results');
         return;
     }
 
     if (selectedInventoryIds.length === 0) {
-        alert('No inventories selected');
+        UIUtils.showModalForMessages('No inventories selected');
         return;
     }
 
@@ -380,25 +381,23 @@ async function handleGrantAccess() {
             };
             await grantWriterAccess(parseInt(inventoryId), grantAccess);
         }
-        
-        alert(`Access granted successfully to ${selectedUser.fullName} for ${selectedInventoryIds.length} inventory(ies)!`);
+        UIUtils.showModalForMessages('Access granted successfully!');
         closeGrantAccessModal();
         clearInventorySelection();
         loadTableOfInventories();
     } catch (error) {
-        console.error('Error granting access:', error);
-        alert('Error granting access. Please try again.');
+        UIUtils.showModalForMessages('Error granting access. Please try again.');
     }
 }
 
 async function handleRemoveAccess() {
     if (!selectedUser) {
-        alert('Please select a user from the search results');
+        UIUtils.showModalForMessages('Please select a user from the search results');
         return;
     }
 
     if (selectedInventoryIds.length === 0) {
-        alert('No inventories selected');
+        UIUtils.showModalForMessages('No inventories selected');
         return;
     }
 
@@ -406,14 +405,12 @@ async function handleRemoveAccess() {
         for (const inventoryId of selectedInventoryIds) {
             await revokeWriterAccess(parseInt(inventoryId), selectedUser.id);
         }
-        
-        alert(`Access removed successfully from ${selectedUser.fullName} for ${selectedInventoryIds.length} inventory(ies)!`);
+        UIUtils.showModalForMessages(`Access removed successfully from ${selectedUser.fullName} for ${selectedInventoryIds.length} inventory(ies)!`);
         closeRemoveAccessModal();
         clearInventorySelection();
         loadTableOfInventories();
     } catch (error) {
-        console.error('Error removing access:', error);
-        alert('Error removing access. Please try again.');
+        UIUtils.showModalForMessages('Error removing access. Please try again.');
     }
 }
 
@@ -423,9 +420,6 @@ async function loadUserInventories() {
     const allUsers = await getUsers();
     users.length = 0;
     users.push(...allUsers);
-    
-    console.log('Users loaded:', users);
-    console.log('Inventories:', inventories);
     return inventories;
 }
 

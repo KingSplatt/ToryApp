@@ -67,14 +67,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #f8f9fa;
+  background-color: var(--bg-secondary);
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .admin-user-management h2 {
-  color: #212529;
+  color: var(--text-primary);
   margin-bottom: 1.5rem;
   font-size: 1.8rem;
 }
@@ -87,9 +87,9 @@
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
   padding: 1rem;
-  background-color: #f8f9fa;
+  background-color: var(--bg-secondary);
   border-radius: 6px;
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--border-color);
 }
 
 .admin-btn-group {
@@ -134,6 +134,10 @@
   border-color: #dc3545;
 }
 
+.admin-btn-danger span{
+  color: var(--text-primary)
+}
+
 .admin-btn-danger:hover:not(:disabled) {
   background-color: #c82333;
   border-color: #bd2130;
@@ -164,8 +168,7 @@
 /* Admin Table Styles */
 .admin-user-table {
   width: 100%;
-  border-collapse: collapse;
-  background-color: #ffffff;
+  background-color: var(--bg-primary);
   border-radius: 6px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -173,26 +176,25 @@
 
 .admin-user-table th,
 .admin-user-table td {
+  background-color: var(--bg-secondary);
   padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid #dddddd;
-  border-color: 2px solid #d12121;
+  text-align: center;
+  &:hover {
+    background-color: var(--bg-secondary);
+  }
+}
+.admin-user-table td:hover {
+  background-color: var(--bg-primary);
 }
 
 .admin-user-table th {
-  background-color: #dfdfdf;
-  color: #212529;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   font-weight: 600;
   text-align: center;
   position: sticky;
   top: 0;
   z-index: 10;
-}
-
-.admin-user-table th:first-child,
-.admin-user-table td:first-child {
-  width: 60px;
-  text-align: center;
 }
 
 .admin-user-table tbody tr {

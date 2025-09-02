@@ -16,8 +16,6 @@ export class Language {
 
   static setLanguage(lang: 'es' | 'en') {
     localStorage.setItem('language', lang);
-    
-    // Update button text if it exists
     const langButton = document.getElementById('lang-toggle') as HTMLButtonElement;
     if (langButton) {
       langButton.textContent = lang.toUpperCase();

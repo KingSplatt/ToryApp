@@ -80,13 +80,11 @@ export function createLayout(content: string, currentPath: string) {
   `;
 }
 
-// Theme and language management
 export function initializeTheme() {
   Theme.initializeTheme();
   Theme.attachThemeButton();
 }
 
-// Initialize layout with auth state management
 export function initializeLayout() {
   const authService = AuthService.getInstance();
   initializeTheme();
@@ -95,7 +93,6 @@ export function initializeLayout() {
   attachFooterListeners();
 }
 
-// Attach navigation event listeners
 function attachNavigationListeners() {
   const logoutLink = document.querySelector('a[data-navigate="/logout"]');
   if (logoutLink) {
@@ -110,7 +107,6 @@ function attachNavigationListeners() {
   }
 }
 
-// Attach footer navigation event listeners
 function attachFooterListeners() {
   const footerLinks = document.querySelectorAll('.footer a[data-navigate]');
   footerLinks.forEach(link => {

@@ -68,12 +68,6 @@
   object-fit: cover;
 }
 
-.profile-actions {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

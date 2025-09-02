@@ -15,7 +15,6 @@ export class Theme {
     document.body.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
     
-    // Update button text if it exists
     const themeButton = document.getElementById('theme-toggle') as HTMLButtonElement;
     if (themeButton) {
       themeButton.textContent = theme === 'light' ? '🌙' : '☀️';
@@ -40,7 +39,6 @@ export class Theme {
     const theme = this.getTheme();
     this.setTheme(theme);
     
-    // Only set up system theme listener once
     if (!instance.isInitialized) {
       window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
         if (!localStorage.getItem('theme')) {
@@ -54,15 +52,11 @@ export class Theme {
   static attachThemeButton() {
     const themeToggle = document.getElementById('theme-toggle');
     if (themeToggle) {
-      // Remove existing listeners by cloning the node
       const newButton = themeToggle.cloneNode(true) as HTMLButtonElement;
       themeToggle.parentNode?.replaceChild(newButton, themeToggle);
-      
-      // Set correct initial text
       const currentTheme = this.getTheme();
       newButton.textContent = currentTheme === 'light' ? '🌙' : '☀️';
-      
-      // Add new event listener
+
       newButton.addEventListener('click', () => {
         const newTheme = this.toggleTheme();
         console.log('Theme switched to:', newTheme);

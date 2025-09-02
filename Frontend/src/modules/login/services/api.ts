@@ -30,7 +30,7 @@ export class ApiService {
     const url = `${API_CONFIG.BASE_URL}${endpoint}`;
     
     const defaultOptions: RequestInit = {
-      credentials: 'include', // Important for cookies/sessions
+      credentials: 'include', 
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
@@ -41,7 +41,6 @@ export class ApiService {
     try {
       const response = await fetch(url, defaultOptions);
       
-      // If redirected to OAuth provider, handle it
       if (response.redirected) {
         window.location.href = response.url;
         return Promise.reject('Redirecting to OAuth provider');

@@ -306,7 +306,7 @@ async function loadInventories() {
 
   sortFilter.addEventListener('change', applyFiltersAndSorting);
   sortCategory.addEventListener('change', applyFiltersAndSorting);
-  searchInput?.addEventListener('input', debounce(applyFiltersAndSorting, 150));
+  searchInput?.addEventListener('input', applyFiltersAndSorting);
 }
 
 
@@ -601,23 +601,13 @@ function setupCreateButton() {
     }
 
     console.log('Create inventory:', inventoryData);
-    
-    // Send data to backend
-    createInventory(inventoryData);
+    UIUtils.showModalForMessages('Creating inventory...');
+    setTimeout(() => {
+      createInventory(inventoryData);
+
+    },1000)
     closeModal();
   }
-}
-// Utility function for debouncing
-function debounce(func: Function, wait: number) {
-  let timeout: number;
-  return function executedFunction(...args: any[]) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait) as any;
-  };
 }
 
 // Global function for sharing

@@ -69,9 +69,10 @@ export function initializeRegisterForm() {
     
     try {
       const response = await apiService.register(userData);
-      console.log('User registered successfully:', response.user);
-      Router.navigate('/login');
-      return;
+      UIUtils.showModalForMessages('Registration successful! Redirecting...');
+      setTimeout(() => {
+        Router.navigate('/login');
+      }, 2000);
     } catch (error) {
       console.error('Registration failed:', error);
     }

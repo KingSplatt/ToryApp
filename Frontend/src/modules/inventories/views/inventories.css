@@ -337,3 +337,10 @@ input:focus, textarea:focus {
 .field-option .btn {
   margin-top: 0.5rem;
 }
+
+.inventory-tags{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 5px;
+}

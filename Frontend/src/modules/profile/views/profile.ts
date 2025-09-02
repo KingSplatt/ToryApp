@@ -64,23 +64,6 @@ export function profilePage() {
           </div>
         </div>
         
-        <div class="profile-stats-card">
-          <h2>Statistics</h2>
-          <div class="stats-grid">
-            <div class="stat-item">
-              <h3 id="user-inventories-count">0</h3>
-              <p>Inventories Created</p>
-            </div>
-            <div class="stat-item">
-              <h3 id="user-items-count">0</h3>
-              <p>Items Registered</p>
-            </div>
-            <div class="stat-item">
-              <h3 id="user-shared-count">0</h3>
-              <p>Inventories Shared</p>
-            </div>
-          </div>
-        </div>
         
         <div class="profile-preferences-card">
           <h2>Preferences</h2>
@@ -100,13 +83,6 @@ export function profilePage() {
                 <option value="en">English</option>
               </select>
             </div>
-            <div class="form-group">
-              <label>
-                <input type="checkbox" id="email-notifications" checked>
-                Receive email notifications
-              </label>
-            </div>
-            <button class="btn btn-success" id="save-preferences-btn">Save Preferences</button>
           </div>
         </div>
       </div>

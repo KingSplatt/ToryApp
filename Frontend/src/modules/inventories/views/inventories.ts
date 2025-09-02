@@ -283,10 +283,6 @@ async function loadInventories() {
             ${inv.tags.map((tag: any) => `<span class="tag">${tag}</span>`).join('')}
           </div>
         </div>
-        <div class="inventory-actions">
-          <a href="/inventory/${inv.id}" data-navigate="/inventory/${inv.id}" class="btn btn-sm">Ver</a>
-          <button class="btn btn-sm btn-secondary" onclick="shareInventory(${inv.id})">Compartir</button>
-        </div>
       </div>
     `).join('');
   }

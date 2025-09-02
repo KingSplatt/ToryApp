@@ -65,7 +65,7 @@ export function createLayout(content: string, currentPath: string) {
           <div class="user-info-nav">
             <span class="user-welcome">Welcome, ${currentUser?.fullName} </span>
           </div>
-          <a href="/logout" data-navigate="/logout" class="btn btn-secondary">
+          <a href="/logout" data-navigate="/logout" class="btn btn-secondary ">
             <i class="fa-solid fa-arrow-right-from-bracket"></i> Log out
           </a>
         ` : `

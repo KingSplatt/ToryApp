@@ -4,6 +4,7 @@ import "./profile.css"
 import { Router } from '../../router/router';
 import { getUserInventories } from '../../inventories/services/inventoryServices';
 import { AuthService } from '../../login/services/auth';
+import { Theme } from '../../utils/theme';
 
 export function profilePage() {
   const currentUser = UIUtils.getCurrentUser();
@@ -104,6 +105,7 @@ export function initializeProfile() {
   loadUserStatistics();
   loadUserPreferences();
   setupProfileEventListeners();
+  setupThemeListener(); // Add theme synchronization listener
   UIUtils.listenToAuthChanges((user) => {
     if (!user) {
       router.navigate('/');
@@ -124,8 +126,8 @@ async function loadUserStatistics() {
 }
 
 function loadUserPreferences() {
-  // Load theme preference
-  const themePreference = localStorage.getItem('theme') || 'light';
+  // Load theme preference using the centralized Theme class
+  const themePreference = Theme.getTheme();
   const themeSelect = document.getElementById('theme-preference') as HTMLSelectElement;
   if (themeSelect) {
     themeSelect.value = themePreference;
@@ -161,21 +163,35 @@ function setupProfileEventListeners() {
   const savePreferencesBtn = document.getElementById('save-preferences-btn');
   savePreferencesBtn?.addEventListener('click', saveUserPreferences);
   
-  // Theme change handler
+  // Theme change handler - using the centralized Theme class
   const themeSelect = document.getElementById('theme-preference') as HTMLSelectElement;
   themeSelect?.addEventListener('change', (e) => {
-    const newTheme = (e.target as HTMLSelectElement).value;
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
+    const newTheme = (e.target as HTMLSelectElement).value as 'light' | 'dark';
+    Theme.setTheme(newTheme);
+    
+    // Update the layout theme button if it exists
+    const themeButton = document.getElementById('theme-toggle') as HTMLButtonElement;
+    if (themeButton) {
+      themeButton.textContent = newTheme === 'light' ? '🌙' : '☀️';
+    }
+    
+    UIUtils.showMessage(`Tema cambiado a ${newTheme === 'light' ? 'claro' : 'oscuro'}`, 'success');
   });
 }
 
 function saveUserPreferences() {
   try {
-    // Save theme preference
+    // Save theme preference using the centralized Theme class
     const themeSelect = document.getElementById('theme-preference') as HTMLSelectElement;
     if (themeSelect) {
-      localStorage.setItem('theme', themeSelect.value);
+      const selectedTheme = themeSelect.value as 'light' | 'dark';
+      Theme.setTheme(selectedTheme);
+      
+      // Update the layout theme button if it exists
+      const themeButton = document.getElementById('theme-toggle') as HTMLButtonElement;
+      if (themeButton) {
+        themeButton.textContent = selectedTheme === 'light' ? '🌙' : '☀️';
+      }
     }
     
     // Save language preference
@@ -195,4 +211,37 @@ function saveUserPreferences() {
     console.error('Error saving preferences:', error);
     UIUtils.showMessage('Error al guardar las preferencias', 'error');
   }
+}
+
+// Function to sync theme changes from layout to profile page
+function setupThemeListener() {
+  // Listen for storage changes to sync theme across tabs/windows
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'theme') {
+      const themeSelect = document.getElementById('theme-preference') as HTMLSelectElement;
+      if (themeSelect && e.newValue) {
+        themeSelect.value = e.newValue;
+      }
+    }
+  });
+  
+  // Also listen for theme changes within the same tab
+  // We can use a custom event or a MutationObserver to detect theme changes
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+        const currentTheme = Theme.getTheme();
+        const themeSelect = document.getElementById('theme-preference') as HTMLSelectElement;
+        if (themeSelect && themeSelect.value !== currentTheme) {
+          themeSelect.value = currentTheme;
+        }
+      }
+    });
+  });
+  
+  // Observe changes to the body's data-theme attribute
+  observer.observe(document.body, {
+    attributes: true,
+    attributeFilter: ['data-theme']
+  });
 }

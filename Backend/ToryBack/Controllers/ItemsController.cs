@@ -32,30 +32,6 @@ namespace ToryBack.Controllers
         [HttpGet("inventory/{inventoryId}")]
         public async Task<ActionResult<IEnumerable<ItemDto>>> GetInventoryItems(int inventoryId)
         {
-            // Get current user ID
-            string? currentUserId = null;
-            if (User.Identity?.IsAuthenticated == true)
-            {
-                var currentUser = await _userManager.FindByNameAsync(User.Identity.Name!);
-                currentUserId = currentUser?.Id;
-            }
-
-            // Check if user can access this inventory
-            if (currentUserId != null)
-            {
-                var canAccess = await _authorizationService.CanUserAccessInventoryAsync(currentUserId, inventoryId, AccessLevel.Read);
-                if (!canAccess)
-                    return StatusCode(403, "You don't have permission to access this inventory");
-            }
-            else
-            {
-                // Check if inventory is public for non-authenticated users
-                var inventory = await _context.Inventories.FirstOrDefaultAsync(i => i.Id == inventoryId);
-                if (inventory == null)
-                    return NotFound("Inventory not found");
-                if (!inventory.IsPublic)
-                    return StatusCode(403, "This inventory is private");
-            }
 
             var items = await _context.Items
                 .Where(i => i.InventoryId == inventoryId)

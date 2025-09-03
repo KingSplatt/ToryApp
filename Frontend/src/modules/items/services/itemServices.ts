@@ -1,4 +1,5 @@
 import { Items } from "../interfaces/itemInterface";
+import { CreateItemDto } from "../interfaces/CreateItemDto";
 export const ITEMS_API_URL = "http://localhost:5217/api/Items";
 export const API_CONFIG = {
     baseUrl: ITEMS_API_URL,
@@ -32,12 +33,19 @@ export const getItems = async (id: number) => {
     return response.json();
 };
 
-export const createItem = async (itemData: Items) => {
+export const createItem = async (itemData: CreateItemDto) => {
     const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.ENDPOINTS.CREATE_ITEM()}`, {
         method: "POST",
         headers: API_CONFIG.headers,
+        credentials: "include",
         body: JSON.stringify(itemData)
     });
+    
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to create item: ${response.status} - ${errorText}`);
+    }
+    
     return response.json();
 };
 

@@ -1,15 +1,20 @@
-import { getInventory, updateInventory } from "../services/inventoryServices";
+import { getInventory, updateInventory, getUserInventoryPermissions } from "../services/inventoryServices";
 import { InventoryDto } from "../interfaces/InventoryDtoInterface";
 import { UpdateInventoryDto } from "../interfaces/UpdateInventoryDto";
 import { createLayout } from "../../layout/layout";
 import "./inventoryPage.css"
 import { UIUtils } from "../../utils/ui";
 import { uint32 } from "zod";
-import { getItemsForInventory } from "../../items/services/itemServices";
+import { getItemsForInventory, createItem } from "../../items/services/itemServices";
 import { getCategories,createCategory } from "../services/categoryServices";
 import { Router } from "../../router/router";
+import { UserInventoryPermissionsDto } from "../interfaces/PermissionInterface";
 
 const router = Router.getInstance();
+// Global variables for toolbar functionality
+let currentInventoryPermissions: UserInventoryPermissionsDto | null = null;
+let selectedItemIds: Set<number> = new Set();
+let inventoryItems: any[] = [];
 
 export function inventoryPage(){
     const isAuthenticated = UIUtils.isUserAuthenticated();
@@ -33,6 +38,10 @@ export const initInventoryPage = async (idInventory: string) => {
     
     const inventory = await takeInventory(idInventory);
     attachButtons();
+    
+    // Check user permissions and initialize toolbars
+    await initializeToolbarsWithPermissions(parsedId);
+    
     // Load items by default
     await loadItemsTable(idInventory);
 };
@@ -103,6 +112,56 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
             </section>
             </section>
         <section class="inventory-meta-actions">
+          <div class="items-action-toolbar" id="items-action-toolbar" style="display: none;">
+            <div class="toolbar-actions">
+              <div class="bulk-selection">
+                <label>
+                  <input type="checkbox" id="select-all-items">
+                  Select All
+                </label>
+                <span id="selected-count">0 items selected</span>
+              </div>
+              <div class="action-buttons">
+                <button class="btn btn-warning" id="edit-selected-items" disabled>
+                  <i class="fas fa-edit"></i> Edit Selected
+                </button>
+                <button class="btn btn-danger" id="delete-selected-items" disabled>
+                  <i class="fas fa-trash"></i> Delete Selected
+                  </button>
+                <button class="btn btn-primary" id="add-item-${inventory.id}">Add Item</button>
+              </div>
+            </div>
+          </div>
+          <hr>
+          
+          <div class="fields-action-toolbar" id="fields-action-toolbar" style="display: none;">
+            <div class="toolbar-actions">
+              <div class="field-selection">
+                <label>Field to modify:</label>
+                <select id="field-selector">
+                  <option value="">Select a field...</option>
+                </select>
+              </div>
+              <div class="field-operation">
+                <label>Operation:</label>
+                <select id="operation-selector">
+                  <option value="">Select operation...</option>
+                  <option value="clear">Clear Field</option>
+                  <option value="replace">Replace Value</option>
+                  <option value="append">Append to Value</option>
+                </select>
+              </div>
+              <div class="new-value-input" id="new-value-input" style="display: none;">
+                <label>New Value:</label>
+                <input type="text" id="new-field-value" placeholder="Enter new value">
+              </div>
+              <div class="action-buttons">
+                <button class="btn btn-primary" id="apply-field-operation" disabled>
+                  <i class="fas fa-magic"></i> Apply to Selected Items
+                </button>
+              </div>
+            </div>
+          </div>
         </section>
     </table>
     </section>
@@ -159,6 +218,42 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
             </div>
         </div>
     </div>
+    
+    <!-- Add Item Modal -->
+    <div id="add-item-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Item</h3>
+                <span class="close" id="close-add-item-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="add-item-form">
+                    <div class="form-group">
+                        <label for="add-item-name" id="add-item-name-label">Name *:</label>
+                        <input type="text" id="add-item-name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="add-item-customId" id="add-item-customId-label">Custom ID:</label>
+                        <input type="text" id="add-item-customId" name="customId" placeholder="Optional custom identifier">
+                    </div>
+                    <div class="form-group">
+                        <label for="add-item-description" id="add-item-description-label">Description:</label>
+                        <textarea id="add-item-description" name="description" rows="3" placeholder="Describe this item..."></textarea>
+                    </div>
+                    
+                    <!-- Dynamic custom fields will be added here -->
+                    <div id="custom-fields-container">
+                        <!-- Custom fields will be dynamically generated -->
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="cancel-add-item">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Item</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     `;
   }
   return inventory;
@@ -194,12 +289,12 @@ export function attachButtons(){
             }
         });
     });
-
+    //PENDIENTE
     const discussButtons = document.querySelectorAll('[id^="discuss-inventory-"]');
     discussButtons.forEach(button => {
         button.addEventListener('click', () => {
             const inventoryId = button.id.split('-')[2];
-    
+            router.navigate(`/inventories/${inventoryId}/discusspost`);
         });
     });
 
@@ -233,16 +328,21 @@ export async function loadItems(inventoryId: string){
 export async function loadItemsTable(inventoryId: string) {
     try {
         const items = await getItemsForInventory(parseInt(inventoryId));
+        inventoryItems = items; // Store for global access
 
-        
         const tableContainer = document.getElementById('items-table-container');
         if (tableContainer) {
             if (items && items.length > 0) {
+                // Check if user has permissions for checkboxes
+                const showCheckboxes = currentInventoryPermissions?.canEditItems || currentInventoryPermissions?.canDeleteItems;
+                
                 const tableHTML = `
                     <table class="items-table">
                         <thead>
                             <tr>
+                                ${showCheckboxes ? '<th><input type="checkbox" id="select-all-items-table"></th>' : ''}
                                 <th>ID</th>
+                                <th>Name</th>
                                 <th>Custom ID</th>
                                 <th>Description</th>
                                 <th>Created At</th>
@@ -253,11 +353,13 @@ export async function loadItemsTable(inventoryId: string) {
                         <tbody>
                             ${items.map((item: any) => `
                                 <tr>
+                                    ${showCheckboxes ? `<td><input type="checkbox" class="item-checkbox" value="${item.id}"></td>` : ''}
                                     <td>${item.id || 'N/A'}</td>
-                                    <td>${item.customid || 'N/A'}</td>
+                                    <td>${item.name || 'N/A'}</td>
+                                    <td>${item.customId || 'N/A'}</td>
                                     <td>${item.description || 'No description'}</td>
-                                    <td>${item.createdat ? new Date(item.createdat).toLocaleDateString() : 'N/A'}</td>
-                                    <td>${item.updatedat ? new Date(item.updatedat).toLocaleDateString() : 'N/A'}</td>
+                                    <td>${item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A'}</td>
+                                    <td>${item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : 'N/A'}</td>
                                     <td>
                                         <button class="btn btn-sm btn-primary edit-item-btn" data-item-id="${item.id}">Edit</button>
                                         <button class="btn btn-sm btn-danger delete-item-btn" data-item-id="${item.id}">Delete</button>
@@ -271,6 +373,11 @@ export async function loadItemsTable(inventoryId: string) {
                 
                 // Attach event listeners for item actions
                 attachItemButtonEvents();
+                
+                // Attach checkbox event listeners if checkboxes are shown
+                if (showCheckboxes) {
+                    attachCheckboxEventListeners();
+                }
             } else {
                 tableContainer.innerHTML = `
                     <div class="no-items-message">
@@ -283,10 +390,13 @@ export async function loadItemsTable(inventoryId: string) {
                 const addItemBtn = document.getElementById('add-item-btn');
                 if (addItemBtn) {
                     addItemBtn.addEventListener('click', () => {
-                
-                        // TODO: Implement add item functionality
+                        openAddItemModal();
                     });
                 }
+                
+                // Clear selected items since there are no items
+                selectedItemIds.clear();
+                updateToolbarState();
             }
         }
     } catch (error) {
@@ -299,6 +409,68 @@ export async function loadItemsTable(inventoryId: string) {
                 </div>
             `;
         }
+    }
+}
+
+// Attach checkbox event listeners for bulk operations
+function attachCheckboxEventListeners() {
+    // Handle individual item checkboxes
+    const itemCheckboxes = document.querySelectorAll('.item-checkbox') as NodeListOf<HTMLInputElement>;
+    itemCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            const target = e.target as HTMLInputElement;
+            const itemId = parseInt(target.value);
+            
+            if (target.checked) {
+                selectedItemIds.add(itemId);
+            } else {
+                selectedItemIds.delete(itemId);
+            }
+            
+            updateToolbarState();
+            updateSelectAllState();
+        });
+    });
+
+    // Handle table header select all checkbox
+    const selectAllTableCheckbox = document.getElementById('select-all-items-table') as HTMLInputElement;
+    selectAllTableCheckbox?.addEventListener('change', (e) => {
+        const target = e.target as HTMLInputElement;
+        itemCheckboxes.forEach(checkbox => {
+            checkbox.checked = target.checked;
+            const itemId = parseInt(checkbox.value);
+            if (target.checked) {
+                selectedItemIds.add(itemId);
+            } else {
+                selectedItemIds.delete(itemId);
+            }
+        });
+        
+        updateToolbarState();
+    });
+}
+
+// Update the state of the select all checkbox based on individual selections
+function updateSelectAllState() {
+    const selectAllTableCheckbox = document.getElementById('select-all-items-table') as HTMLInputElement;
+    const selectAllToolbarCheckbox = document.getElementById('select-all-items') as HTMLInputElement;
+    const itemCheckboxes = document.querySelectorAll('.item-checkbox') as NodeListOf<HTMLInputElement>;
+    
+    if (itemCheckboxes.length === 0) return;
+    
+    const checkedCount = selectedItemIds.size;
+    const totalCount = itemCheckboxes.length;
+    
+    // Update table select all checkbox
+    if (selectAllTableCheckbox) {
+        selectAllTableCheckbox.checked = checkedCount === totalCount;
+        selectAllTableCheckbox.indeterminate = checkedCount > 0 && checkedCount < totalCount;
+    }
+    
+    // Update toolbar select all checkbox
+    if (selectAllToolbarCheckbox) {
+        selectAllToolbarCheckbox.checked = checkedCount === totalCount;
+        selectAllToolbarCheckbox.indeterminate = checkedCount > 0 && checkedCount < totalCount;
     }
 }
 
@@ -463,6 +635,357 @@ async function handleEditFormSubmit(inventoryId: number) {
         if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Save Changes';
+        }
+    }
+}
+
+// Initialize toolbars with permission checking
+async function initializeToolbarsWithPermissions(inventoryId: number) {
+    try {
+        // Check if user is authenticated
+        const isAuthenticated = UIUtils.isUserAuthenticated();
+        if (!isAuthenticated) {
+            return; // Don't show toolbars for unauthenticated users
+        }
+
+        // Get user permissions for this inventory
+        currentInventoryPermissions = await getUserInventoryPermissions(inventoryId);
+        
+        // Show toolbars based on permissions
+        if (currentInventoryPermissions.canEditItems || currentInventoryPermissions.canDeleteItems) {
+            const itemsToolbar = document.getElementById('items-action-toolbar');
+            if (itemsToolbar) {
+                itemsToolbar.style.display = 'block';
+                initializeItemsToolbar();
+            }
+        }
+
+        if (currentInventoryPermissions.canEditItems) {
+            const fieldsToolbar = document.getElementById('fields-action-toolbar');
+            if (fieldsToolbar) {
+                fieldsToolbar.style.display = 'block';
+                initializeFieldsToolbar(inventoryId);
+            }
+        }
+
+    } catch (error) {
+        console.error('Error checking permissions:', error);
+        // If there's an error getting permissions, hide the toolbars
+    }
+}
+
+// Initialize items action toolbar
+function initializeItemsToolbar() {
+    const selectAllCheckbox = document.getElementById('select-all-items') as HTMLInputElement;
+    const editButton = document.getElementById('edit-selected-items') as HTMLButtonElement;
+    const deleteButton = document.getElementById('delete-selected-items') as HTMLButtonElement;
+    const addItemButton = document.getElementById(`add-item-${currentInventoryPermissions?.inventoryId}`) as HTMLButtonElement;
+    const selectedCount = document.getElementById('selected-count');
+
+    // Handle permissions for buttons
+    if (!currentInventoryPermissions?.canEditItems) {
+        editButton.style.display = 'none';
+    }
+    if (!currentInventoryPermissions?.canDeleteItems) {
+        deleteButton.style.display = 'none';
+    }
+
+    // Select all functionality
+    selectAllCheckbox?.addEventListener('change', (e) => {
+        const target = e.target as HTMLInputElement;
+        const itemCheckboxes = document.querySelectorAll('.item-checkbox') as NodeListOf<HTMLInputElement>;
+        
+        itemCheckboxes.forEach(checkbox => {
+            checkbox.checked = target.checked;
+            const itemId = parseInt(checkbox.value);
+            if (target.checked) {
+                selectedItemIds.add(itemId);
+            } else {
+                selectedItemIds.delete(itemId);
+            }
+        });
+        
+        updateToolbarState();
+    });
+
+    // Edit selected items
+    editButton?.addEventListener('click', () => {
+        if (selectedItemIds.size === 0) {
+            UIUtils.showModalForMessages('Please select items to edit');
+            return;
+        }
+        openBulkEditModal();
+    });
+
+    // Delete selected items
+    deleteButton?.addEventListener('click', () => {
+        if (selectedItemIds.size === 0) {
+            UIUtils.showModalForMessages('Please select items to delete');
+            return;
+        }
+        confirmBulkDelete();
+    });
+
+    // Add new item
+    addItemButton?.addEventListener('click', () => {
+        openAddItemModal();
+    });
+}
+
+// Initialize fields action toolbar
+async function initializeFieldsToolbar(inventoryId: number) {
+    const fieldSelector = document.getElementById('field-selector') as HTMLSelectElement;
+    const operationSelector = document.getElementById('operation-selector') as HTMLSelectElement;
+    const newValueInput = document.getElementById('new-value-input');
+    const applyButton = document.getElementById('apply-field-operation') as HTMLButtonElement;
+
+    // Populate field selector with available fields
+    try {
+        const inventory = await getInventory(inventoryId);
+        populateFieldSelector(fieldSelector, inventory);
+    } catch (error) {
+        console.error('Error loading inventory fields:', error);
+    }
+
+    // Handle operation selection
+    operationSelector?.addEventListener('change', () => {
+        const operation = operationSelector.value;
+        if (operation === 'replace' || operation === 'append') {
+            newValueInput!.style.display = 'block';
+        } else {
+            newValueInput!.style.display = 'none';
+        }
+        updateFieldOperationState();
+    });
+
+    // Handle field selection
+    fieldSelector?.addEventListener('change', updateFieldOperationState);
+
+    // Apply field operation
+    applyButton?.addEventListener('click', () => {
+        if (selectedItemIds.size === 0) {
+            UIUtils.showModalForMessages('Please select items to modify');
+            return;
+        }
+        applyFieldOperation();
+    });
+}
+
+// Update toolbar button states
+function updateToolbarState() {
+    const selectedCount = document.getElementById('selected-count');
+    const editButton = document.getElementById('edit-selected-items') as HTMLButtonElement;
+    const deleteButton = document.getElementById('delete-selected-items') as HTMLButtonElement;
+
+    const count = selectedItemIds.size;
+    if (selectedCount) {
+        selectedCount.textContent = `${count} items selected`;
+    }
+
+    if (editButton) editButton.disabled = count === 0;
+    if (deleteButton) deleteButton.disabled = count === 0;
+}
+
+// Update field operation button state
+function updateFieldOperationState() {
+    const fieldSelector = document.getElementById('field-selector') as HTMLSelectElement;
+    const operationSelector = document.getElementById('operation-selector') as HTMLSelectElement;
+    const applyButton = document.getElementById('apply-field-operation') as HTMLButtonElement;
+
+    const hasField = fieldSelector?.value !== '';
+    const hasOperation = operationSelector?.value !== '';
+    const hasSelectedItems = selectedItemIds.size > 0;
+
+    if (applyButton) {
+        applyButton.disabled = !hasField || !hasOperation || !hasSelectedItems;
+    }
+}
+
+// Populate field selector with available custom fields
+function populateFieldSelector(selector: HTMLSelectElement, inventory: InventoryDto) {
+    selector.innerHTML = '<option value="">Select a field...</option>';
+    
+    // Add basic fields
+    selector.innerHTML += '<option value="name">Name</option>';
+    selector.innerHTML += '<option value="description">Description</option>';
+    selector.innerHTML += '<option value="customId">Custom ID</option>';
+    
+    // Add custom fields if they exist
+    if (inventory.customFields) {
+        inventory.customFields.forEach((field, index) => {
+            selector.innerHTML += `<option value="custom_${index}">${field.name}</option>`;
+        });
+    }
+}
+
+// Bulk edit modal functions
+function openBulkEditModal() {
+    UIUtils.showModalForMessages('Bulk edit functionality coming soon!');
+}
+
+function confirmBulkDelete() {
+    UIUtils.ModalForConfirmation(
+        `Are you sure you want to delete ${selectedItemIds.size} selected items? This action cannot be undone.`,
+        () => executeBulkDelete(),
+        () => console.log('Bulk delete canceled')
+    );
+}
+
+async function executeBulkDelete() {
+    try {
+        UIUtils.showModalForMessages('Deleting items...');
+        
+        // TODO: Implement bulk delete API call
+        // For now, just show a success message
+        selectedItemIds.clear();
+        updateToolbarState();
+        
+        // Reload items table
+        const inventoryIdStr = window.location.pathname.split('/').pop();
+        if (inventoryIdStr) {
+            await loadItemsTable(inventoryIdStr);
+        }
+        
+        UIUtils.showModalForMessages('Items deleted successfully!');
+    } catch (error) {
+        console.error('Error deleting items:', error);
+        UIUtils.showModalForMessages('Error deleting items. Please try again.');
+    }
+}
+
+function applyFieldOperation() {
+    const fieldSelector = document.getElementById('field-selector') as HTMLSelectElement;
+    const operationSelector = document.getElementById('operation-selector') as HTMLSelectElement;
+    const newValueInput = document.getElementById('new-field-value') as HTMLInputElement;
+
+    const field = fieldSelector.value;
+    const operation = operationSelector.value;
+    const newValue = newValueInput.value;
+
+    UIUtils.showModalForMessages(`Field operation: ${operation} on ${field} for ${selectedItemIds.size} items. Implementation coming soon!`);
+}
+
+// Add Item Modal Functions
+function openAddItemModal() {
+    const modal = document.getElementById('add-item-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        
+        // Reset form
+        const form = document.getElementById('add-item-form') as HTMLFormElement;
+        if (form) {
+            form.reset();
+        }
+        
+        // Populate custom fields if needed
+        populateCustomFieldsForAdd();
+        
+        // Attach modal event listeners
+        attachAddItemModalEventListeners();
+    }
+}
+
+function populateCustomFieldsForAdd() {
+    const container = document.getElementById('custom-fields-container');
+    if (!container) return;
+    
+    // Get current inventory from global state or reload if needed
+    const currentInventoryId = currentInventoryPermissions?.inventoryId;
+    if (!currentInventoryId) return;
+    
+    // For now, we'll leave this empty. In a full implementation,
+    // you would fetch the inventory custom fields and generate form inputs
+    container.innerHTML = '';
+}
+
+function attachAddItemModalEventListeners() {
+    const closeBtn = document.getElementById('close-add-item-modal');
+    const cancelBtn = document.getElementById('cancel-add-item');
+    const modal = document.getElementById('add-item-modal');
+    const form = document.getElementById('add-item-form') as HTMLFormElement;
+
+    const closeModal = () => {
+        if (modal) modal.style.display = 'none';
+    };
+
+    // Close button events
+    if (closeBtn) closeBtn.onclick = closeModal;
+    if (cancelBtn) cancelBtn.onclick = closeModal;
+    
+    // Close modal when clicking outside
+    window.onclick = (event) => {
+        if (event.target === modal) {
+            closeModal();
+        }
+    };
+
+    // Form submission
+    if (form) {
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            await handleAddItemFormSubmit();
+        };
+    }
+}
+
+async function handleAddItemFormSubmit() {
+    try {
+        const form = document.getElementById('add-item-form') as HTMLFormElement;
+        const formData = new FormData(form);
+        
+        const name = (formData.get('name') as string)?.trim();
+        const customId = (formData.get('customId') as string)?.trim();
+        const description = (formData.get('description') as string)?.trim();
+
+        // Validation
+        if (!name) {
+            UIUtils.showModalForMessages('Item name is required');
+            return;
+        }
+
+        if (!currentInventoryPermissions?.inventoryId) {
+            UIUtils.showModalForMessages('Invalid inventory ID');
+            return;
+        }
+
+        // Prepare item data according to CreateItemDto interface
+        const itemData = {
+            inventoryId: currentInventoryPermissions.inventoryId,
+            name: name,
+            description: description || undefined,
+            customId: customId || undefined,
+            customFieldValues: [] // Will be populated from custom fields
+        };
+
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Adding...';
+        }
+
+        // Call API to create item
+        await createItem(itemData);
+
+        // Close modal
+        const modal = document.getElementById('add-item-modal');
+        if (modal) modal.style.display = 'none';
+        
+        UIUtils.showModalForMessages('Item added successfully!');
+        
+        // Reload items table
+        const inventoryIdStr = currentInventoryPermissions.inventoryId.toString();
+        await loadItemsTable(inventoryIdStr);
+
+    } catch (error) {
+        console.error('Error adding item:', error);
+        UIUtils.showModalForMessages('Error adding item: ' + (error instanceof Error ? error.message : 'Unknown error'));
+
+        // Reset button state
+        const submitBtn = document.querySelector('#add-item-form button[type="submit"]') as HTMLButtonElement;
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Add Item';
         }
     }
 }

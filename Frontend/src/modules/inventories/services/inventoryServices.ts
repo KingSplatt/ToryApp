@@ -3,6 +3,7 @@ import { InventoryDto } from "../interfaces/InventoryDtoInterface";
 import { UpdateInventoryDto } from "../interfaces/UpdateInventoryDto";
 import { GrantAccess } from "../interfaces/GrantAccessInterface";
 import { Tag } from "../interfaces/TagInterface";
+import { UserInventoryPermissionsDto } from "../interfaces/PermissionInterface";
 
 export const INVENTORY_API_URL = "http://localhost:5217/api/Inventories";
 export const API_CONFIG_INVENTORIES = {
@@ -16,7 +17,8 @@ export const API_CONFIG_INVENTORIES = {
     DELETE_INVENTORY: (id: number) => `/${id}`,
     GET_TAGS: "/tags",
     GRANT_WRITER_ACCESS: (id: number) => `/${id}/grant-access`,
-    REVOKE_WRITER_ACCESS: (id: number, userId: string) => `/${id}/revoke-access/${userId}`
+    REVOKE_WRITER_ACCESS: (id: number, userId: string) => `/${id}/revoke-access/${userId}`,
+    GET_PERMISSIONS: (id: number) => `/${id}/permissions`
   },
   headers: {
     "Content-Type": "application/json"
@@ -167,3 +169,21 @@ export const revokeWriterAccess = async (inventoryId: number, userId: string) =>
     throw new Error('Failed to revoke access');
   }
 };
+
+export const getUserInventoryPermissions = async (inventoryId: number): Promise<UserInventoryPermissionsDto> => {
+  const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.GET_PERMISSIONS(inventoryId)}`, {
+    credentials: 'include',
+    headers: {
+      "Content-Type": "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Error response body:', errorText);
+    throw new Error(`Failed to get permissions: ${response.status} - ${errorText}`);
+  }
+
+  return await response.json();
+};
+

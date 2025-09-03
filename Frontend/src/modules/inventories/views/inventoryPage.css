@@ -384,3 +384,229 @@
 #edit-isPublic-label{
     color: var(--text-primary);
 }
+
+/* Toolbar Styles */
+.items-action-toolbar,
+.fields-action-toolbar {
+    margin: 16px 0;
+    padding: 16px;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--bg-accent);
+}
+
+.items-action-toolbar h4,
+.fields-action-toolbar h4 {
+    margin: 0 0 12px 0;
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: space-between;}
+
+.bulk-selection {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.bulk-selection button {
+    align-items: flex-end;
+}
+
+.bulk-selection label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.bulk-selection input[type="checkbox"] {
+    margin: 0;
+}
+
+#selected-count {
+    color: var(--text-secondary);
+    font-size: 14px;
+    padding: 4px 8px;
+    background-color: var(--bg-primary);
+    border-radius: 4px;
+}
+
+.action-buttons {
+
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.field-selection,
+.field-operation,
+.new-value-input {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.field-selection label,
+.field-operation label,
+.new-value-input label {
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.field-selection select,
+.field-operation select,
+.new-value-input input {
+    padding: 6px 12px;
+    border: 1px solid var(--bg-accent);
+    border-radius: 4px;
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.field-selection select:focus,
+.field-operation select:focus,
+.new-value-input input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb, 0, 123, 255), 0.2);
+}
+
+/* Checkbox styles in table */
+.items-table input[type="checkbox"] {
+    cursor: pointer;
+    transform: scale(1.1);
+}
+
+.items-table th:first-child,
+.items-table td:first-child {
+    width: 40px;
+    text-align: center;
+}
+
+/* Responsive design for toolbars */
+@media (max-width: 768px) {
+    .toolbar-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .action-buttons {
+        justify-content: center;
+    }
+    
+    .field-selection,
+    .field-operation,
+    .new-value-input {
+        width: 100%;
+    }
+}
+
+/* Add Item Modal Styles */
+#add-item-modal .modal-content {
+    max-width: 600px;
+}
+
+#add-item-name-label,
+#add-item-customId-label,
+#add-item-description-label {
+    color: var(--text-primary);
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+#add-item-form .form-group {
+    margin-bottom: 16px;
+}
+
+#add-item-form input[type="text"],
+#add-item-form textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--bg-accent);
+    border-radius: 4px;
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+#add-item-form input[type="text"]:focus,
+#add-item-form textarea:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb, 0, 123, 255), 0.2);
+}
+
+#add-item-form textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+#custom-fields-container {
+    margin: 16px 0;
+    padding: 12px;
+    background-color: var(--bg-secondary);
+    border-radius: 6px;
+    border: 1px solid var(--bg-accent);
+}
+
+#custom-fields-container:empty {
+    display: none;
+}
+
+/* Custom field styles */
+.custom-field-group {
+    margin-bottom: 12px;
+}
+
+.custom-field-group:last-child {
+    margin-bottom: 0;
+}
+
+.custom-field-group label {
+    display: block;
+    color: var(--text-primary);
+    font-weight: 500;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.custom-field-group input,
+.custom-field-group select,
+.custom-field-group textarea {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--bg-accent);
+    border-radius: 4px;
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.custom-field-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 6px;
+}
+
+.custom-field-group input[type="date"] {
+    padding: 5px 10px;
+}
+
+/* Required field indicator */
+.required-field::after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}

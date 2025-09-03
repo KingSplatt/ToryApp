@@ -1,11 +1,9 @@
 import { getInventory, updateInventory, getUserInventoryPermissions } from "../services/inventoryServices";
 import { InventoryDto } from "../interfaces/InventoryDtoInterface";
 import { UpdateInventoryDto } from "../interfaces/UpdateInventoryDto";
-import { createLayout } from "../../layout/layout";
 import "./inventoryPage.css"
 import { UIUtils } from "../../utils/ui";
-import { uint32 } from "zod";
-import { getItemsForInventory, createItem } from "../../items/services/itemServices";
+import { getItemsForInventory, createItem,deleteItems,updateItem } from "../../items/services/itemServices";
 import { getCategories,createCategory } from "../services/categoryServices";
 import { Router } from "../../router/router";
 import { UserInventoryPermissionsDto } from "../interfaces/PermissionInterface";
@@ -56,9 +54,9 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
     <section class="inventory-info">
         <section class="inventory-header">
             <section class="inventory-cards">
-                <h2>${inventory.title || 'Untitled Inventory'}</h2>
+                <h2>${escapeHtml(inventory.title || 'Untitled Inventory')}</h2>
                 <hr>
-                <h3>${inventory.description || 'No description available'}</h3>
+                <h3>${escapeHtml(inventory.description || 'No description available')}</h3>
                 <hr>
                 <section class="inventory-meta">
                     <section class="inventory-meta-owner">
@@ -66,15 +64,15 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
                             <thead>
                                 <tr>
                                     <th>Owner:</th>
-                                    <td>${inventory.owner}</td>
+                                    <td>${escapeHtml(inventory.owner)}</td>
                                 </tr>
                                 <tr>
                                     <th>Description:</th>
-                                    <td>${inventory.description || 'No description available'}</td>
+                                    <td>${escapeHtml(inventory.description || 'No description available')}</td>
                                 </tr>
                                 <tr>
                                     <th>Category:</th>
-                                    <td>${inventory.category || 'Uncategorized'}</td>
+                                    <td>${escapeHtml(inventory.category || 'Uncategorized')}</td>
                                 </tr>
                                 <tr>
                                     <th>Is Public:</th>
@@ -90,7 +88,7 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
                                 </tr>
                                 <tr>
                                     <th>Tags:</th>
-                                    <td>${inventory.tags.length > 0 ? inventory.tags.map(tag => `<span class="list-tag">${tag}</span>`).join(', ') : '<span>No tags</span>'}</td>
+                                    <td>${inventory.tags.length > 0 ? inventory.tags.map(tag => `<span class="list-tag">${escapeHtml(tag)}</span>`).join(', ') : '<span>No tags</span>'}</td>
                                 </tr>
                             </thead>
                         </table>
@@ -98,7 +96,7 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
                     
                     <section class="inventory-meta-img">
                         <section class="inventory-image">
-                            <img src="${inventory.imageUrl || 'placeholder.jpg'}" alt="${inventory.title || 'Untitled Inventory'}">
+                            <img src="${escapeHtml(inventory.imageUrl || 'placeholder.jpg')}" alt="${escapeHtml(inventory.title || 'Untitled Inventory')}">
                         </section>
                     </section>
                 </section>
@@ -192,8 +190,8 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
                     <div class="form-group">
                         <label for="edit-category" id="edit-category-label">Category:</label>
                         <select id="edit-category" name="categoryId" required>
-                            <option value="Select a category">Select a category</option>
-                            ${categories.map(category => `<option value="${category.id}">${category.name}</option>`).join("")}
+                            <option value="">Select a category</option>
+                            ${categories.map(category => `<option value="${escapeHtml(category.id.toString())}">${escapeHtml(category.name)}</option>`).join("")}
                         </select>
                     </div>
                     <div class="form-group">
@@ -259,10 +257,6 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
   return inventory;
 }
 
-export function loadToolBarItems(){
-    
-}
-
 export function attachButtons(){
     // Select buttons that start with "edit-inventory-" but exclude the form
     const editButtons = document.querySelectorAll('button[id^="edit-inventory-"]');
@@ -270,11 +264,6 @@ export function attachButtons(){
         button.addEventListener('click', async () => {
             const inventoryId = button.id.split('-')[2];
             const parsedInventory = parseInt(inventoryId);
-    
-    
-    
-    
-
             const parsedId = parseInt(inventoryId);
             if (isNaN(parsedId)) {
                 UIUtils.showModalForMessages('Invalid inventory ID: ' + inventoryId);
@@ -370,10 +359,7 @@ export async function loadItemsTable(inventoryId: string) {
                     </table>
                 `;
                 tableContainer.innerHTML = tableHTML;
-                
-                // Attach event listeners for item actions
                 attachItemButtonEvents();
-                
                 // Attach checkbox event listeners if checkboxes are shown
                 if (showCheckboxes) {
                     attachCheckboxEventListeners();
@@ -393,8 +379,6 @@ export async function loadItemsTable(inventoryId: string) {
                         openAddItemModal();
                     });
                 }
-                
-                // Clear selected items since there are no items
                 selectedItemIds.clear();
                 updateToolbarState();
             }
@@ -414,7 +398,6 @@ export async function loadItemsTable(inventoryId: string) {
 
 // Attach checkbox event listeners for bulk operations
 function attachCheckboxEventListeners() {
-    // Handle individual item checkboxes
     const itemCheckboxes = document.querySelectorAll('.item-checkbox') as NodeListOf<HTMLInputElement>;
     itemCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', (e) => {
@@ -457,17 +440,13 @@ function updateSelectAllState() {
     const itemCheckboxes = document.querySelectorAll('.item-checkbox') as NodeListOf<HTMLInputElement>;
     
     if (itemCheckboxes.length === 0) return;
-    
     const checkedCount = selectedItemIds.size;
     const totalCount = itemCheckboxes.length;
-    
-    // Update table select all checkbox
+
     if (selectAllTableCheckbox) {
         selectAllTableCheckbox.checked = checkedCount === totalCount;
         selectAllTableCheckbox.indeterminate = checkedCount > 0 && checkedCount < totalCount;
     }
-    
-    // Update toolbar select all checkbox
     if (selectAllToolbarCheckbox) {
         selectAllToolbarCheckbox.checked = checkedCount === totalCount;
         selectAllToolbarCheckbox.indeterminate = checkedCount > 0 && checkedCount < totalCount;
@@ -475,7 +454,6 @@ function updateSelectAllState() {
 }
 
 function attachItemButtonEvents() {
-    // Edit item buttons
     const editButtons = document.querySelectorAll('.edit-item-btn');
     editButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -484,8 +462,6 @@ function attachItemButtonEvents() {
             // TODO: Implement edit item functionality
         });
     });
-
-    // Delete item buttons
     const deleteButtons = document.querySelectorAll('.delete-item-btn');
     deleteButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -499,11 +475,7 @@ function attachItemButtonEvents() {
 // Modal functions
 export async function openEditModal(inventoryId: number) {
     try {
-        // Get current inventory data
         const inventory = await getInventory(inventoryId);
-
-        
-        // Populate form fields
         const titleInput = document.getElementById('edit-title') as HTMLInputElement;
         const descriptionInput = document.getElementById('edit-description') as HTMLTextAreaElement;
         const categoryInput = document.getElementById('edit-category') as HTMLInputElement;
@@ -518,42 +490,31 @@ export async function openEditModal(inventoryId: number) {
         if (imageUrlInput) imageUrlInput.value = inventory.imageUrl || '';
         if (isPublicInput) isPublicInput.checked = inventory.isPublic;
 
-
-        // Show modal
         const modal = document.getElementById('edit-inventory-modal');
         if (modal) {
             modal.style.display = 'block';
         }
-
-        // Attach modal event listeners
         attachModalEventListeners(inventoryId);
     } catch (error) {
-        console.error('Error opening edit modal:', error);
         UIUtils.showModalForMessages('Error loading inventory data for editing: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
 }
 
 function attachModalEventListeners(inventoryId: number) {
-    // Close modal events
     const closeBtn = document.getElementById('close-edit-modal');
     const cancelBtn = document.getElementById('cancel-edit');
     const modal = document.getElementById('edit-inventory-modal');
-
     const closeModal = () => {
         if (modal) modal.style.display = 'none';
     };
 
     if (closeBtn) closeBtn.onclick = closeModal;
     if (cancelBtn) cancelBtn.onclick = closeModal;
-    
-    // Close modal when clicking outside
     window.onclick = (event) => {
         if (event.target === modal) {
             closeModal();
         }
     };
-
-    // Form submission
     const form = document.getElementById('inventory-edit-form') as HTMLFormElement;
     if (form) {
         form.onsubmit = async (e) => {
@@ -611,9 +572,6 @@ async function handleEditFormSubmit(inventoryId: number) {
             updateData.imageUrl = imageUrl;
         }
 
-
-
-        // Show loading state
         const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
         if (submitBtn) {
             submitBtn.disabled = true;
@@ -627,10 +585,7 @@ async function handleEditFormSubmit(inventoryId: number) {
         Router.navigate(`/inventories/${inventoryId}`);
 
     } catch (error) {
-        console.error('Error updating inventory:', error);
         UIUtils.showModalForMessages('Error updating inventory: ' + (error instanceof Error ? error.message : 'Unknown error'));
-
-        // Reset button state
         const submitBtn = document.querySelector('#inventory-edit-form button[type="submit"]') as HTMLButtonElement;
         if (submitBtn) {
             submitBtn.disabled = false;
@@ -647,11 +602,7 @@ async function initializeToolbarsWithPermissions(inventoryId: number) {
         if (!isAuthenticated) {
             return; // Don't show toolbars for unauthenticated users
         }
-
-        // Get user permissions for this inventory
         currentInventoryPermissions = await getUserInventoryPermissions(inventoryId);
-        
-        // Show toolbars based on permissions
         if (currentInventoryPermissions.canEditItems || currentInventoryPermissions.canDeleteItems) {
             const itemsToolbar = document.getElementById('items-action-toolbar');
             if (itemsToolbar) {
@@ -669,8 +620,6 @@ async function initializeToolbarsWithPermissions(inventoryId: number) {
         }
 
     } catch (error) {
-        console.error('Error checking permissions:', error);
-        // If there's an error getting permissions, hide the toolbars
     }
 }
 
@@ -739,15 +688,12 @@ async function initializeFieldsToolbar(inventoryId: number) {
     const newValueInput = document.getElementById('new-value-input');
     const applyButton = document.getElementById('apply-field-operation') as HTMLButtonElement;
 
-    // Populate field selector with available fields
     try {
         const inventory = await getInventory(inventoryId);
         populateFieldSelector(fieldSelector, inventory);
     } catch (error) {
         console.error('Error loading inventory fields:', error);
     }
-
-    // Handle operation selection
     operationSelector?.addEventListener('change', () => {
         const operation = operationSelector.value;
         if (operation === 'replace' || operation === 'append') {
@@ -757,11 +703,6 @@ async function initializeFieldsToolbar(inventoryId: number) {
         }
         updateFieldOperationState();
     });
-
-    // Handle field selection
-    fieldSelector?.addEventListener('change', updateFieldOperationState);
-
-    // Apply field operation
     applyButton?.addEventListener('click', () => {
         if (selectedItemIds.size === 0) {
             UIUtils.showModalForMessages('Please select items to modify');
@@ -769,6 +710,7 @@ async function initializeFieldsToolbar(inventoryId: number) {
         }
         applyFieldOperation();
     });
+    fieldSelector?.addEventListener('change', updateFieldOperationState);
 }
 
 // Update toolbar button states
@@ -791,7 +733,6 @@ function updateFieldOperationState() {
     const fieldSelector = document.getElementById('field-selector') as HTMLSelectElement;
     const operationSelector = document.getElementById('operation-selector') as HTMLSelectElement;
     const applyButton = document.getElementById('apply-field-operation') as HTMLButtonElement;
-
     const hasField = fieldSelector?.value !== '';
     const hasOperation = operationSelector?.value !== '';
     const hasSelectedItems = selectedItemIds.size > 0;
@@ -803,17 +744,33 @@ function updateFieldOperationState() {
 
 // Populate field selector with available custom fields
 function populateFieldSelector(selector: HTMLSelectElement, inventory: InventoryDto) {
-    selector.innerHTML = '<option value="">Select a field...</option>';
+    selector.innerHTML = '';
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Select a field...';
+    selector.appendChild(defaultOption);
     
-    // Add basic fields
-    selector.innerHTML += '<option value="name">Name</option>';
-    selector.innerHTML += '<option value="description">Description</option>';
-    selector.innerHTML += '<option value="customId">Custom ID</option>';
+    const nameOption = document.createElement('option');
+    nameOption.value = 'name';
+    nameOption.textContent = 'Name';
+    selector.appendChild(nameOption);
     
-    // Add custom fields if they exist
+    const descOption = document.createElement('option');
+    descOption.value = 'description';
+    descOption.textContent = 'Description';
+    selector.appendChild(descOption);
+    
+    const customIdOption = document.createElement('option');
+    customIdOption.value = 'customId';
+    customIdOption.textContent = 'Custom ID';
+    selector.appendChild(customIdOption);
+    
     if (inventory.customFields) {
         inventory.customFields.forEach((field, index) => {
-            selector.innerHTML += `<option value="custom_${index}">${field.name}</option>`;
+            const option = document.createElement('option');
+            option.value = `custom_${index}`;
+            option.textContent = field.name;
+            selector.appendChild(option);
         });
     }
 }
@@ -833,18 +790,13 @@ function confirmBulkDelete() {
 
 async function executeBulkDelete() {
     try {
-        UIUtils.showModalForMessages('Deleting items...');
-        
-        // TODO: Implement bulk delete API call
-        // For now, just show a success message
+        const itemCheckboxes = document.querySelectorAll('.item-checkbox') as NodeListOf<HTMLInputElement>;
+        const itemIdsToDelete = Array.from(selectedItemIds);
+        console.log('Deleting items:', itemIdsToDelete);
+        await deleteItems(itemIdsToDelete);
         selectedItemIds.clear();
         updateToolbarState();
-        
-        // Reload items table
-        const inventoryIdStr = window.location.pathname.split('/').pop();
-        if (inventoryIdStr) {
-            await loadItemsTable(inventoryIdStr);
-        }
+        Router.navigate(`/inventories/${currentInventoryPermissions?.inventoryId}`);
         
         UIUtils.showModalForMessages('Items deleted successfully!');
     } catch (error) {
@@ -870,17 +822,11 @@ function openAddItemModal() {
     const modal = document.getElementById('add-item-modal');
     if (modal) {
         modal.style.display = 'block';
-        
-        // Reset form
         const form = document.getElementById('add-item-form') as HTMLFormElement;
         if (form) {
             form.reset();
         }
-        
-        // Populate custom fields if needed
         populateCustomFieldsForAdd();
-        
-        // Attach modal event listeners
         attachAddItemModalEventListeners();
     }
 }
@@ -888,13 +834,8 @@ function openAddItemModal() {
 function populateCustomFieldsForAdd() {
     const container = document.getElementById('custom-fields-container');
     if (!container) return;
-    
-    // Get current inventory from global state or reload if needed
     const currentInventoryId = currentInventoryPermissions?.inventoryId;
     if (!currentInventoryId) return;
-    
-    // For now, we'll leave this empty. In a full implementation,
-    // you would fetch the inventory custom fields and generate form inputs
     container.innerHTML = '';
 }
 
@@ -908,18 +849,15 @@ function attachAddItemModalEventListeners() {
         if (modal) modal.style.display = 'none';
     };
 
-    // Close button events
     if (closeBtn) closeBtn.onclick = closeModal;
     if (cancelBtn) cancelBtn.onclick = closeModal;
     
-    // Close modal when clicking outside
     window.onclick = (event) => {
         if (event.target === modal) {
             closeModal();
         }
     };
 
-    // Form submission
     if (form) {
         form.onsubmit = async (e) => {
             e.preventDefault();
@@ -937,7 +875,6 @@ async function handleAddItemFormSubmit() {
         const customId = (formData.get('customId') as string)?.trim();
         const description = (formData.get('description') as string)?.trim();
 
-        // Validation
         if (!name) {
             UIUtils.showModalForMessages('Item name is required');
             return;
@@ -948,7 +885,6 @@ async function handleAddItemFormSubmit() {
             return;
         }
 
-        // Prepare item data according to CreateItemDto interface
         const itemData = {
             inventoryId: currentInventoryPermissions.inventoryId,
             name: name,
@@ -957,23 +893,19 @@ async function handleAddItemFormSubmit() {
             customFieldValues: [] // Will be populated from custom fields
         };
 
-        // Show loading state
         const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.textContent = 'Adding...';
         }
 
-        // Call API to create item
         await createItem(itemData);
 
-        // Close modal
         const modal = document.getElementById('add-item-modal');
         if (modal) modal.style.display = 'none';
         
         UIUtils.showModalForMessages('Item added successfully!');
         
-        // Reload items table
         const inventoryIdStr = currentInventoryPermissions.inventoryId.toString();
         await loadItemsTable(inventoryIdStr);
 
@@ -988,4 +920,15 @@ async function handleAddItemFormSubmit() {
             submitBtn.textContent = 'Add Item';
         }
     }
+}
+
+function escapeHtml(text: string): string {
+    const map: { [key: string]: string } = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, (m) => map[m]);
 }

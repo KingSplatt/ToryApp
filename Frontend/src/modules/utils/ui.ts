@@ -101,13 +101,13 @@ export class UIUtils {
     try {
       const authService = AuthService.getInstance();
       await authService.logout();
-      UIUtils.showMessage('Sesión cerrada exitosamente', 'success');
+      UIUtils.showMessage('Session ended successfully', 'success');
       setTimeout(() => {
         Router.navigate('/');
       }, 1000);
     } catch (error) {
       console.error('Logout error:', error);
-      UIUtils.showMessage('Error al cerrar sesión', 'error');
+      UIUtils.showMessage('Logout error', 'error');
     }
   }
 
@@ -237,7 +237,7 @@ export class UIUtils {
     buttonContainer.className = 'button-container';
 
     const confirmButton = document.createElement('button');
-    confirmButton.textContent = 'Confirmar';
+    confirmButton.textContent = 'Confirm';
     confirmButton.className = 'btn btn-primary';
     confirmButton.addEventListener('click', () => {
       modal.remove();
@@ -246,7 +246,7 @@ export class UIUtils {
     });
 
     const cancelButton = document.createElement('button');
-    cancelButton.textContent = 'Cancelar';
+    cancelButton.textContent = 'Cancel';
     cancelButton.className = 'btn btn-secondary';
     cancelButton.addEventListener('click', () => {
       modal.remove();

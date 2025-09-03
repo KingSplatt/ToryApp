@@ -8,7 +8,8 @@ export const API_CONFIG = {
         GET_ITEMS: (id: number) => `/${id}`,
         CREATE_ITEM: () => `/`,
         UPDATE_ITEM: (id: number) => `/${id}`,
-        DELETE_ITEM: (id: number) => `/${id}`
+        DELETE_ITEM: (id: number) => `/${id}`,
+        DELETE_ITEMS: () => `/bulk-delete`
     },
     headers: {
         "Content-Type": "application/json"
@@ -53,7 +54,8 @@ export const updateItem = async (id: number, itemData: Items) => {
     const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.ENDPOINTS.UPDATE_ITEM(id)}`, {
         method: "PUT",
         headers: API_CONFIG.headers,
-        body: JSON.stringify(itemData)
+        body: JSON.stringify(itemData),
+        credentials: "include"
     });
     return response.json();
 };
@@ -61,7 +63,36 @@ export const updateItem = async (id: number, itemData: Items) => {
 export const deleteItem = async (id: number) => {
     const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.ENDPOINTS.DELETE_ITEM(id)}`, {
         method: "DELETE",
-        headers: API_CONFIG.headers
+        headers: API_CONFIG.headers,
+        credentials: "include"
     });
+    
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to delete item: ${response.status} - ${errorText}`);
+    }
+    if (response.status === 204) {
+        return { success: true };
+    }
+    
+    return response.json();
+};
+
+export const deleteItems = async (itemIds: number[]) => {
+    const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.ENDPOINTS.DELETE_ITEMS()}`, {
+        method: "DELETE",
+        headers: API_CONFIG.headers,
+        credentials: "include",
+        body: JSON.stringify(itemIds)
+    });
+    
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to delete items: ${response.status} - ${errorText}`);
+    }
+    if (response.status === 204) {
+        return { success: true };
+    }
+    
     return response.json();
 };

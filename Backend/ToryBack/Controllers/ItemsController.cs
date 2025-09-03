@@ -312,6 +312,61 @@ namespace ToryBack.Controllers
             }
         }
 
+        [HttpDelete("bulk-delete")]
+        public async Task<ActionResult> DeleteItems([FromBody] List<int> itemIds)
+        {
+            try
+            {
+                if (itemIds == null || itemIds.Count == 0)
+                    return BadRequest("No item IDs provided for deletion");
+
+                var items = await _context.Items
+                    .Include(i => i.Inventory)
+                    .Where(i => itemIds.Contains(i.Id))
+                    .ToListAsync();
+
+                if (items.Count == 0)
+                    return NotFound("No items found for the provided IDs");
+
+                // Get current user ID
+                string? currentUserId = null;
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    var currentUser = await _userManager.FindByNameAsync(User.Identity.Name!);
+                    currentUserId = currentUser?.Id;
+                }
+
+                if (currentUserId == null)
+                    return Unauthorized("You must be logged in to delete items");
+
+                // Check permissions for each item's inventory
+                foreach (var item in items)
+                {
+                    var canDeleteItems = await _authorizationService.CanUserDeleteItemsAsync(currentUserId, item.InventoryId);
+                    if (!canDeleteItems)
+                        return StatusCode(403, $"You don't have permission to delete items in inventory ID {item.InventoryId}");
+                }
+
+                _context.Items.RemoveRange(items);
+
+                // Update UpdatedAt timestamp for affected inventories
+                var affectedInventories = items.Select(i => i.Inventory).Distinct();
+                foreach (var inventory in affectedInventories)
+                {
+                    inventory.UpdatedAt = DateTime.UtcNow;
+                }
+
+                await _context.SaveChangesAsync();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting items");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         // Helper methods for custom fields
         private static List<CustomFieldValueDto> GetItemCustomFieldValues(Item item, Inventory inventory)
         {

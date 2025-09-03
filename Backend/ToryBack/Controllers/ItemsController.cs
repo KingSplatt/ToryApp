@@ -120,16 +120,6 @@ namespace ToryBack.Controllers
                     var currentUser = await _userManager.FindByNameAsync(User.Identity.Name!);
                     currentUserId = currentUser?.Id;
                 }
-
-                if (currentUserId == null)
-                    return Unauthorized("You must be logged in to create items");
-
-                // Check if user can create items in this inventory
-                var canCreateItems = await _authorizationService.CanUserCreateItemsAsync(currentUserId, createDto.InventoryId);
-                if (!canCreateItems)
-                    return StatusCode(403, "You don't have permission to create items in this inventory");
-
-                // Verify inventory exists
                 var inventory = await _context.Inventories.FirstOrDefaultAsync(i => i.Id == createDto.InventoryId);
                 if (inventory == null)
                     return NotFound("Inventory not found");

@@ -11,6 +11,7 @@ import { UserInventoryPermissionsDto } from "../interfaces/PermissionInterface";
 const router = Router.getInstance();
 // Global variables for toolbar functionality
 let currentInventoryPermissions: UserInventoryPermissionsDto | null = null;
+let currentInventory: InventoryDto | null = null;
 let selectedItemIds: Set<number> = new Set();
 let inventoryItems: any[] = [];
 
@@ -46,6 +47,7 @@ export const initInventoryPage = async (idInventory: string) => {
 
 async function takeInventory(idInventory: string): Promise<InventoryDto> {
   const inventory = await getInventory(parseInt(idInventory));
+  currentInventory = inventory; // Store current inventory globally
   const categories = await getCategories();
   
   const inventoryDetails = document.getElementById('inventory-details');
@@ -113,7 +115,7 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
           <div class="items-action-toolbar" id="items-action-toolbar" style="display: none;">
             <div class="toolbar-actions">
               <div class="bulk-selection">
-                <label>
+                <label class="select-all-label">
                   <input type="checkbox" id="select-all-items">
                   Select All
                 </label>
@@ -322,8 +324,9 @@ export async function loadItemsTable(inventoryId: string) {
         const tableContainer = document.getElementById('items-table-container');
         if (tableContainer) {
             if (items && items.length > 0) {
-                // Check if user has permissions for checkboxes
-                const showCheckboxes = currentInventoryPermissions?.canEditItems || currentInventoryPermissions?.canDeleteItems;
+                // Check if user has permissions for checkboxes or if it's a public inventory
+                const isAuthenticated = UIUtils.isUserAuthenticated();
+                const showCheckboxes = isAuthenticated && (currentInventoryPermissions?.canEditItems || currentInventoryPermissions?.canDeleteItems);
                 
                 const tableHTML = `
                     <table class="items-table">
@@ -336,7 +339,6 @@ export async function loadItemsTable(inventoryId: string) {
                                 <th>Description</th>
                                 <th>Created At</th>
                                 <th>Updated At</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -349,10 +351,6 @@ export async function loadItemsTable(inventoryId: string) {
                                     <td>${item.description || 'No description'}</td>
                                     <td>${item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A'}</td>
                                     <td>${item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : 'N/A'}</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-primary edit-item-btn" data-item-id="${item.id}">Edit</button>
-                                        <button class="btn btn-sm btn-danger delete-item-btn" data-item-id="${item.id}">Delete</button>
-                                    </td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -365,10 +363,13 @@ export async function loadItemsTable(inventoryId: string) {
                     attachCheckboxEventListeners();
                 }
             } else {
+                // Show "Add Item" button even for public inventories when no items exist
+                const showAddButton = currentInventory?.isPublic || currentInventoryPermissions?.canEditItems;
+                
                 tableContainer.innerHTML = `
                     <div class="no-items-message">
                         <p>No items found in this inventory.</p>
-                        <button class="btn btn-primary" id="add-item-btn">Add First Item</button>
+                        ${showAddButton ? '<button class="btn btn-primary" id="add-item-btn">Add First Item</button>' : ''}
                     </div>
                 `;
                 
@@ -600,10 +601,21 @@ async function initializeToolbarsWithPermissions(inventoryId: number) {
         // Check if user is authenticated
         const isAuthenticated = UIUtils.isUserAuthenticated();
         if (!isAuthenticated) {
-            return; // Don't show toolbars for unauthenticated users
+            // For unauthenticated users, only show "Add Item" button if inventory is public
+            if (currentInventory?.isPublic) {
+                const itemsToolbar = document.getElementById('items-action-toolbar');
+                if (itemsToolbar) {
+                    itemsToolbar.style.display = 'block';
+                    initializeItemsToolbarForPublicInventory();
+                }
+            }
+            return;
         }
+        
         currentInventoryPermissions = await getUserInventoryPermissions(inventoryId);
-        if (currentInventoryPermissions.canEditItems || currentInventoryPermissions.canDeleteItems) {
+        
+        // Show toolbar if user has permissions OR if inventory is public
+        if (currentInventoryPermissions.canEditItems || currentInventoryPermissions.canDeleteItems || currentInventory?.isPublic) {
             const itemsToolbar = document.getElementById('items-action-toolbar');
             if (itemsToolbar) {
                 itemsToolbar.style.display = 'block';
@@ -620,6 +632,14 @@ async function initializeToolbarsWithPermissions(inventoryId: number) {
         }
 
     } catch (error) {
+        // In case of error, still check if inventory is public to allow adding items
+        if (currentInventory?.isPublic) {
+            const itemsToolbar = document.getElementById('items-action-toolbar');
+            if (itemsToolbar) {
+                itemsToolbar.style.display = 'block';
+                initializeItemsToolbarForPublicInventory();
+            }
+        }
     }
 }
 
@@ -676,6 +696,27 @@ function initializeItemsToolbar() {
     });
 
     // Add new item
+    addItemButton?.addEventListener('click', () => {
+        openAddItemModal();
+    });
+}
+
+// Initialize items toolbar for public inventories (limited functionality)
+function initializeItemsToolbarForPublicInventory() {
+    const selectAllCheckbox = document.getElementById('select-all-items') as HTMLInputElement;
+    const editButton = document.getElementById('edit-selected-items') as HTMLButtonElement;
+    const deleteButton = document.getElementById('delete-selected-items') as HTMLButtonElement;
+    const addItemButton = document.getElementById(`add-item-${currentInventory?.id}`) as HTMLButtonElement;
+    const selectedCount = document.getElementById('selected-count');
+    const label = document.querySelector('.select-all-label') as HTMLLabelElement;
+
+    if (label) label.style.display = 'none';
+    // Hide edit and delete buttons for public inventories without permissions
+    if (editButton) editButton.style.display = 'none';
+    if (deleteButton) deleteButton.style.display = 'none';
+    if (selectAllCheckbox) selectAllCheckbox.style.display = 'none';
+    if (selectedCount) selectedCount.style.display = 'none';
+    // Only show "Add Item" button for public inventories
     addItemButton?.addEventListener('click', () => {
         openAddItemModal();
     });
@@ -880,13 +921,15 @@ async function handleAddItemFormSubmit() {
             return;
         }
 
-        if (!currentInventoryPermissions?.inventoryId) {
+        // Get inventory ID from permissions or current inventory
+        const inventoryId = currentInventoryPermissions?.inventoryId || currentInventory?.id;
+        if (!inventoryId) {
             UIUtils.showModalForMessages('Invalid inventory ID');
             return;
         }
 
         const itemData = {
-            inventoryId: currentInventoryPermissions.inventoryId,
+            inventoryId: inventoryId,
             name: name,
             description: description || undefined,
             customId: customId || undefined,
@@ -906,7 +949,7 @@ async function handleAddItemFormSubmit() {
         
         UIUtils.showModalForMessages('Item added successfully!');
         
-        const inventoryIdStr = currentInventoryPermissions.inventoryId.toString();
+        const inventoryIdStr = inventoryId.toString();
         await loadItemsTable(inventoryIdStr);
 
     } catch (error) {

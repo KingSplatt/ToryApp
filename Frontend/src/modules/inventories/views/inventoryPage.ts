@@ -1,10 +1,15 @@
-import { getInventory } from "../services/inventoryServices";
+import { getInventory, updateInventory } from "../services/inventoryServices";
 import { InventoryDto } from "../interfaces/InventoryDtoInterface";
+import { UpdateInventoryDto } from "../interfaces/UpdateInventoryDto";
 import { createLayout } from "../../layout/layout";
 import "./inventoryPage.css"
 import { UIUtils } from "../../utils/ui";
 import { uint32 } from "zod";
 import { getItemsForInventory } from "../../items/services/itemServices";
+import { getCategories,createCategory } from "../services/categoryServices";
+import { Router } from "../../router/router";
+
+const router = Router.getInstance();
 
 export function inventoryPage(){
     const isAuthenticated = UIUtils.isUserAuthenticated();
@@ -18,6 +23,14 @@ export function inventoryPage(){
 }
 
 export const initInventoryPage = async (idInventory: string) => {
+    const parsedId = parseInt(idInventory);
+    
+    if (isNaN(parsedId)) {
+        console.error('Invalid inventory ID provided:', idInventory);
+        UIUtils.showModalForMessages('Invalid inventory ID: ' + idInventory);
+        return;
+    }
+    
     const inventory = await takeInventory(idInventory);
     attachButtons();
     // Load items by default
@@ -26,13 +39,14 @@ export const initInventoryPage = async (idInventory: string) => {
 
 async function takeInventory(idInventory: string): Promise<InventoryDto> {
   const inventory = await getInventory(parseInt(idInventory));
-  console.log('Inventory loaded:', inventory);
+  const categories = await getCategories();
+  
   const inventoryDetails = document.getElementById('inventory-details');
   if (inventoryDetails) {
     inventoryDetails.innerHTML = `
     <section class="inventory-info">
         <section class="inventory-header">
-            <section class="inventory-card">
+            <section class="inventory-cards">
                 <h2>${inventory.title || 'Untitled Inventory'}</h2>
                 <hr>
                 <h3>${inventory.description || 'No description available'}</h3>
@@ -98,6 +112,53 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
             <!-- Items table will be inserted here -->
         </div>
     </section>
+
+    <!-- Edit Inventory Modal -->
+    <div id="edit-inventory-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Inventory</h3>
+                <span class="close" id="close-edit-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="inventory-edit-form">
+                    <div class="form-group">
+                        <label for="edit-title" id="edit-title-label">Title:</label>
+                        <input type="text" id="edit-title" name="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-description" id="edit-description-label">Description:</label>
+                        <textarea id="edit-description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-category" id="edit-category-label">Category:</label>
+                        <select id="edit-category" name="categoryId" required>
+                            <option value="Select a category">Select a category</option>
+                            ${categories.map(category => `<option value="${category.id}">${category.name}</option>`).join("")}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-tags" id="edit-tags-label">Tags (comma separated):</label>
+                        <input type="text" id="edit-tags" name="tags" placeholder="tag1, tag2, tag3">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-imageUrl" id="edit-imageUrl-label">Image URL:</label>
+                        <input type="url" id="edit-imageUrl" name="imageUrl">
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <label for="edit-isPublic" id="edit-isPublic-label">
+                            <input type="checkbox" id="edit-isPublic" name="isPublic">
+                            Public Inventory
+                        </label>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="cancel-edit">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     `;
   }
   return inventory;
@@ -108,11 +169,29 @@ export function loadToolBarItems(){
 }
 
 export function attachButtons(){
-    const editButtons = document.querySelectorAll('[id^="edit-inventory-"]');
+    // Select buttons that start with "edit-inventory-" but exclude the form
+    const editButtons = document.querySelectorAll('button[id^="edit-inventory-"]');
     editButtons.forEach(button => {
-        button.addEventListener('click', () => {
+        button.addEventListener('click', async () => {
             const inventoryId = button.id.split('-')[2];
-            console.log('Edit inventory:', inventoryId);
+            const parsedInventory = parseInt(inventoryId);
+    
+    
+    
+    
+
+            const parsedId = parseInt(inventoryId);
+            if (isNaN(parsedId)) {
+                UIUtils.showModalForMessages('Invalid inventory ID: ' + inventoryId);
+                return;
+            }
+            
+            try {
+                await openEditModal(parsedId);
+            } catch (error) {
+                console.error('Error opening edit modal:', error);
+                UIUtils.showModalForMessages('Error opening edit modal: ' + (error instanceof Error ? error.message : 'Unknown error'));
+            }
         });
     });
 
@@ -120,7 +199,7 @@ export function attachButtons(){
     discussButtons.forEach(button => {
         button.addEventListener('click', () => {
             const inventoryId = button.id.split('-')[2];
-            console.log('Discuss inventory:', inventoryId);
+    
         });
     });
 
@@ -128,7 +207,7 @@ export function attachButtons(){
     itemsButtons.forEach(button => {
         button.addEventListener('click', async () => {
             const inventoryId = button.id.split('-')[2];
-            console.log('Toggle items visibility for inventory:', inventoryId);
+    
             
             const itemsSection = document.getElementById('inventory-items-section');
             if (itemsSection) {
@@ -149,13 +228,12 @@ export function attachButtons(){
 
 export async function loadItems(inventoryId: string){
     const items = await getItemsForInventory(parseInt(inventoryId));
-    console.log('Items loaded:', items);
 }
 
 export async function loadItemsTable(inventoryId: string) {
     try {
         const items = await getItemsForInventory(parseInt(inventoryId));
-        console.log('Items loaded for table:', items);
+
         
         const tableContainer = document.getElementById('items-table-container');
         if (tableContainer) {
@@ -205,7 +283,7 @@ export async function loadItemsTable(inventoryId: string) {
                 const addItemBtn = document.getElementById('add-item-btn');
                 if (addItemBtn) {
                     addItemBtn.addEventListener('click', () => {
-                        console.log('Add new item to inventory:', inventoryId);
+                
                         // TODO: Implement add item functionality
                     });
                 }
@@ -230,7 +308,7 @@ function attachItemButtonEvents() {
     editButtons.forEach(button => {
         button.addEventListener('click', () => {
             const itemId = button.getAttribute('data-item-id');
-            console.log('Edit item:', itemId);
+    
             // TODO: Implement edit item functionality
         });
     });
@@ -240,8 +318,151 @@ function attachItemButtonEvents() {
     deleteButtons.forEach(button => {
         button.addEventListener('click', () => {
             const itemId = button.getAttribute('data-item-id');
-            console.log('Delete item:', itemId);
+    
             // TODO: Implement delete item functionality
         });
     });
+}
+
+// Modal functions
+export async function openEditModal(inventoryId: number) {
+    try {
+        // Get current inventory data
+        const inventory = await getInventory(inventoryId);
+
+        
+        // Populate form fields
+        const titleInput = document.getElementById('edit-title') as HTMLInputElement;
+        const descriptionInput = document.getElementById('edit-description') as HTMLTextAreaElement;
+        const categoryInput = document.getElementById('edit-category') as HTMLInputElement;
+        const tagsInput = document.getElementById('edit-tags') as HTMLInputElement;
+        const imageUrlInput = document.getElementById('edit-imageUrl') as HTMLInputElement;
+        const isPublicInput = document.getElementById('edit-isPublic') as HTMLInputElement;
+
+        if (titleInput) titleInput.value = inventory.title || '';
+        if (descriptionInput) descriptionInput.value = inventory.description || '';
+        if (categoryInput) categoryInput.value = inventory.category || '';
+        if (tagsInput) tagsInput.value = inventory.tags?.join(', ') || '';
+        if (imageUrlInput) imageUrlInput.value = inventory.imageUrl || '';
+        if (isPublicInput) isPublicInput.checked = inventory.isPublic;
+
+
+        // Show modal
+        const modal = document.getElementById('edit-inventory-modal');
+        if (modal) {
+            modal.style.display = 'block';
+        }
+
+        // Attach modal event listeners
+        attachModalEventListeners(inventoryId);
+    } catch (error) {
+        console.error('Error opening edit modal:', error);
+        UIUtils.showModalForMessages('Error loading inventory data for editing: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
+}
+
+function attachModalEventListeners(inventoryId: number) {
+    // Close modal events
+    const closeBtn = document.getElementById('close-edit-modal');
+    const cancelBtn = document.getElementById('cancel-edit');
+    const modal = document.getElementById('edit-inventory-modal');
+
+    const closeModal = () => {
+        if (modal) modal.style.display = 'none';
+    };
+
+    if (closeBtn) closeBtn.onclick = closeModal;
+    if (cancelBtn) cancelBtn.onclick = closeModal;
+    
+    // Close modal when clicking outside
+    window.onclick = (event) => {
+        if (event.target === modal) {
+            closeModal();
+        }
+    };
+
+    // Form submission
+    const form = document.getElementById('inventory-edit-form') as HTMLFormElement;
+    if (form) {
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            await handleEditFormSubmit(inventoryId);
+        };
+    }
+}
+
+async function handleEditFormSubmit(inventoryId: number) {
+    try {
+        const form = document.getElementById('inventory-edit-form') as HTMLFormElement;
+        const formData = new FormData(form);
+        const tagsString = formData.get('tags') as string;
+        const tags = tagsString ? tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) : [];
+        const title = (formData.get('title') as string)?.trim();
+        const description = (formData.get('description') as string)?.trim();
+        const categoryId = (formData.get('categoryId') as string)?.trim();
+
+        const imageUrl = (formData.get('imageUrl') as string)?.trim();
+
+        if (!title) {
+            UIUtils.showModalForMessages('Title is required');
+            return;
+        }
+        if (!categoryId || categoryId === "Select a category") {
+            UIUtils.showModalForMessages('Category is required');
+            return;
+        }
+
+        const categories = await getCategories();
+        const selectedCategory = categories.find(cat => cat.id.toString() === categoryId);
+        
+        if (!selectedCategory) {
+            UIUtils.showModalForMessages('Invalid category selected');
+            return;
+        }
+        
+        const categoryName = selectedCategory.name;
+
+
+        const updateData: UpdateInventoryDto = {
+            title: title,
+            categoryName: categoryName,
+            isPublic: formData.get('isPublic') === 'on'
+        };
+
+        if (description) {
+            updateData.description = description;
+        }
+        if (tags.length > 0) {
+            updateData.tags = tags;
+        }
+        if (imageUrl) {
+            updateData.imageUrl = imageUrl;
+        }
+
+
+
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+        }
+        await updateInventory(inventoryId, updateData);
+
+        const modal = document.getElementById('edit-inventory-modal');
+        if (modal) modal.style.display = 'none';
+        UIUtils.showModalForMessages('Inventory updated successfully!');
+        Router.navigate(`/inventories/${inventoryId}`);
+
+    } catch (error) {
+        console.error('Error updating inventory:', error);
+        UIUtils.showModalForMessages('Error updating inventory: ' + (error instanceof Error ? error.message : 'Unknown error'));
+
+        // Reset button state
+        const submitBtn = document.querySelector('#inventory-edit-form button[type="submit"]') as HTMLButtonElement;
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Save Changes';
+        }
+    }
 }

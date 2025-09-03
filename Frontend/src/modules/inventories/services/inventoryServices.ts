@@ -1,5 +1,6 @@
 import { CreateInventoryDto } from "../interfaces/CreateInventoryDto";
 import { InventoryDto } from "../interfaces/InventoryDtoInterface";
+import { UpdateInventoryDto } from "../interfaces/UpdateInventoryDto";
 import { GrantAccess } from "../interfaces/GrantAccessInterface";
 import { Tag } from "../interfaces/TagInterface";
 
@@ -16,6 +17,18 @@ export const API_CONFIG_INVENTORIES = {
     GET_TAGS: "/tags",
     GRANT_WRITER_ACCESS: (id: number) => `/${id}/grant-access`,
     REVOKE_WRITER_ACCESS: (id: number, userId: string) => `/${id}/revoke-access/${userId}`
+  },
+  headers: {
+    "Content-Type": "application/json"
+  }
+};
+
+export const CATEGORY_API_URL = "http://localhost:5217/api/Categories";
+export const API_CONFIG_INVENTORIES_CAT= {
+  baseUrl: CATEGORY_API_URL,
+  ENDPOINTS: {
+    GET_CATEGORIES: "/",
+    CREATE_CATEGORY: "/",
   },
   headers: {
     "Content-Type": "application/json"
@@ -39,14 +52,21 @@ export const getInventories = async (): Promise<InventoryDto[]> => {
 };
 
 export const getInventory = async (id: number): Promise<InventoryDto> => {
-  const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.GET_INVENTORY(id)}`,
-  {
+  const url = `${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.GET_INVENTORY(id)}`;
+  
+  const response = await fetch(url, {
     credentials: 'include'
   });
+  
+  
   if (!response.ok) {
-    throw new Error("Failed to fetch inventory");
+    const errorText = await response.text();
+    console.error('Error response:', errorText);
+    throw new Error(`Failed to fetch inventory: ${response.status} - ${errorText}`);
   }
-  return await response.json();
+  
+  const result = await response.json();
+  return result;
 };
 
 export const getUserInventories = async (userId: string): Promise<InventoryDto[]> => {
@@ -78,8 +98,6 @@ export const getUserInventoriesWithWriteAccess = async (userId: string): Promise
 };
 
 export const createInventory = async(createDto: CreateInventoryDto): Promise<InventoryDto> => {
-  console.log('Sending to API:', createDto);
-  console.log('API URL:', `${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.CREATE_INVENTORY}`);
   
   const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.CREATE_INVENTORY}`, {
     method: "POST",
@@ -88,8 +106,6 @@ export const createInventory = async(createDto: CreateInventoryDto): Promise<Inv
     body: JSON.stringify(createDto),
   });
 
-  console.log('Response status:', response.status);
-  console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -98,12 +114,30 @@ export const createInventory = async(createDto: CreateInventoryDto): Promise<Inv
   }
 
   const result = await response.json();
-  console.log('Success response:', result);
+  return result;
+};
+
+export const updateInventory = async (id: number, updateData: UpdateInventoryDto): Promise<InventoryDto> => {
+  
+  const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.UPDATE_INVENTORY(id)}`, {
+    method: "PUT",
+    credentials: 'include',
+    headers: API_CONFIG_INVENTORIES.headers,
+    body: JSON.stringify(updateData),
+  });
+
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Error response body:', errorText);
+    throw new Error(`Failed to update inventory: ${response.status} - ${errorText}`);
+  }
+
+  const result = await response.json();
   return result;
 };
 
 export const grantWriterAccess = async (inventoryId: number, grantAccess: GrantAccess) => {
-  console.log('Granting access with data:', grantAccess);
   const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.GRANT_WRITER_ACCESS(inventoryId)}`, {
     method: "POST",
     credentials: 'include',

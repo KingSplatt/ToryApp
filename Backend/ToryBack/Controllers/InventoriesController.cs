@@ -124,28 +124,6 @@ namespace ToryBack.Controllers
             if (inventory == null)
                 return NotFound();
 
-            // Get current user ID
-            string? currentUserId = null;
-            if (User.Identity?.IsAuthenticated == true)
-            {
-                var currentUser = await _userManager.FindByNameAsync(User.Identity.Name!);
-                currentUserId = currentUser?.Id;
-            }
-
-            // Check if user can access this inventory
-            if (currentUserId != null)
-            {
-                var canAccessRead = await _authorizationService.CanUserAccessInventoryAsync(currentUserId, id, AccessLevel.Read);
-                var canAccessWrite = await _authorizationService.CanUserAccessInventoryAsync(currentUserId, id, AccessLevel.Write);
-                var isOwner = await _authorizationService.IsInventoryOwnerAsync(currentUserId, id);
-                if (!inventory.IsPublic && !canAccessRead && !canAccessWrite && !isOwner)
-                    return Forbid("You don't have permission to access this inventory");
-            }
-            else if (!inventory.IsPublic)
-            {
-                return Forbid("This inventory is private");
-            }
-
             var result = new InventoryDetailDto
             {
                 Id = inventory.Id,
@@ -162,7 +140,6 @@ namespace ToryBack.Controllers
                 ImageUrl = inventory.ImageUrl,
                 CustomFields = GetInventoryCustomFields(inventory)
             };
-
             return Ok(result);
         }
         [HttpGet("user/{userId}")]
@@ -716,6 +693,136 @@ namespace ToryBack.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+
+        [HttpPut("{id}")]
+        [Authorize]
+        public async Task<ActionResult<InventoryDto>> UpdateInventory(int id, UpdateInventoryDto updateDto)
+        {
+            try
+            {
+                _logger.LogInformation("Updating inventory {Id} with data: {@UpdateDto}", id, updateDto);
+                
+                // Get current user ID
+                string? currentUserId = null;
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    var currentUser = await _userManager.FindByNameAsync(User.Identity.Name!);
+                    currentUserId = currentUser?.Id;
+                }
+
+                if (currentUserId == null)
+                    return Unauthorized();
+
+                // Find the inventory
+                var inventory = await _context.Inventories
+                    .Include(i => i.Category)
+                    .Include(i => i.Owner)
+                    .Include(i => i.InventoryTags)
+                        .ThenInclude(it => it.Tag)
+                    .FirstOrDefaultAsync(i => i.Id == id);
+
+                if (inventory == null)
+                    return NotFound("Inventory not found");
+
+                // Check if user has permission to update this inventory
+                var isOwner = await _authorizationService.IsInventoryOwnerAsync(currentUserId, id);
+                var accessLevel = await _authorizationService.GetUserAccessLevelAsync(currentUserId, id);
+                
+                if (!isOwner && accessLevel < AccessLevel.Write)
+                    return Forbid("You don't have permission to update this inventory");
+
+                // Update basic properties
+                inventory.Title = updateDto.Title;
+                inventory.Description = updateDto.Description ?? string.Empty;
+                inventory.IsPublic = updateDto.IsPublic;
+                inventory.UpdatedAt = DateTime.UtcNow;
+
+                // Update category if provided
+                if (!string.IsNullOrEmpty(updateDto.CategoryName))
+                {
+                    var category = await _context.Categories
+                        .FirstOrDefaultAsync(c => c.Name.ToLower() == updateDto.CategoryName.ToLower());
+                    if (category != null)
+                    {
+                        inventory.CategoryId = category.Id;
+                    }
+                }
+
+                // Update tags if provided
+                if (updateDto.Tags != null)
+                {
+                    // Remove existing tags
+                    var existingTags = inventory.InventoryTags.ToList();
+                    _context.InventoryTags.RemoveRange(existingTags);
+
+                    // Add new tags
+                    foreach (var tagName in updateDto.Tags)
+                    {
+                        if (string.IsNullOrWhiteSpace(tagName)) continue;
+
+                        var tag = await _context.Tags
+                            .FirstOrDefaultAsync(t => t.Name.ToLower() == tagName.ToLower());
+
+                        if (tag == null)
+                        {
+                            tag = new Tag
+                            {
+                                Name = tagName.Trim(),
+                                UsageCount = 1
+                            };
+                            _context.Tags.Add(tag);
+                        }
+                        else
+                        {
+                            tag.UsageCount++;
+                        }
+
+                        var inventoryTag = new InventoryTag
+                        {
+                            Inventory = inventory,
+                            Tag = tag
+                        };
+                        _context.InventoryTags.Add(inventoryTag);
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+
+                // Return updated inventory
+                var updatedInventory = await _context.Inventories
+                    .Include(i => i.Category)
+                    .Include(i => i.Owner)
+                    .Include(i => i.InventoryTags)
+                        .ThenInclude(it => it.Tag)
+                    .Include(i => i.Items)
+                    .FirstOrDefaultAsync(i => i.Id == id);
+
+                var result = new InventoryDetailDto
+                {
+                    Id = updatedInventory!.Id,
+                    Title = updatedInventory.Title,
+                    Description = updatedInventory.Description,
+                    Category = updatedInventory.Category.Name,
+                    CategoryId = updatedInventory.CategoryId.ToString(),
+                    ItemCount = updatedInventory.Items.Count,
+                    IsPublic = updatedInventory.IsPublic,
+                    Owner = updatedInventory.Owner.FullName,
+                    OwnerId = updatedInventory.OwnerId,
+                    CreatedAt = updatedInventory.CreatedAt,
+                    LastUpdated = updatedInventory.UpdatedAt,
+                    Tags = updatedInventory.InventoryTags.Select(it => it.Tag.Name).ToList(),
+                    ImageUrl = updatedInventory.ImageUrl,
+                    CustomFields = GetInventoryCustomFields(updatedInventory)
+                };
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating inventory");
+                return StatusCode(500, "Internal server error");
+            }
+        }
     }
 
     // DTOs
@@ -772,6 +879,16 @@ namespace ToryBack.Controllers
         public string OwnerId { get; set; } = string.Empty;
         public List<string>? Tags { get; set; }
         public List<CreateCustomFieldDto>? CustomFields { get; set; }
+    }
+
+    public class UpdateInventoryDto
+    {
+        public string Title { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string CategoryName { get; set; } = string.Empty;
+        public bool IsPublic { get; set; }
+        public List<string>? Tags { get; set; }
+        public string? ImageUrl { get; set; }
     }
 
     public class CreateCustomFieldDto

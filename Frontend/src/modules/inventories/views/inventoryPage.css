@@ -3,3 +3,211 @@
     border-radius: 4px;
     font-size: 12px;
 }
+
+.inventory-info{
+    width: 100%;
+    margin: 0 auto;
+}
+
+.inventory-header{
+    width: 100%;
+    margin: 0 auto;
+}
+
+.inventory-card{
+    text-align: center;
+    color: var(--text-primary);
+}
+
+.inventory-meta{
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 16px;
+    align-items: flex-start;
+}
+
+.inventory-meta-owner{
+    width: 50%;
+    padding: 8px 16px;
+}
+
+.inventory-meta p{
+    font-size: 16px;
+    color: var(--text-secondary);
+    text-align: left;
+    padding: 4px 6px;
+}
+
+.inventory-meta-table{
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.inventory-meta-table th,
+.inventory-meta-table td{
+    padding: 8px 12px;
+}
+
+.inventory-meta-table th{
+    background-color: var(--bg-secondary);
+    width: 30%;
+    color: var(--text-primary);
+}
+
+.inventory-meta-table td{
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+}
+
+.inventory-meta-img{
+    width: 50%;
+    padding: 8px 16px;
+}
+
+.inventory-image{
+    width: 100%;
+    height: auto;
+}
+
+.inventory-control{
+    width: 100%;
+    padding: 8px 16px;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+}
+.inventory-actions{
+    margin: 0 auto;
+    justify-content: center;
+    padding: 8px 16px;
+    display: flex;
+    gap: 8px;
+}
+
+.inventory-meta-actions{
+    margin-top: 10px;
+    padding: 8px 16px;
+    background-color: var(--bg-secondary);
+}
+
+/* Items Table Styles */
+.inventory-items-section {
+    width: 100%;
+    margin-top: 20px;
+    padding: 16px;
+    background-color: var(--bg-primary);
+    border-radius: 8px;
+}
+
+.inventory-items-section h3 {
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    background-color: var(--bg-primary);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.items-table thead {
+    background-color: var(--bg-secondary);
+}
+
+.items-table th {
+    padding: 12px 16px;
+    text-align: left;
+    color: var(--text-primary);
+    font-weight: 600;
+    border-bottom: 2px solid var(--bg-accent);
+}
+
+.items-table td {
+    padding: 12px 16px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--bg-secondary);
+}
+
+.items-table tbody tr:hover {
+    background-color: var(--bg-secondary);
+}
+
+.items-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Item Action Buttons */
+.edit-item-btn,
+.delete-item-btn {
+    padding: 4px 8px;
+    margin: 0 2px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+.edit-item-btn {
+    background-color: var(--accent-primary);
+    color: white;
+}
+
+.edit-item-btn:hover {
+    background-color: var(--accent-secondary);
+}
+
+.delete-item-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.delete-item-btn:hover {
+    background-color: #c82333;
+}
+
+/* No Items Message */
+.no-items-message,
+.error-message {
+    text-align: center;
+    padding: 32px 16px;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    margin-top: 16px;
+}
+
+.no-items-message p,
+.error-message p {
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    font-size: 16px;
+}
+
+.no-items-message button {
+    background-color: var(--accent-primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.no-items-message button:hover {
+    background-color: var(--accent-secondary);
+}
+
+.error-message {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+.error-message p {
+    color: #721c24;
+}

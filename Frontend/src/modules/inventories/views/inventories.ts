@@ -264,7 +264,7 @@ async function loadInventories() {
     container.innerHTML = list.map((inv) => `
       <div class="inventory-card-full">
         <div class="inventory-header">
-          <h3><a href="/inventory/${inv.id}" data-navigate="/inventory/${inv.id}">${inv.title}</a></h3>
+          <h3><a href="/inventories/${inv.id}" data-navigate="/inventories/${inv.id}">${inv.title}</a></h3>
           <div class="inventory-meta">
             <span class="access-type ${inv.isPublic ? 'public' : 'private'}">
               ${inv.isPublic ? '🌐 Public' : '🔒 Private'}
@@ -274,7 +274,7 @@ async function loadInventories() {
         <div class="inventory-content">
           <p class="inventory-description">${inv.description}</p>
           <div class="inventory-stats">
-            <span class="stat">📦 ${inv.itemCount} elementos</span>
+            <span class="stat">📦 ${inv.itemCount} Items</span>
             <span class="stat">📂 ${inv.category}</span>
             <span class="stat">👤 ${inv.owner}</span>
             <span class="stat">📅 ${new Date(inv.lastUpdated).toLocaleDateString()}</span>

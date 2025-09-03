@@ -49,7 +49,25 @@ export class Router {
       window.history.pushState({}, '', path);
     }
 
-    const route = this.routes.find(r => r.path === path) || this.routes.find(r => r.path === '/404');
+    // Find exact match first, then try pattern matching
+    let route = this.routes.find(r => r.path === path);
+    
+    if (!route) {
+      // Try pattern matching for routes with parameters
+      route = this.routes.find(r => {
+        if (r.path.includes(':')) {
+          const pattern = r.path.replace(/:([^/]+)/g, '([^/]+)');
+          const regex = new RegExp(`^${pattern}$`);
+          return regex.test(path);
+        }
+        return false;
+      });
+    }
+    
+    // Fallback to 404
+    if (!route) {
+      route = this.routes.find(r => r.path === '/404');
+    }
     
     if (route) {
       document.title = `${route.title} - ToryApp`;
@@ -83,7 +101,36 @@ export class Router {
       console.error('Failed to initialize layout features:', error);
     });
   }
-  
+
+  getParams() {
+    // Find the route that matches the current path
+    const route = this.routes.find(r => {
+      if (r.path.includes(':')) {
+        const pattern = r.path.replace(/:([^/]+)/g, '([^/]+)');
+        const regex = new RegExp(`^${pattern}$`);
+        return regex.test(this.currentPath);
+      }
+      return r.path === this.currentPath;
+    });
+
+    if (!route || !route.path.includes(':')) {
+      return {};
+    }
+
+    // Extract parameter names and values
+    const paramNames = route.path.match(/:([^/]+)/g)?.map(p => p.substring(1)) || [];
+    const pattern = route.path.replace(/:([^/]+)/g, '([^/]+)');
+    const regex = new RegExp(`^${pattern}$`);
+    const values = this.currentPath.match(regex)?.slice(1) || [];
+
+    const params: Record<string, string> = {};
+    paramNames.forEach((name, index) => {
+      params[name] = values[index] || '';
+    });
+
+    return params;
+  }
+
   getCurrentPath() {
     return this.currentPath;
   }

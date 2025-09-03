@@ -4,6 +4,7 @@ using ToryBack.Data;
 using ToryBack.Models;
 using Microsoft.AspNetCore.Identity;
 using ToryBack.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace ToryBack.Controllers
 {
@@ -44,7 +45,7 @@ namespace ToryBack.Controllers
             {
                 var canAccess = await _authorizationService.CanUserAccessInventoryAsync(currentUserId, inventoryId, AccessLevel.Read);
                 if (!canAccess)
-                    return Forbid("You don't have permission to access this inventory");
+                    return StatusCode(403, "You don't have permission to access this inventory");
             }
             else
             {
@@ -53,7 +54,7 @@ namespace ToryBack.Controllers
                 if (inventory == null)
                     return NotFound("Inventory not found");
                 if (!inventory.IsPublic)
-                    return Forbid("This inventory is private");
+                    return StatusCode(403, "This inventory is private");
             }
 
             var items = await _context.Items
@@ -70,7 +71,7 @@ namespace ToryBack.Controllers
                 CustomId = item.CustomId,
                 InventoryId = item.InventoryId,
                 Name = item.Name,
-                Description = item.Description,
+                Description = item.Description ?? string.Empty,
                 CreatedAt = item.CreatedAt,
                 UpdatedAt = item.UpdatedAt,
                 CustomFieldValues = GetItemCustomFieldValues(item, inventory_info!)
@@ -102,11 +103,11 @@ namespace ToryBack.Controllers
             {
                 var canAccess = await _authorizationService.CanUserAccessInventoryAsync(currentUserId, item.InventoryId, AccessLevel.Read);
                 if (!canAccess)
-                    return Forbid("You don't have permission to access this inventory");
+                    return StatusCode(403, "You don't have permission to access this inventory");
             }
             else if (!item.Inventory.IsPublic)
             {
-                return Forbid("This inventory is private");
+                return StatusCode(403, "This inventory is private");
             }
 
             var result = new ItemDto
@@ -115,7 +116,7 @@ namespace ToryBack.Controllers
                 CustomId = item.CustomId,
                 InventoryId = item.InventoryId,
                 Name = item.Name,
-                Description = item.Description,
+                Description = item.Description ?? string.Empty,
                 CreatedAt = item.CreatedAt,
                 UpdatedAt = item.UpdatedAt,
                 CustomFieldValues = GetItemCustomFieldValues(item, item.Inventory)
@@ -129,6 +130,13 @@ namespace ToryBack.Controllers
         {
             try
             {
+                // Validate model
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                if (string.IsNullOrWhiteSpace(createDto.Name))
+                    return BadRequest("Item name is required");
+
                 // Get current user ID
                 string? currentUserId = null;
                 if (User.Identity?.IsAuthenticated == true)
@@ -143,12 +151,22 @@ namespace ToryBack.Controllers
                 // Check if user can create items in this inventory
                 var canCreateItems = await _authorizationService.CanUserCreateItemsAsync(currentUserId, createDto.InventoryId);
                 if (!canCreateItems)
-                    return Forbid("You don't have permission to create items in this inventory");
+                    return StatusCode(403, "You don't have permission to create items in this inventory");
 
                 // Verify inventory exists
                 var inventory = await _context.Inventories.FirstOrDefaultAsync(i => i.Id == createDto.InventoryId);
                 if (inventory == null)
                     return NotFound("Inventory not found");
+
+                // Check if CustomId is unique within the inventory (if provided)
+                if (!string.IsNullOrWhiteSpace(createDto.CustomId))
+                {
+                    var existingItem = await _context.Items
+                        .FirstOrDefaultAsync(i => i.InventoryId == createDto.InventoryId && 
+                                                 i.CustomId == createDto.CustomId);
+                    if (existingItem != null)
+                        return BadRequest("An item with this CustomId already exists in this inventory");
+                }
 
                 // Create item
                 var item = new Item
@@ -197,6 +215,13 @@ namespace ToryBack.Controllers
         {
             try
             {
+                // Validate model
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                if (string.IsNullOrWhiteSpace(updateDto.Name))
+                    return BadRequest("Item name is required");
+
                 var item = await _context.Items
                     .Include(i => i.Inventory)
                     .FirstOrDefaultAsync(i => i.Id == id);
@@ -218,7 +243,17 @@ namespace ToryBack.Controllers
                 // Check if user can edit items in this inventory
                 var canEditItems = await _authorizationService.CanUserEditItemsAsync(currentUserId, item.InventoryId);
                 if (!canEditItems)
-                    return Forbid("You don't have permission to edit items in this inventory");
+                    return StatusCode(403, "You don't have permission to edit items in this inventory");
+
+                // Check if CustomId is unique within the inventory (if provided and different from current)
+                if (!string.IsNullOrWhiteSpace(updateDto.CustomId) && updateDto.CustomId != item.CustomId)
+                {
+                    var existingItem = await _context.Items
+                        .FirstOrDefaultAsync(i => i.InventoryId == item.InventoryId && 
+                                                 i.CustomId == updateDto.CustomId);
+                    if (existingItem != null)
+                        return BadRequest("An item with this CustomId already exists in this inventory");
+                }
 
                 // Update item properties
                 item.Name = updateDto.Name;
@@ -283,7 +318,7 @@ namespace ToryBack.Controllers
                 // Check if user can delete items in this inventory
                 var canDeleteItems = await _authorizationService.CanUserDeleteItemsAsync(currentUserId, item.InventoryId);
                 if (!canDeleteItems)
-                    return Forbid("You don't have permission to delete items in this inventory");
+                    return StatusCode(403, "You don't have permission to delete items in this inventory");
 
                 _context.Items.Remove(item);
                 
@@ -446,18 +481,34 @@ namespace ToryBack.Controllers
 
     public class CreateItemDto
     {
+        [StringLength(100)]
         public string? CustomId { get; set; }
+        
+        [Required]
         public int InventoryId { get; set; }
+        
+        [Required]
+        [StringLength(200, MinimumLength = 1)]
         public string Name { get; set; } = string.Empty;
+        
+        [StringLength(2000)]
         public string? Description { get; set; }
+        
         public List<CustomFieldValueDto>? CustomFieldValues { get; set; }
     }
 
     public class UpdateItemDto
     {
+        [StringLength(100)]
         public string? CustomId { get; set; }
+        
+        [Required]
+        [StringLength(200, MinimumLength = 1)]
         public string Name { get; set; } = string.Empty;
+        
+        [StringLength(2000)]
         public string? Description { get; set; }
+        
         public List<CustomFieldValueDto>? CustomFieldValues { get; set; }
     }
 

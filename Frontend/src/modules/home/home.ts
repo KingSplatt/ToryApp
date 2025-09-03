@@ -100,7 +100,7 @@ async function loadRecentInventories() {
       <div class="inventory-info">
         <h3><a href="/inventory/${inv.id}" data-navigate="/inventory/${inv.id}">${inv.title}</a></h3>
         <p class="inventory-category">${inv.category}</p>
-        <p class="inventory-count">${inv.itemCount} elementos</p>
+        <p class="inventory-count">${inv.itemCount} Items</p>
       </div>
     </div>
   `).join('');

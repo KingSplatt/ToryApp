@@ -135,8 +135,10 @@ namespace ToryBack.Controllers
             // Check if user can access this inventory
             if (currentUserId != null)
             {
-                var canAccess = await _authorizationService.CanUserAccessInventoryAsync(currentUserId, id, AccessLevel.Read);
-                if (!canAccess)
+                var canAccessRead = await _authorizationService.CanUserAccessInventoryAsync(currentUserId, id, AccessLevel.Read);
+                var canAccessWrite = await _authorizationService.CanUserAccessInventoryAsync(currentUserId, id, AccessLevel.Write);
+                var isOwner = await _authorizationService.IsInventoryOwnerAsync(currentUserId, id);
+                if (!inventory.IsPublic && !canAccessRead && !canAccessWrite && !isOwner)
                     return Forbid("You don't have permission to access this inventory");
             }
             else if (!inventory.IsPublic)

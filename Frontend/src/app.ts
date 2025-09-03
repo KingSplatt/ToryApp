@@ -3,6 +3,7 @@ import { createLayout, initializeTheme, initializeLanguage, initializeLayout } f
 import { homePage, initializeHome } from './modules/home/home';
 import { loginPage, initializeLogin } from './modules/login/views/login';
 import { inventoriesPage, initializeInventories } from './modules/inventories/views/inventories';
+import { initInventoryPage, inventoryPage } from './modules/inventories/views/inventoryPage';
 import { ownInventory, initOwnInventory } from './modules/profile/views/ownInventory';
 import { sharedInventory, initSharedInventory } from './modules/profile/views/sharedInventory';
 import { searchPage, initializeSearch } from './modules/search/search';
@@ -52,6 +53,16 @@ router.addRoute({
   component: () => {
     const content = inventoriesPage();
     setTimeout(initializeInventories, 0);
+    return createLayout(content, router.getCurrentPath());
+  }
+});
+
+router.addRoute({
+  path: '/inventories/:id',
+  title: 'Inventory Details',
+  component: () => {
+    const content = inventoryPage();
+    setTimeout(initInventoryPage, 0, router.getParams().id);
     return createLayout(content, router.getCurrentPath());
   }
 });
@@ -189,19 +200,23 @@ async function initializeApp() {
     return;
   }
   
-  if (authService.isAuthenticated()) {
-    if (authService.isBlocked()) {
-      const user = authService.getUser();
-      const blockedMessage = user?.blockedAt 
-        ? `Your account was blocked on ${new Date(user.blockedAt).toLocaleDateString()}.`
-        : 'Your account has been blocked.';
-      UIUtils.showMessage(`Access denied. ${blockedMessage} Please contact support.`, 'error');
-      await authService.logout();
-      router.navigate('/login');
-      initializeLayout();
-      return;
-    }
-    router.navigate('/');
+  // Check if user is blocked only if authenticated
+  if (authService.isAuthenticated() && authService.isBlocked()) {
+    const user = authService.getUser();
+    const blockedMessage = user?.blockedAt 
+      ? `Your account was blocked on ${new Date(user.blockedAt).toLocaleDateString()}.`
+      : 'Your account has been blocked.';
+    UIUtils.showMessage(`Access denied. ${blockedMessage} Please contact support.`, 'error');
+    await authService.logout();
+    router.navigate('/login');
+    initializeLayout();
+    return;
+  }
+  
+  // Navigate to current path or default to home
+  const currentPath = window.location.pathname;
+  if (currentPath && currentPath !== '/') {
+    router.navigate(currentPath, false); // Don't push to history, we're already here
   } else {
     router.navigate('/');
   }

@@ -39,7 +39,10 @@ export const getInventories = async (): Promise<InventoryDto[]> => {
 };
 
 export const getInventory = async (id: number): Promise<InventoryDto> => {
-  const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.GET_INVENTORY(id)}`);
+  const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.GET_INVENTORY(id)}`,
+  {
+    credentials: 'include'
+  });
   if (!response.ok) {
     throw new Error("Failed to fetch inventory");
   }

@@ -175,25 +175,6 @@ namespace ToryBack.Controllers
             return Ok(result);
         }   
 
-
-        [HttpGet("categories")]
-        public async Task<ActionResult<IEnumerable<CategoryDto>>> GetCategories()
-        {
-            var categories = await _context.Categories
-                .Where(c => c.IsActive)
-                .OrderBy(c => c.SortOrder)
-                .ThenBy(c => c.Name)
-                .Select(c => new CategoryDto
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Description = c.Description
-                })
-                .ToListAsync();
-
-            return Ok(categories);
-        }
-
         [HttpGet("user/writeAccess/{userId}")]
         public async Task<ActionResult<IEnumerable<InventoryDetailDto>>> GetUserInventoriesWithWriteAccess(string userId)
         {

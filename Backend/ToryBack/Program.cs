@@ -45,6 +45,29 @@ if (!string.IsNullOrEmpty(connectionString))
         ? connectionString.Substring(0, connectionString.IndexOf("://") + 3) + "***@" + connectionString.Substring(connectionString.IndexOf("@") + 1)
         : "***";
     Console.WriteLine($"Database URL detected: {maskedConnectionString}");
+    
+    // Convert PostgreSQL URL to Entity Framework connection string
+    if (connectionString.StartsWith("postgresql://"))
+    {
+        try
+        {
+            var uri = new Uri(connectionString);
+            var host = uri.Host;
+            var portt = uri.Port;
+            var database = uri.AbsolutePath.TrimStart('/');
+            var userInfo = uri.UserInfo.Split(':');
+            var username = userInfo[0];
+            var password = userInfo.Length > 1 ? userInfo[1] : "";
+            
+            connectionString = $"Host={host};Port={portt};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true;";
+            Console.WriteLine("PostgreSQL URL converted to Entity Framework format successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error parsing PostgreSQL URL: {ex.Message}");
+            throw new InvalidOperationException($"Invalid PostgreSQL URL format: {ex.Message}");
+        }
+    }
 }
 else
 {
@@ -64,7 +87,7 @@ if (string.IsNullOrEmpty(connectionString))
     
     if (!string.IsNullOrEmpty(database) && !string.IsNullOrEmpty(username))
     {
-        connectionString = $"Host={dbHost};Port={dbPort};Database={database};Username={username};Password={password};";
+        connectionString = $"Host={dbHost};Port={dbPort};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true;";
     }
 }
 

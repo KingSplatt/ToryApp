@@ -36,9 +36,48 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Database configuration
-var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL")
-    ?? builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Database connection string not configured");
+var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+
+// Log the connection string for debugging (mask password)
+if (!string.IsNullOrEmpty(connectionString))
+{
+    var maskedConnectionString = connectionString.Contains("@") 
+        ? connectionString.Substring(0, connectionString.IndexOf("://") + 3) + "***@" + connectionString.Substring(connectionString.IndexOf("@") + 1)
+        : "***";
+    Console.WriteLine($"Database URL detected: {maskedConnectionString}");
+}
+else
+{
+    Console.WriteLine("DATABASE_URL environment variable is null or empty");
+}
+
+// If DATABASE_URL is not available, build from individual components
+if (string.IsNullOrEmpty(connectionString))
+{
+    var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
+    var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
+    var database = Environment.GetEnvironmentVariable("DB_NAME") ?? "";
+    var username = Environment.GetEnvironmentVariable("DB_USER") ?? "";
+    var password = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "";
+    
+    Console.WriteLine($"Building connection string from components: Host={dbHost}, Port={dbPort}, Database={database}, User={username}");
+    
+    if (!string.IsNullOrEmpty(database) && !string.IsNullOrEmpty(username))
+    {
+        connectionString = $"Host={dbHost};Port={dbPort};Database={database};Username={username};Password={password};";
+    }
+}
+
+// Fallback to configuration
+connectionString ??= builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (string.IsNullOrEmpty(connectionString))
+{
+    Console.WriteLine("ERROR: No database connection string available");
+    throw new InvalidOperationException("Database connection string not configured");
+}
+
+Console.WriteLine("Database connection string configured successfully");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString)

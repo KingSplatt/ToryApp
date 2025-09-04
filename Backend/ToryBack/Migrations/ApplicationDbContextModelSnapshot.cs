@@ -341,6 +341,16 @@ namespace ToryBack.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("custom_decimal3_state");
 
+                    b.Property<bool>("CustomIdEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("custom_id_enabled");
+
+                    b.Property<string>("CustomIdFormat")
+                        .HasColumnType("longtext")
+                        .HasColumnName("custom_id_format");
+
                     b.Property<string>("CustomInt1Name")
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)")

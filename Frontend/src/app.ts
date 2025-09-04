@@ -4,6 +4,7 @@ import { homePage, initializeHome } from './modules/home/home';
 import { loginPage, initializeLogin } from './modules/login/views/login';
 import { inventoriesPage, initializeInventories } from './modules/inventories/views/inventories';
 import { initInventoryPage, inventoryPage } from './modules/inventories/views/inventoryPage';
+import { customIdPage, initializeCustomIdPage } from './modules/inventories/views/customIdPage';
 import { discusspost, initDiscusspost } from './modules/discusspost/views/discusspost';
 import { ownInventory, initOwnInventory } from './modules/profile/views/ownInventory';
 import { sharedInventory, initSharedInventory } from './modules/profile/views/sharedInventory';
@@ -66,6 +67,18 @@ router.addRoute({
     setTimeout(initInventoryPage, 0, router.getParams().id);
     return createLayout(content, router.getCurrentPath());
   }
+});
+
+router.addRoute({
+  path: '/inventories/:id/custom-id',
+  title: 'Custom ID Configuration',
+  component: () => {
+    const params = router.getParams();
+    const content = customIdPage(parseInt(params.id));
+    setTimeout(initializeCustomIdPage, 0, parseInt(params.id));
+    return createLayout(content, router.getCurrentPath());
+  },
+  requiresAuth: true
 });
 
 router.addRoute({

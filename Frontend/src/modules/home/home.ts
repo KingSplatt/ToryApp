@@ -97,7 +97,9 @@ async function loadRecentInventories() {
   if (!container) return;
   
   const inventories = await getInventories();
-  
+  inventories.length = 5; // Limit to 5 inventories
+  inventories.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
   container.innerHTML = inventories.map((inv: InventoryDto, index: number) => `
     <div class="scroll-item" data-index="${index}">
       <div class="inventory-card" data-inventory-id="${inv.id}">

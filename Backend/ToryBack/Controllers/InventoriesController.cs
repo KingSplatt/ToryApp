@@ -16,17 +16,20 @@ namespace ToryBack.Controllers
         private readonly ILogger<InventoriesController> _logger;
         private readonly UserManager<User> _userManager;
         private readonly IInventoryAuthorizationService _authorizationService;
+        private readonly ICustomIdService _customIdService;
 
         public InventoriesController(
             ApplicationDbContext context, 
             ILogger<InventoriesController> logger, 
             UserManager<User> userManager,
-            IInventoryAuthorizationService authorizationService)
+            IInventoryAuthorizationService authorizationService,
+            ICustomIdService customIdService)
         {
             _context = context;
             _logger = logger;
             _userManager = userManager;
             _authorizationService = authorizationService;
+            _customIdService = customIdService;
         }
 
         [HttpGet]
@@ -56,7 +59,9 @@ namespace ToryBack.Controllers
                 LastUpdated = i.UpdatedAt,
                 Tags = i.InventoryTags.Select(it => it.Tag.Name).ToList(),
                 ImageUrl = i.ImageUrl,
-                CustomFields = GetInventoryCustomFields(i)
+                CustomFields = GetInventoryCustomFields(i),
+                CustomIdFormat = i.CustomIdFormat,
+                CustomIdEnabled = i.CustomIdEnabled
             }).ToList();
 
             return Ok(result);
@@ -138,7 +143,9 @@ namespace ToryBack.Controllers
                 LastUpdated = inventory.UpdatedAt,
                 Tags = inventory.InventoryTags.Select(it => it.Tag.Name).ToList(),
                 ImageUrl = inventory.ImageUrl,
-                CustomFields = GetInventoryCustomFields(inventory)
+                CustomFields = GetInventoryCustomFields(inventory),
+                CustomIdFormat = inventory.CustomIdFormat,
+                CustomIdEnabled = inventory.CustomIdEnabled
             };
             return Ok(result);
         }
@@ -644,8 +651,12 @@ namespace ToryBack.Controllers
                         }
                     }
                 }
+
+                // Configure default Custom ID format for new inventory
+                inventory.CustomIdEnabled = true;
+                inventory.CustomIdFormat = "ITEM-{random6}"; // Default format: ITEM-123456
+
                 await _context.SaveChangesAsync();
-                
                 // Grant creator access to the inventory
                 await _authorizationService.GrantCreatorAccessAsync(currentUserId, inventory.Id);
                 
@@ -804,6 +815,102 @@ namespace ToryBack.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+
+        [HttpGet("{id}/custom-id-format")]
+        public async Task<ActionResult<CustomIdFormatDto>> GetCustomIdFormat(int id)
+        {
+            var inventory = await _context.Inventories.FindAsync(id);
+            if (inventory == null)
+                return NotFound();
+
+            var result = new CustomIdFormatDto
+            {
+                Format = inventory.CustomIdFormat ?? string.Empty,
+                Enabled = inventory.CustomIdEnabled,
+                Preview = inventory.CustomIdEnabled && !string.IsNullOrEmpty(inventory.CustomIdFormat) 
+                    ? _customIdService.PreviewCustomId(inventory.CustomIdFormat)
+                    : string.Empty
+            };
+
+            return Ok(result);
+        }
+
+        [HttpPut("{id}/custom-id-format")]
+        [Authorize]
+        public async Task<ActionResult<CustomIdFormatDto>> UpdateCustomIdFormat(int id, UpdateCustomIdFormatDto updateDto)
+        {
+            try
+            {
+                // Get current user ID
+                string? currentUserId = null;
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    var currentUser = await _userManager.FindByNameAsync(User.Identity.Name!);
+                    currentUserId = currentUser?.Id;
+                }
+
+                if (currentUserId == null)
+                    return Unauthorized();
+
+                var inventory = await _context.Inventories.FindAsync(id);
+                if (inventory == null)
+                    return NotFound();
+
+                // Check if user is owner or has admin access
+                var isOwner = await _authorizationService.IsInventoryOwnerAsync(currentUserId, id);
+                var accessLevel = await _authorizationService.GetUserAccessLevelAsync(currentUserId, id);
+                
+                if (!isOwner && accessLevel < AccessLevel.Admin)
+                    return Forbid("You don't have permission to update custom ID format");
+
+                // Validate format if enabled
+                if (updateDto.Enabled && !string.IsNullOrEmpty(updateDto.Format))
+                {
+                    if (!_customIdService.ValidateCustomIdFormat(updateDto.Format))
+                        return BadRequest("Invalid custom ID format");
+                }
+
+                inventory.CustomIdFormat = updateDto.Format;
+                inventory.CustomIdEnabled = updateDto.Enabled;
+                inventory.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                var result = new CustomIdFormatDto
+                {
+                    Format = inventory.CustomIdFormat ?? string.Empty,
+                    Enabled = inventory.CustomIdEnabled,
+                    Preview = inventory.CustomIdEnabled && !string.IsNullOrEmpty(inventory.CustomIdFormat) 
+                        ? _customIdService.PreviewCustomId(inventory.CustomIdFormat)
+                        : string.Empty
+                };
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating custom ID format");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpPost("{id}/custom-id/preview")]
+        public ActionResult<string> PreviewCustomId(int id, [FromBody] string format)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(format))
+                    return BadRequest("Format cannot be empty");
+
+                var preview = _customIdService.PreviewCustomId(format);
+                return Ok(preview);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating custom ID preview");
+                return BadRequest("Invalid format");
+            }
+        }
     }
 
     // DTOs
@@ -827,6 +934,8 @@ namespace ToryBack.Controllers
     {
         public DateTime CreatedAt { get; set; }
         public List<CustomFieldDto> CustomFields { get; set; } = new();
+        public string? CustomIdFormat { get; set; }
+        public bool CustomIdEnabled { get; set; }
     }
 
     public class CustomFieldDto

@@ -109,6 +109,7 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
         <section class="inventory-control">
             <section class="inventory-actions">
                 <button class="btn btn-secondary" id="edit-inventory-${inventory.id}">Edit</button>
+                <button class="btn btn-info" id="custom-id-inventory-${inventory.id}">Custom ID</button>
                 <button class="btn btn-primary" id="discuss-inventory-${inventory.id}">Discussion post</button>
                 <button class="btn btn-secondary" id="items-inventory-${inventory.id}">Hide Items</button>
             </section>
@@ -282,6 +283,16 @@ export function attachButtons(){
             }
         });
     });
+    
+    //Custom ID buttons
+    const customIdButtons = document.querySelectorAll('[id^="custom-id-inventory-"]');
+    customIdButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const inventoryId = button.id.split('-')[3];
+            router.navigate(`/inventories/${inventoryId}/custom-id`);
+        });
+    });
+    
     //PENDIENTE
     const discussButtons = document.querySelectorAll('[id^="discuss-inventory-"]');
     discussButtons.forEach(button => {
@@ -1083,7 +1094,7 @@ async function handleAddItemFormSubmit() {
         
         const inventoryIdStr = inventoryId.toString();
         await loadItemsTable(inventoryIdStr);
-
+        router.navigate(`/inventories/${inventoryIdStr}`);
     } catch (error) {
         console.error('Error adding item:', error);
         UIUtils.showModalForMessages('Error adding item: ' + (error instanceof Error ? error.message : 'Unknown error'));

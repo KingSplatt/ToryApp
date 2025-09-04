@@ -12,8 +12,8 @@ using ToryBack.Data;
 namespace ToryBack.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250829021203_InitialMigrationNewStructure")]
-    partial class InitialMigrationNewStructure
+    [Migration("20250904030458_InitialCreateWithCustomId")]
+    partial class InitialCreateWithCustomId
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -343,6 +343,16 @@ namespace ToryBack.Migrations
                         .HasColumnType("tinyint(1)")
                         .HasDefaultValue(false)
                         .HasColumnName("custom_decimal3_state");
+
+                    b.Property<bool>("CustomIdEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("custom_id_enabled");
+
+                    b.Property<string>("CustomIdFormat")
+                        .HasColumnType("longtext")
+                        .HasColumnName("custom_id_format");
 
                     b.Property<string>("CustomInt1Name")
                         .HasMaxLength(100)

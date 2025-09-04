@@ -32,6 +32,9 @@ namespace ToryBack.Models
         // Optimistic locking
         [Timestamp]
         public byte[] RowVersion { get; set; } = null!;
+  
+        public string? CustomIdFormat { get; set; }
+        public bool CustomIdEnabled { get; set; } = false;
         
         // Custom String Fields (up to 3)
         public bool CustomString1State { get; set; } = false;

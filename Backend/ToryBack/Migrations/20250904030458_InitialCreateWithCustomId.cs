@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ToryBack.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigrationNewStructure : Migration
+    public partial class InitialCreateWithCustomId : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -267,6 +267,9 @@ namespace ToryBack.Migrations
                     CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
                     RowVersion = table.Column<DateTime>(type: "timestamp(6)", rowVersion: true, nullable: false),
+                    custom_id_format = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    custom_id_enabled = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
                     custom_string1_state = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
                     custom_string1_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),

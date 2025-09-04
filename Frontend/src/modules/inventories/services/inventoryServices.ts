@@ -4,6 +4,7 @@ import { UpdateInventoryDto } from "../interfaces/UpdateInventoryDto";
 import { GrantAccess } from "../interfaces/GrantAccessInterface";
 import { Tag } from "../interfaces/TagInterface";
 import { UserInventoryPermissionsDto } from "../interfaces/PermissionInterface";
+import { CustomIdFormatDto, UpdateCustomIdFormatDto } from "../interfaces/CustomIdInterface";
 
 export const INVENTORY_API_URL = "http://localhost:5217/api/Inventories";
 export const API_CONFIG_INVENTORIES = {
@@ -18,7 +19,10 @@ export const API_CONFIG_INVENTORIES = {
     GET_TAGS: "/tags",
     GRANT_WRITER_ACCESS: (id: number) => `/${id}/grant-access`,
     REVOKE_WRITER_ACCESS: (id: number, userId: string) => `/${id}/revoke-access/${userId}`,
-    GET_PERMISSIONS: (id: number) => `/${id}/permissions`
+    GET_PERMISSIONS: (id: number) => `/${id}/permissions`,
+    GET_CUSTOM_ID_FORMAT: (id: number) => `/${id}/custom-id-format`,
+    UPDATE_CUSTOM_ID_FORMAT: (id: number) => `/${id}/custom-id-format`,
+    PREVIEW_CUSTOM_ID: (id: number) => `/${id}/custom-id/preview`
   },
   headers: {
     "Content-Type": "application/json"
@@ -187,3 +191,59 @@ export const getUserInventoryPermissions = async (inventoryId: number): Promise<
   return await response.json();
 };
 
+export const getCustomIdFormat = async (inventoryId: number): Promise<CustomIdFormatDto> => {
+  const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.GET_CUSTOM_ID_FORMAT(inventoryId)}`, {
+    credentials: 'include',
+    headers: {
+      "Content-Type": "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Error response body:', errorText);
+    throw new Error(`Failed to get custom ID format: ${response.status} - ${errorText}`);
+  }
+
+  return await response.json();
+};
+
+export const updateCustomIdFormat = async (inventoryId: number, updateData: UpdateCustomIdFormatDto): Promise<CustomIdFormatDto> => {
+  const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.UPDATE_CUSTOM_ID_FORMAT(inventoryId)}`, {
+    method: "PUT",
+    credentials: 'include',
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(updateData)
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Error response body:', errorText);
+    throw new Error(`Failed to update custom ID format: ${response.status} - ${errorText}`);
+  }
+
+  return await response.json();
+};
+
+export const previewCustomId = async (inventoryId: number, format: string): Promise<string> => {
+  const response = await fetch(`${API_CONFIG_INVENTORIES.baseUrl}${API_CONFIG_INVENTORIES.ENDPOINTS.PREVIEW_CUSTOM_ID(inventoryId)}`, {
+    method: "POST",
+    credentials: 'include',
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(format)
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Error response body:', errorText);
+    throw new Error(`Failed to preview custom ID: ${response.status} - ${errorText}`);
+  }
+
+  // The backend returns a JSON string, so we need to parse it to get the actual string value
+  const result = await response.json();
+  return result;
+};

@@ -13,4 +13,7 @@ export interface InventoryDto {
   tags: string[];
   customFields: CustomFieldDto[];
   imageUrl: string;
+  createdAt: Date;
+  customIdFormat?: string;
+  customIdEnabled: boolean;
 }

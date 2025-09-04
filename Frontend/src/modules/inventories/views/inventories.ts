@@ -7,6 +7,8 @@ import { CreateCustomFieldDto } from "../interfaces/CreateInventoryDto";
 import { createInventory } from "../services/inventoryServices";
 import { UIUtils } from "../../utils/ui";
 import { InventoryDto } from "../interfaces/InventoryDtoInterface";
+import { createCategory } from "../services/categoryServices";
+import { CreateCategoryDto } from "../interfaces/CategoryInterface";
 const additionalFields = [
   {
     id: "inventory-serial-number",
@@ -100,15 +102,7 @@ const additionalFields = [
   }
 ];
 
-const inventories = await getInventories();
-
 export function inventoriesPage() {
-  console.log('Inventories:', inventories);
-  // Obtener categorías únicas de los inventarios
-  const uniqueCategories = Array.from(
-    new Set(inventories.map((inv: any) => inv.category).filter(Boolean))
-  );
-
   return `
     <div class="inventories-container">
       <div class="page-header">
@@ -123,9 +117,6 @@ export function inventoriesPage() {
           <label for="category-filter">Serach by Category:</label>
           <select id="category-filter">
             <option value="">All</option>
-            ${uniqueCategories.map(category => `
-              <option value="${category}">${category}</option>
-            `).join('')}
           </select>
         </div>
 
@@ -165,10 +156,15 @@ export function inventoriesPage() {
               <label for="inventory-title">Title *</label>
               <input type="text" id="inventory-title" name="title" required placeholder="E.g. Books">
             </div>
+
+            <div class="form-group">
+              <label for="inventory-customid">Custom ID *</label>
+              <input type="text" id="inventory-customid" name="customId" required placeholder="Custom ID">
+            </div>
             
             <div class="form-group">
               <label for="inventory-description">Description</label>
-              <textarea id="inventory-description" name="description" placeholder="Describe your inventory..."></textarea>
+              <textarea id="inventory-description" name="description" placeholder="Describe your inventory..." required></textarea>
             </div>
             
             <div class="form-row">
@@ -179,7 +175,9 @@ export function inventoriesPage() {
                   ${categories.map(category => `
                     <option value="${category.id}">${category.name}</option>
                   `).join('')}
+                  <option value="other">Other</option>
                 </select>
+                <input type="text" id="other-category-input" name="otherCategory" placeholder="Enter new category name" style="display: none; margin-top: 8px;" class="form-control">
               </div>
             </div>
             
@@ -221,6 +219,24 @@ async function loadInventories() {
   if (!container) return;
 
   let inventarios = await getInventories();
+  
+  // Load categories for filter
+  const uniqueCategories = Array.from(
+    new Set(inventarios.map((inv: any) => inv.category).filter(Boolean))
+  );
+  
+  const categoryFilter = document.getElementById('category-filter') as HTMLSelectElement;
+  if (categoryFilter) {
+    // Clear existing options except "All"
+    categoryFilter.innerHTML = '<option value="">All</option>';
+    uniqueCategories.forEach(category => {
+      const option = document.createElement('option');
+      option.value = category;
+      option.textContent = category;
+      categoryFilter.appendChild(option);
+    });
+  }
+  
   const sortFilter = document.getElementById('sort-filter') as HTMLSelectElement;
   const sortCategory = document.getElementById('category-filter') as HTMLSelectElement;
   const searchInput = document.getElementById('search-inventories') as HTMLInputElement;
@@ -320,10 +336,29 @@ function setupCreateButton() {
   
   let selectedCustomFields: string[] = []; // Array para almacenar los IDs de campos seleccionados
 
+  // Attach the event listener for category select only once
+  const categorySelect = document.getElementById('inventory-category') as HTMLSelectElement;
+  if (categorySelect) {
+    categorySelect.addEventListener('change', () => {
+      const otherCategoryInput = document.getElementById('other-category-input') as HTMLInputElement;
+      if (categorySelect.value === 'other') {
+        otherCategoryInput.style.display = 'block';
+        otherCategoryInput.required = true;
+      }
+      else {
+        otherCategoryInput.style.display = 'none';
+        otherCategoryInput.required = false;
+        otherCategoryInput.value = '';
+      }
+    });
+  }
+
   createBtn?.addEventListener('click', () => {
     modalNewInventory?.classList.add('is-active');
     setupCustomFields(); // Configurar los campos personalizados al abrir el modal
+    // No need to add the category select event listener here anymore
   });
+  
 
   closeModalBtn?.addEventListener('click', () => {
     closeModal();
@@ -524,6 +559,14 @@ function setupCreateButton() {
     modalNewInventory?.classList.remove('is-active');
     form?.reset();
     
+    // Reset category input field
+    const otherCategoryInput = document.getElementById('other-category-input') as HTMLInputElement;
+    if (otherCategoryInput) {
+      otherCategoryInput.style.display = 'none';
+      otherCategoryInput.required = false;
+      otherCategoryInput.value = '';
+    }
+    
     // Limpiar campos personalizados
     selectedCustomFields = [];
     const container = document.getElementById('custom-fields-container');
@@ -546,14 +589,46 @@ function setupCreateButton() {
     }
     
     // Recopilar datos básicos del inventario
-    const inventoryData = {
+    const categoryValue = formData.get('category') as string;
+    let categoryName = '';
+    let newCategory: CreateCategoryDto | undefined;
+    
+    // Handle category selection
+    if (categoryValue === 'other') {
+      const otherCategoryInput = document.getElementById('other-category-input') as HTMLInputElement;
+      const newCategoryName = otherCategoryInput?.value.trim();
+      if (newCategoryName) {
+        categoryName = newCategoryName;
+        newCategory = {
+          name: newCategoryName,
+          description: `Custom category: ${newCategoryName}`
+        };
+      } else {
+        alert('Please enter a category name');
+        return;
+      }
+    } else if (categoryValue === '' || categoryValue === 'Select a category') {
+      alert('Please select a category or create a new one');
+      return;
+    } else {
+      // Find the category name from the existing categories
+      const selectedCategory = categories.find(cat => cat.id.toString() === categoryValue);
+      categoryName = selectedCategory ? selectedCategory.name : categoryValue;
+    }
+    const customidenable = formData.get('customIdFormat') ? true : false;
+    console.log('Custom ID Enabled:', customidenable);
+    
+    
+    const inventoryData: CreateInventoryDto = {
       title: formData.get('title') as string,
       description: formData.get('description') as string,
-      categoryName: formData.get('category') as string, // Enviar nombre de categoría
+      categoryName: categoryName,
       isPublic: formData.get('isPublic') === 'on',
       tags: (formData.get('tags') as string)?.split(',').map(tag => tag.trim()).filter(tag => tag),
       ownerId: currentUser.id, // Usar ID del usuario autenticado
-      customFields: [] as any[] // Ensure this is always initialized as an array
+      customFields: [] as any[], // Always initialized as an array
+      customIdFormat: formData.get('customIdFormat') as string,
+      customIdEnabled: formData.get('customIdEnabled') === 'on'
     };
 
     // Recopilar datos de campos personalizados
@@ -602,10 +677,39 @@ function setupCreateButton() {
 
     console.log('Create inventory:', inventoryData);
     UIUtils.showModalForMessages('Creating inventory...');
-    setTimeout(() => {
-      createInventory(inventoryData);
-
-    },1000)
+    
+    // Si hay una nueva categoría, crearla primero
+    if (newCategory) {
+      createCategory(newCategory)
+        .then(() => {
+          // Crear el inventario después de crear la categoría
+          return createInventory(inventoryData);
+        })
+        .then(() => {
+          UIUtils.showModalForMessages('Inventory created successfully!');
+          setTimeout(() => {
+            location.reload(); // Recargar la página para mostrar el nuevo inventario
+          }, 1000);
+        })
+        .catch((error) => {
+          console.error('Error creating inventory:', error);
+          UIUtils.showModalForMessages('Error creating inventory. Please try again.');
+        });
+    } else {
+      // Crear solo el inventario
+      createInventory(inventoryData)
+        .then(() => {
+          UIUtils.showModalForMessages('Inventory created successfully!');
+          setTimeout(() => {
+            location.reload(); // Recargar la página para mostrar el nuevo inventario
+          }, 1000);
+        })
+        .catch((error) => {
+          console.error('Error creating inventory:', error);
+          UIUtils.showModalForMessages('Error creating inventory. Please try again.');
+        });
+    }
+    
     closeModal();
   }
 }

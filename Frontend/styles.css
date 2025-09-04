@@ -166,6 +166,17 @@ body {
   color: white;
 }
 
+.btn-info {
+  background-color: var(--info-color);
+  border-color: var(--info-color);
+  color: white;
+}
+
+.btn-info:hover {
+  background-color: #138496;
+  border-color: #138496;
+}
+
 .btn-sm {
   padding: 0.25rem 0.5rem;
   font-size: 0.8rem;

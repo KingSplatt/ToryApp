@@ -8,5 +8,4 @@ export const categories = [
   { id: "Sports", name: "Sports" },
   { id: "Music", name: "Music" },
   { id: "Art", name: "Art" },
-  { id: "Other", name: "Other" },
 ];

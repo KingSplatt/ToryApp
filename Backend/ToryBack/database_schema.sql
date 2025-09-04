@@ -36,6 +36,10 @@ CREATE TABLE inventories (
     UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     RowVersion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
+    -- Custom ID Format Configuration
+    custom_id_format TEXT,
+    custom_id_enabled BOOLEAN DEFAULT FALSE,
+    
     -- String fields (up to 3)
     custom_string1_state BOOLEAN DEFAULT FALSE,
     custom_string1_name VARCHAR(100),
@@ -88,16 +92,16 @@ CREATE TABLE tags (
 );
 
 INSERT INTO tags (Name, UsageCount) VALUES
-('programming', 15),
-('vintage', 12),
-('collectible', 18),
-('professional', 10),
-('home', 8),
-('electronic', 22),
-('manual', 6),
-('rare', 4),
-('new', 25),
-('used', 15);
+('programming', 1),
+('vintage', 1),
+('collectible', 1),
+('professional', 1),
+('home', 1),
+('electronic', 1),
+('manual', 1),
+('rare', 1),
+('new', 1),
+('used', 1);
 
 -- Inventory tags junction table (unchanged)
 CREATE TABLE inventory_tags (
@@ -177,17 +181,6 @@ CREATE TABLE post_likes (
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (UserId, PostId),
     FOREIGN KEY (PostId) REFERENCES discussion_posts(Id) ON DELETE CASCADE
-);
-
--- Custom ID configs table (unchanged)
-CREATE TABLE custom_id_configs (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
-    InventoryId INT NOT NULL,
-    Pattern JSON NOT NULL,
-    NextSequence INT DEFAULT 1,
-    IsActive BOOLEAN DEFAULT TRUE,
-    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (InventoryId) REFERENCES inventories(Id) ON DELETE CASCADE
 );
 
 -- Indexes for performance

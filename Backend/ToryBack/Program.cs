@@ -57,6 +57,7 @@ builder.Services.AddAuthentication()
 // Register custom services
 builder.Services.AddScoped<RoleInitializerService>();
 builder.Services.AddScoped<IInventoryAuthorizationService, InventoryAuthorizationService>();
+builder.Services.AddScoped<ICustomIdService, CustomIdService>();
 
 // CORS configuration
 var allowedOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() 

@@ -14,5 +14,7 @@ export interface CreateInventoryDto {
   tags?: string[];
   ownerId: string;
   customFields?: CreateCustomFieldDto[];
+  customIdFormat?: string;
+  customIdEnabled: boolean;
 }
 

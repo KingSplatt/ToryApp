@@ -16,17 +16,20 @@ namespace ToryBack.Controllers
         private readonly ILogger<ItemsController> _logger;
         private readonly UserManager<User> _userManager;
         private readonly IInventoryAuthorizationService _authorizationService;
+        private readonly ICustomIdService _customIdService;
 
         public ItemsController(
             ApplicationDbContext context, 
             ILogger<ItemsController> logger, 
             UserManager<User> userManager,
-            IInventoryAuthorizationService authorizationService)
+            IInventoryAuthorizationService authorizationService,
+            ICustomIdService customIdService)
         {
             _context = context;
             _logger = logger;
             _userManager = userManager;
             _authorizationService = authorizationService;
+            _customIdService = customIdService;
         }
 
         [HttpGet("inventory/{inventoryId}")]
@@ -124,12 +127,40 @@ namespace ToryBack.Controllers
                 if (inventory == null)
                     return NotFound("Inventory not found");
 
+                // Generate custom ID if enabled and not provided
+                string? customId = createDto.CustomId;
+                if (inventory.CustomIdEnabled && !string.IsNullOrEmpty(inventory.CustomIdFormat))
+                {
+                    if (string.IsNullOrWhiteSpace(customId))
+                    {
+                        // Generate new custom ID
+                        customId = _customIdService.GenerateCustomId(inventory.CustomIdFormat);
+                        
+                        // Ensure uniqueness within inventory
+                        int attempts = 0;
+                        while (attempts < 10)
+                        {
+                            var existingItem = await _context.Items
+                                .FirstOrDefaultAsync(i => i.InventoryId == createDto.InventoryId && 
+                                                         i.CustomId == customId);
+                            if (existingItem == null)
+                                break;
+                                
+                            customId = _customIdService.GenerateCustomId(inventory.CustomIdFormat);
+                            attempts++;
+                        }
+                        
+                        if (attempts >= 10)
+                            return StatusCode(500, "Unable to generate unique custom ID after multiple attempts");
+                    }
+                }
+
                 // Check if CustomId is unique within the inventory (if provided)
-                if (!string.IsNullOrWhiteSpace(createDto.CustomId))
+                if (!string.IsNullOrWhiteSpace(customId))
                 {
                     var existingItem = await _context.Items
                         .FirstOrDefaultAsync(i => i.InventoryId == createDto.InventoryId && 
-                                                 i.CustomId == createDto.CustomId);
+                                                 i.CustomId == customId);
                     if (existingItem != null)
                         return BadRequest("An item with this CustomId already exists in this inventory");
                 }
@@ -137,7 +168,7 @@ namespace ToryBack.Controllers
                 // Create item
                 var item = new Item
                 {
-                    CustomId = createDto.CustomId,
+                    CustomId = customId,
                     InventoryId = createDto.InventoryId,
                     Name = createDto.Name,
                     Description = createDto.Description ?? string.Empty,

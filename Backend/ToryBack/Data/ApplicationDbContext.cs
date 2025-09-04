@@ -119,6 +119,10 @@ namespace ToryBack.Data
                 entity.Property(e => e.CustomDecimal3State).HasColumnName("custom_decimal3_state").HasDefaultValue(false);
                 entity.Property(e => e.CustomDecimal3Name).HasColumnName("custom_decimal3_name").HasMaxLength(100);
                 
+                // Custom ID Configuration mappings
+                entity.Property(e => e.CustomIdFormat).HasColumnName("custom_id_format");
+                entity.Property(e => e.CustomIdEnabled).HasColumnName("custom_id_enabled").HasDefaultValue(true);
+                
                 // Foreign key relationships
                 entity.HasOne(e => e.Category)
                       .WithMany(c => c.Inventories)

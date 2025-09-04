@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: toryapp-backend
+    env: docker
+    rootDir: Backend/ToryBack
+    plan: free
+    buildCommand: ""
+    startCommand: ""
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: toryapp-db
+          property: connectionString
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: FACEBOOK_APP_ID
+        sync: false
+      - key: FACEBOOK_APP_SECRET
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+
+databases:
+  - name: toryapp-db
+    databaseName: toryapp
+    user: toryapp_user
+    plan: free

@@ -1,8 +1,10 @@
 import { LoginRequest } from "../interfaces/LoginRequestInterface";
 import { AuthResponse } from "../interfaces/AuthRequestInterface";
 import { RegisterRequest } from "../interfaces/RegisterRequestInterface";
+import { CONFIG } from "../../../config/config";
+
 export const API_CONFIG = {
-  BASE_URL: 'http://localhost:5217',
+  BASE_URL: CONFIG.API_BASE_URL,
   ENDPOINTS: {
     LOGIN: '/api/Account/login',
     REGISTER: '/api/Account/register',

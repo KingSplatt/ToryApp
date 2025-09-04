@@ -1,5 +1,6 @@
 import { Category,CreateCategoryDto } from "../interfaces/CategoryInterface";
-export const CATEGORY_API_URL = "http://localhost:5217/api/Categories";
+import CONFIG from "../../../config/config";
+export const CATEGORY_API_URL = `${CONFIG.API_BASE_URL}/api/Categories`;
 export const API_CONFIG_INVENTORIES_CAT = {
   baseUrl: CATEGORY_API_URL,
   ENDPOINTS: {

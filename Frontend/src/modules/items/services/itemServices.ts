@@ -1,6 +1,8 @@
 import { Items } from "../interfaces/itemInterface";
 import { CreateItemDto } from "../interfaces/CreateItemDto";
-export const ITEMS_API_URL = "http://localhost:5217/api/Items";
+import { CONFIG } from "../../../config/config";
+
+export const ITEMS_API_URL = `${CONFIG.API_BASE_URL}/api/Items`;
 export const API_CONFIG = {
     baseUrl: ITEMS_API_URL,
     ENDPOINTS:{

@@ -7,12 +7,28 @@ using ToryBack.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-Env.Load();
+// Load .env file only in development
+if (builder.Environment.IsDevelopment())
+{
+    Env.Load();
+}
 
-builder.Configuration["Google:ClientId"] = Env.GetString("GOOGLE_CLIENT_ID") ?? throw new InvalidOperationException("Google ClientId not configured");
-builder.Configuration["Google:ClientSecret"] = Env.GetString("GOOGLE_CLIENT_SECRET") ?? throw new InvalidOperationException("Google ClientSecret not configured");
-builder.Configuration["Facebook:AppId"] = Env.GetString("FACEBOOK_APP_ID") ?? throw new InvalidOperationException("Facebook AppId not configured");
-builder.Configuration["Facebook:AppSecret"] = Env.GetString("FACEBOOK_APP_SECRET") ?? throw new InvalidOperationException("Facebook AppSecret not configured");
+// Configure OAuth settings from environment variables or configuration
+builder.Configuration["Google:ClientId"] = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID") 
+    ?? builder.Configuration["Google:ClientId"] 
+    ?? throw new InvalidOperationException("Google ClientId not configured");
+
+builder.Configuration["Google:ClientSecret"] = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET") 
+    ?? builder.Configuration["Google:ClientSecret"] 
+    ?? throw new InvalidOperationException("Google ClientSecret not configured");
+
+builder.Configuration["Facebook:AppId"] = Environment.GetEnvironmentVariable("FACEBOOK_APP_ID") 
+    ?? builder.Configuration["Facebook:AppId"] 
+    ?? throw new InvalidOperationException("Facebook AppId not configured");
+
+builder.Configuration["Facebook:AppSecret"] = Environment.GetEnvironmentVariable("FACEBOOK_APP_SECRET") 
+    ?? builder.Configuration["Facebook:AppSecret"] 
+    ?? throw new InvalidOperationException("Facebook AppSecret not configured");
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -20,9 +36,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Database configuration
+var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL")
+    ?? builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Database connection string not configured");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(builder.Configuration.GetConnectionString("Default"), 
-                    new MySqlServerVersion(new Version(8, 0, 21)))
+    options.UseNpgsql(connectionString)
            .EnableSensitiveDataLogging(builder.Environment.IsDevelopment()));
 
 // Identity configuration
@@ -60,7 +79,8 @@ builder.Services.AddScoped<IInventoryAuthorizationService, InventoryAuthorizatio
 builder.Services.AddScoped<ICustomIdService, CustomIdService>();
 
 // CORS configuration
-var allowedOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() 
+var allowedOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS")?.Split(',') 
+                    ?? builder.Configuration.GetSection("Cors:Origins").Get<string[]>() 
                     ?? new[] { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" };
 builder.Services.AddCors(options =>
 {
@@ -73,13 +93,16 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseHttpsRedirection();
+else
+{
+    app.UseHttpsRedirection();
+}
 
 // CORS must be before Authentication
 app.UseCors("AllowConfiguredOrigins");
@@ -96,7 +119,7 @@ app.MapGet("/api/health", () => Results.Ok(new {
     status = "ok", 
     timestamp = DateTime.UtcNow,
     environment = app.Environment.EnvironmentName,
-    database = "inventorydb"
+    database = "inventorydb (PostgreSQL)"
 }))
 .WithName("HealthCheck")
 .WithTags("Health");
@@ -130,5 +153,9 @@ app.MapGet("/api/test-db", async (ApplicationDbContext context) =>
 })
 .WithName("TestDatabase")
 .WithTags("Health");
+
+// Configure port for Render
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5217";
+app.Urls.Add($"http://0.0.0.0:{port}");
 
 app.Run();

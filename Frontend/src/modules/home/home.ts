@@ -3,6 +3,10 @@ import { getPopularTags } from '../inventories/services/inventoryServices';
 import { Tag } from '../inventories/interfaces/TagInterface';
 import { getInventories } from '../inventories/services/inventoryServices';
 import { InventoryDto } from '../inventories/interfaces/InventoryDtoInterface';
+import { AuthService } from '../login/services/auth';
+import { Router } from '../router/router';
+
+const router = Router.getInstance();
 
 export function homePage() {
   const isAuthenticated = UIUtils.isUserAuthenticated();
@@ -32,8 +36,10 @@ export function homePage() {
           <h2>${isAuthenticated ? 'Recent Inventories' : 'Recent Inventories'}</h2>
           <a href="/inventories" data-navigate="/inventories">View All</a>
         </div>
-        <div class="inventory-grid" id="recent-inventories">
-          <!-- Dynamic content will be loaded here -->
+        <div class="scroll-container">
+          <div class="scroll-track" id="recent-inventories">
+            <!-- Dynamic content will be loaded here -->
+          </div>
         </div>
       </section>
       
@@ -42,8 +48,10 @@ export function homePage() {
           <h2>Popular Inventories</h2>
           <a href="/inventories?sort=popular" data-navigate="/inventories">View All</a>
         </div>
-        <div class="inventory-grid" id="popular-inventories">
-          <!-- Dynamic content will be loaded here -->
+        <div class="scroll-container">
+          <div class="scroll-track" id="popular-inventories">
+            <!-- Dynamic content will be loaded here -->
+          </div>
         </div>
       </section>
       
@@ -62,8 +70,6 @@ export function initializeHome() {
   loadRecentInventories();
   loadPopularInventories();
   loadTagCloud();
-  
-  // Listen for authentication state changes
   UIUtils.listenToAuthChanges((user) => {
     const heroSection = document.querySelector('.hero');
     if (heroSection) {
@@ -82,6 +88,7 @@ export function initializeHome() {
         </div>
       `;
     }
+    loadRecentInventories();
   });
 }
 
@@ -90,20 +97,23 @@ async function loadRecentInventories() {
   if (!container) return;
   
   const inventories = await getInventories();
-  inventories.length = 3;
-
-  container.innerHTML = inventories.map((inv: InventoryDto) => `
-    <div class="inventory-card">
-      <div class="inventory-image">
-        ${inv.imageUrl ? `<img src="${inv.imageUrl}" alt="${inv.title}">` : '<div class="image-placeholder">📦 </div>'}
-      </div>
-      <div class="inventory-info">
-        <h3><a href="/inventory/${inv.id}" data-navigate="/inventory/${inv.id}">${inv.title}</a></h3>
-        <p class="inventory-category">${inv.category}</p>
-        <p class="inventory-count">${inv.itemCount} Items</p>
+  
+  container.innerHTML = inventories.map((inv: InventoryDto, index: number) => `
+    <div class="scroll-item" data-index="${index}">
+      <div class="inventory-card" data-inventory-id="${inv.id}">
+        <div class="inventory-image">
+          ${inv.imageUrl ? `<img src="${inv.imageUrl}" alt="${inv.title}">` : '<div class="image-placeholder">📦 </div>'}
+        </div>
+        <div class="inventory-info">
+          <h3 class="navegar"><a href="/inventories/${inv.id}" data-navigate="/inventory/${inv.id}">${inv.title}</a></h3>
+          <p class="inventory-category">${inv.category}</p>
+          <p class="inventory-count">${inv.itemCount} Items</p>
+          <p class="inventory-owner">Created by: ${inv.owner}</p>
+        </div>
       </div>
     </div>
   `).join('');
+  setTimeout(() => loadCardNavigation(), 100);
 }
 
 async function loadPopularInventories() {
@@ -111,25 +121,28 @@ async function loadPopularInventories() {
   if (!container) return;
 
   const inventories = await getInventories();
-  // Sort by itemCount (most popular first)
   inventories.sort((a, b) => b.itemCount - a.itemCount);
-  inventories.length = 3;
+  inventories.length = 5; // Limit to 5 inventories
 
-  container.innerHTML = inventories.map(inv => `
-    <div class="inventory-card">
-      <div class="inventory-image">
-        ${inv.imageUrl ? `<img src="${inv.imageUrl}" alt="${inv.title}">` : '<div class="image-placeholder">📦</div>'}
-      </div>
-      <div class="inventory-info">
-        <h3><a href="/inventory/${inv.id}" data-navigate="/inventory/${inv.id}">${inv.title}</a></h3>
-        <p class="inventory-category">${inv.category}</p>
-        <p class="inventory-count">${inv.itemCount} Items</p>
-        <div class="popularity-indicator">
-          <span class="popularity-label">Popularity: ${inv.itemCount} items</span>
+  container.innerHTML = inventories.map((inv, index) => `
+    <div class="scroll-item" data-index="${index}">
+      <div class="inventory-card" data-inventory-id="${inv.id}">
+        <div class="inventory-image">
+          ${inv.imageUrl ? `<img src="${inv.imageUrl}" alt="${inv.title}">` : '<div class="image-placeholder">📦</div>'}
+        </div>
+        <div class="inventory-info">
+          <h3 class="navegar"><a href="/inventories/${inv.id}" data-navigate="/inventory/${inv.id}">${inv.title}</a></h3>
+          <p class="inventory-category">${inv.category}</p>
+          <p class="inventory-count">${inv.itemCount} Items</p>
+          <p class="inventory-owner">Created by: ${inv.owner}</p>
+          <div class="popularity-indicator">
+            <span class="popularity-label">Popularity: ${inv.itemCount} items</span>
+          </div>
         </div>
       </div>
     </div>
   `).join('');
+  setTimeout(() => loadCardNavigation(), 100);
 }
 
 export async function loadTagCloud() {
@@ -146,4 +159,21 @@ export async function loadTagCloud() {
   } catch (error) {
     console.error("Error loading tag cloud:", error);
   }
+}
+
+function loadCardNavigation() {
+  const cards = document.querySelectorAll('.inventory-card');
+  cards.forEach(card => {
+    card.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      if (target.tagName === 'A' || target.closest('a')) {
+        return;
+      }
+      
+      const inventoryId = card.getAttribute('data-inventory-id');
+      if (inventoryId) {
+        router.navigate(`/inventories/${inventoryId}`);
+      }
+    });
+  });
 }

@@ -2,7 +2,11 @@ import { getUserInventoriesWithWriteAccess } from "../../inventories/services/in
 import { AuthService } from "../../login/services/auth";
 import { InventoryDto } from "../../inventories/interfaces/InventoryDtoInterface";
 import { UIUtils } from "../../utils/ui";
+import "./sharedInventory.css";
+import { Router } from "../../router/router";
 
+
+const router = Router.getInstance();
 export function sharedInventory() {
   return `
     <div class="inventory-container">
@@ -67,12 +71,17 @@ function loadTableSharedInventories(){
     if(tbody && InventoryDto){
       InventoryDto.forEach(item => {
         const row = document.createElement('tr');
+        row.classList.add('inventory-row-clickable');
         row.innerHTML = `
           <td>${item.title}</td>
           <td>${item.description}</td>
           <td>${item.category}</td>
           <td>${item.customFields.length}</td>
         `;
+
+        row.addEventListener('click', () => {
+          router.navigate(`/inventories/${item.id}`);
+        });
         tbody.appendChild(row);
       });
     }

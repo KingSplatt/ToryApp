@@ -1,0 +1,16 @@
+.inventory-row-clickable {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.inventory-row-clickable:hover {
+  background-color: var(--bg-secondary) !important;
+}
+
+.inventory-row-clickable td:not(:first-child) {
+  cursor: pointer;
+}
+
+.inventory-row-clickable .inventory-checkbox {
+  cursor: pointer;
+}

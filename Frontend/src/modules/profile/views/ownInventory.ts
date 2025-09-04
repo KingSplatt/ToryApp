@@ -9,6 +9,8 @@ import { grantWriterAccess, revokeWriterAccess } from "../../inventories/service
 import { GrantAccess, AccessLevel } from "../../inventories/interfaces/GrantAccessInterface";
 import { UIUtils } from "../../utils/ui";
 
+const router = Router.getInstance();
+
 export function ownInventory(){
     return `
     <div class="inventory-container">
@@ -452,13 +454,27 @@ export function loadTableOfInventories(){
       if (tbody) {
         InventoryDto.forEach(tory => {
           const row = document.createElement('tr');
+          row.classList.add('inventory-row-clickable');
           row.innerHTML = `
             <td><input type="checkbox" class="inventory-checkbox" data-inventory-id="${tory.id}" onchange="updateInventoryToolBar()"></td>
-            <td>${tory.title}</td>
-            <td>${tory.description}</td>
-            <td>${tory.category}</td>
-            <td>${tory.customFields.length}</td>
+            <td class="inventory-title-cell">${tory.title}</td>
+            <td class="inventory-description-cell">${tory.description}</td>
+            <td class="inventory-category-cell">${tory.category}</td>
+            <td class="inventory-fields-cell">${tory.customFields.length}</td>
           `;
+          
+          // Add click event listener to navigate to inventory page
+          row.addEventListener('click', (event) => {
+            // Prevent navigation if clicking on checkbox
+            const target = event.target as HTMLElement;
+            if (target.tagName === 'INPUT' && (target as HTMLInputElement).type === 'checkbox') {
+              return;
+            }
+            
+            // Navigate to inventory details page
+            router.navigate(`/inventories/${tory.id}`);
+          });
+          
           tbody.appendChild(row);
         });
       }

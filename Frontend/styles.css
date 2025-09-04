@@ -674,9 +674,247 @@ body {
   }
 }
 
-.button-container {
+/* Scroll Container Styles */
+.scroll-container {
+  margin: 1rem 0;
+  position: relative;
+}
+
+.scroll-track {
   display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  padding: 1rem 0;
+  margin: 0 -1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Custom scrollbar styling */
+.scroll-track::-webkit-scrollbar {
+  height: 8px;
+}
+
+.scroll-track::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  margin: 0 1rem;
+}
+
+.scroll-track::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.scroll-track::-webkit-scrollbar-thumb:hover {
+  background: #0056b3;
+}
+
+/* Firefox scrollbar */
+.scroll-track {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) var(--bg-secondary);
+}
+
+.scroll-item {
+  flex: 0 0 300px;
+  scroll-snap-align: start;
+}
+
+.scroll-item .inventory-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.scroll-item .inventory-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px var(--shadow-hover);
+}
+
+.scroll-item .inventory-card:active {
+  transform: translateY(-2px);
+  transition: transform 0.1s ease;
+}
+
+.scroll-item .inventory-card .inventory-image {
+  height: 150px;
+  overflow: hidden;
+  border-radius: 0.5rem 0.5rem 0 0;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 10px;
-  flex-wrap: wrap;
+}
+
+.scroll-item .inventory-card .inventory-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.scroll-item .inventory-card:hover .inventory-image img {
+  transform: scale(1.05);
+}
+
+.scroll-item .inventory-card .image-placeholder {
+  font-size: 2rem;
+  color: var(--text-muted);
+}
+
+.scroll-item .inventory-card .inventory-info {
+  padding: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll-item .inventory-card .inventory-info h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.scroll-item .inventory-card .inventory-info h3 a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.scroll-item .inventory-card .inventory-info h3 a:hover {
+  color: var(--primary-color);
+}
+
+.scroll-item .inventory-card .inventory-info p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.popularity-indicator {
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.popularity-label {
+  font-size: 0.8rem;
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+/* Inventory Owner Styles */
+.inventory-owner {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin: 0.25rem 0;
+  padding: 0.25rem 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.scroll-item .inventory-card .inventory-owner {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Scroll hint for better UX */
+.scroll-container::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 40px;
+  height: 100%;
+  background: linear-gradient(to right, transparent, var(--bg-primary));
+  pointer-events: none;
+  transform: translateY(-50%);
+  opacity: 0.7;
+}
+
+/* Responsive design for scroll containers */
+@media (max-width: 768px) {
+  .scroll-item {
+    flex: 0 0 280px;
+  }
+  
+  .scroll-track {
+    gap: 0.8rem;
+    padding-left: 0.8rem;
+    padding-right: 0.8rem;
+    margin: 0 -0.8rem;
+  }
+  
+  .scroll-item .inventory-card .inventory-info {
+    padding: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .scroll-item {
+    flex: 0 0 250px;
+  }
+  
+  .scroll-track {
+    gap: 0.6rem;
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+    margin: 0 -0.6rem;
+  }
+  
+  .scroll-item .inventory-card .inventory-info {
+    padding: 0.6rem;
+  }
+  
+  .scroll-item .inventory-card .inventory-info h3 {
+    font-size: 1rem;
+  }
+  
+  .scroll-item .inventory-card .inventory-info p {
+    font-size: 0.8rem;
+  }
+}
+
+/* Add subtle animation for scroll items on load */
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.scroll-item {
+  animation: fadeInSlide 0.5s ease-out;
+}
+
+.scroll-item:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.scroll-item:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.scroll-item:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+.scroll-item:nth-child(5) {
+  animation-delay: 0.4s;
 }

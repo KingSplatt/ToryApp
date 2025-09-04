@@ -626,7 +626,7 @@ function setupCreateButton() {
       isPublic: formData.get('isPublic') === 'on',
       tags: (formData.get('tags') as string)?.split(',').map(tag => tag.trim()).filter(tag => tag),
       ownerId: currentUser.id, // Usar ID del usuario autenticado
-      customFields: [] as any[], // Always initialized as an array
+      customFields: [], // Always initialized as an array
       customIdFormat: formData.get('customIdFormat') as string,
       customIdEnabled: formData.get('customIdEnabled') === 'on'
     };
@@ -653,7 +653,7 @@ function setupCreateButton() {
           options: field.options ? JSON.stringify(field.options) : undefined
         };
         
-        inventoryData.customFields.push(customFieldData);
+        inventoryData.customFields!.push(customFieldData);
       }
     });
 

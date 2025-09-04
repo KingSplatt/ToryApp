@@ -1,4 +1,4 @@
-import { customFieldData } from "./customFiledInterface";
+import { customFieldData, CustomFieldDto } from "./customFiledInterface";
 export interface InventoryDto {
   id: number;
   title: string;
@@ -11,6 +11,6 @@ export interface InventoryDto {
   owner: string;
   lastUpdated: Date;
   tags: string[];
-  customFields: customFieldData[];
+  customFields: CustomFieldDto[];
   imageUrl: string;
 }

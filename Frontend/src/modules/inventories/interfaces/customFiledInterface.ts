@@ -3,7 +3,7 @@ export interface customFieldData {
   type: string;
   showInTable: boolean;
   sortOrder: number;
-  value: string | number | boolean;
+  value?: string | number | boolean | Date;
   validationRules: {
     required: boolean;
     minLength?: number;
@@ -11,4 +11,25 @@ export interface customFieldData {
     pattern?: string;
   };
   options?: Array<string | number | boolean>;
+}
+
+export interface CustomFieldDefinition {
+  id: number;
+  name: string;
+  type: 'string' | 'int' | 'bool' | 'date' | 'decimal';
+  isActive: boolean;
+  sortOrder: number;
+  validationRules?: {
+    required?: boolean;
+    minLength?: number;
+    maxLength?: number;
+    pattern?: string;
+  };
+}
+
+export interface CustomFieldDto {
+  id: number;
+  name: string;
+  type: string; 
+  showInTable: boolean;
 }

@@ -4,6 +4,7 @@ import { UpdateInventoryDto } from "../interfaces/UpdateInventoryDto";
 import "./inventoryPage.css"
 import { UIUtils } from "../../utils/ui";
 import { getItemsForInventory, createItem,deleteItems,updateItem } from "../../items/services/itemServices";
+import { CreateItemDto, CustomFieldValueDto } from "../../items/interfaces/CreateItemDto";
 import { getCategories,createCategory } from "../services/categoryServices";
 import { Router } from "../../router/router";
 import { UserInventoryPermissionsDto } from "../interfaces/PermissionInterface";
@@ -48,6 +49,7 @@ export const initInventoryPage = async (idInventory: string) => {
 async function takeInventory(idInventory: string): Promise<InventoryDto> {
   const inventory = await getInventory(parseInt(idInventory));
   currentInventory = inventory; // Store current inventory globally
+  console.log('Loaded inventory:', inventory);
   const categories = await getCategories();
   
   const inventoryDetails = document.getElementById('inventory-details');
@@ -875,9 +877,92 @@ function openAddItemModal() {
 function populateCustomFieldsForAdd() {
     const container = document.getElementById('custom-fields-container');
     if (!container) return;
-    const currentInventoryId = currentInventoryPermissions?.inventoryId;
-    if (!currentInventoryId) return;
+    
+    const inventory = currentInventory;
+    if (!inventory || !inventory.customFields || inventory.customFields.length === 0) {
+        console.log('No custom fields found for inventory:', inventory?.id);
+        return;
+    }
+    
+    console.log('Populating custom fields for inventory:', inventory.id, 'Fields:', inventory.customFields);
+    
     container.innerHTML = '';
+    
+    // Generate custom fields based on the inventory configuration
+    inventory.customFields.forEach((field) => {
+        const fieldGroup = document.createElement('div');
+        fieldGroup.className = 'form-group';
+        
+        const label = document.createElement('label');
+        label.setAttribute('for', `custom-field-${field.id}`);
+        label.textContent = `${field.name}:`;
+        
+        let input: HTMLElement;
+        
+        switch (field.type.toLowerCase()) {
+            case 'text':
+            case 'string':
+                input = document.createElement('input');
+                (input as HTMLInputElement).type = 'text';
+                (input as HTMLInputElement).id = `custom-field-${field.id}`;
+                (input as HTMLInputElement).name = `custom_field_${field.id}`;
+                (input as HTMLInputElement).placeholder = `Enter ${field.name}`;
+                break;
+                
+            case 'number':
+            case 'integer':
+                input = document.createElement('input');
+                (input as HTMLInputElement).type = 'number';
+                (input as HTMLInputElement).id = `custom-field-${field.id}`;
+                (input as HTMLInputElement).name = `custom_field_${field.id}`;
+                (input as HTMLInputElement).placeholder = `Enter ${field.name}`;
+                break;
+                
+            case 'checkbox':
+            case 'boolean':
+                input = document.createElement('input');
+                (input as HTMLInputElement).type = 'checkbox';
+                (input as HTMLInputElement).id = `custom-field-${field.id}`;
+                (input as HTMLInputElement).name = `custom_field_${field.id}`;
+                break;
+                
+            case 'date':
+            case 'datetime':
+                input = document.createElement('input');
+                (input as HTMLInputElement).type = 'datetime-local';
+                (input as HTMLInputElement).id = `custom-field-${field.id}`;
+                (input as HTMLInputElement).name = `custom_field_${field.id}`;
+                break;
+                
+            case 'decimal':
+                input = document.createElement('input');
+                (input as HTMLInputElement).type = 'number';
+                (input as HTMLInputElement).step = '0.0001';
+                (input as HTMLInputElement).id = `custom-field-${field.id}`;
+                (input as HTMLInputElement).name = `custom_field_${field.id}`;
+                (input as HTMLInputElement).placeholder = `Enter ${field.name}`;
+                break;
+                
+            default:
+                input = document.createElement('input');
+                (input as HTMLInputElement).type = 'text';
+                (input as HTMLInputElement).id = `custom-field-${field.id}`;
+                (input as HTMLInputElement).name = `custom_field_${field.id}`;
+                (input as HTMLInputElement).placeholder = `Enter ${field.name}`;
+                break;
+        }
+        
+        // Store field metadata for form submission
+        input.setAttribute('data-field-name', field.name);
+        input.setAttribute('data-field-type', field.type);
+        input.setAttribute('data-field-id', field.id.toString());
+        
+        fieldGroup.appendChild(label);
+        fieldGroup.appendChild(input);
+        container.appendChild(fieldGroup);
+    });
+    
+    console.log('Custom fields populated. Container children count:', container.children.length);
 }
 
 function attachAddItemModalEventListeners() {
@@ -928,12 +1013,59 @@ async function handleAddItemFormSubmit() {
             return;
         }
 
-        const itemData = {
+        // Collect custom field values from the form
+        const customFieldValues: CustomFieldValueDto[] = [];
+        const customFieldInputs = form.querySelectorAll('[data-field-name]') as NodeListOf<HTMLInputElement>;
+        
+        console.log('Found custom field inputs:', customFieldInputs.length);
+        
+        customFieldInputs.forEach((input) => {
+            const fieldName = input.getAttribute('data-field-name');
+            const fieldType = input.getAttribute('data-field-type');
+            const fieldId = input.getAttribute('data-field-id');
+            
+            console.log('Processing field:', { fieldName, fieldType, fieldId, value: input.value });
+            
+            if (fieldName && fieldType && fieldId) {
+                let value: string | undefined;
+                
+                switch (fieldType.toLowerCase()) {
+                    case 'checkbox':
+                    case 'boolean':
+                        value = (input as HTMLInputElement).checked.toString();
+                        break;
+                    case 'date':
+                    case 'datetime':
+                        if (input.value) {
+                            // Convert to ISO string for backend
+                            value = new Date(input.value).toISOString();
+                        }
+                        break;
+                    default:
+                        value = input.value.trim() || undefined;
+                        break;
+                }
+                
+                // Only add if there's a value or it's a boolean field
+                if (value && (value !== 'false' || fieldType.toLowerCase().includes('checkbox'))) {
+                    customFieldValues.push({
+                        fieldId: parseInt(fieldId),
+                        name: fieldName,
+                        type: fieldType,
+                        value: value
+                    });
+                }
+            }
+        });
+
+        console.log('Custom field values to send:', customFieldValues);
+
+        const itemData: CreateItemDto = {
             inventoryId: inventoryId,
             name: name,
             description: description || undefined,
             customId: customId || undefined,
-            customFieldValues: [] // Will be populated from custom fields
+            customFieldValues: customFieldValues
         };
 
         const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;

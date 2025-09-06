@@ -160,8 +160,14 @@ namespace ToryBack.Controllers
         [HttpGet("login/google")]
         public IActionResult GoogleLogin(string returnUrl = "/")
         {
-            var redirectUrl = Url.Action("GoogleCallback", "Account", new { returnUrl });
+            // Generar la URL de callback correcta basada en el entorno
+            var request = HttpContext.Request;
+            var baseUrl = $"{request.Scheme}://{request.Host}";
+            var redirectUrl = $"{baseUrl}/api/Account/google-callback";
+            
+            Console.WriteLine($"Base URL: {baseUrl}");
             Console.WriteLine($"Redirect URL: {redirectUrl}");
+            
             var properties = _signInManager.ConfigureExternalAuthenticationProperties("Google", redirectUrl);
             return Challenge(properties, "Google");
         }
@@ -258,7 +264,14 @@ namespace ToryBack.Controllers
         [HttpGet("login/facebook")]
         public IActionResult FacebookLogin(string returnUrl = "/")
         {
-            var redirectUrl = Url.Action("FacebookCallback", "Account", new { returnUrl });
+            // Generar la URL de callback correcta basada en el entorno
+            var request = HttpContext.Request;
+            var baseUrl = $"{request.Scheme}://{request.Host}";
+            var redirectUrl = $"{baseUrl}/api/Account/facebook-callback";
+            
+            Console.WriteLine($"Base URL: {baseUrl}");
+            Console.WriteLine($"Redirect URL: {redirectUrl}");
+            
             var properties = _signInManager.ConfigureExternalAuthenticationProperties("Facebook", redirectUrl);
             return Challenge(properties, "Facebook");
         }

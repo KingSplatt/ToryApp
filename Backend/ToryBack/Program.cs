@@ -133,6 +133,33 @@ builder.Services.ConfigureApplicationCookie(options =>
         : SameSiteMode.None;
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
     options.SlidingExpiration = true;
+    
+    // Configuración específica para OAuth en producción
+    if (!builder.Environment.IsDevelopment())
+    {
+        options.Cookie.Name = "ToryApp.Auth";
+        options.Cookie.Domain = null; // Let the browser handle the domain
+        options.Cookie.Path = "/";
+    }
+});
+
+// Configuración adicional para sesiones distribuidas
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
+        ? CookieSecurePolicy.SameAsRequest 
+        : CookieSecurePolicy.Always;
+    options.Cookie.SameSite = builder.Environment.IsDevelopment() 
+        ? SameSiteMode.Lax 
+        : SameSiteMode.None;
+    if (!builder.Environment.IsDevelopment())
+    {
+        options.Cookie.Name = "ToryApp.Session";
+    }
 });
 
 // Configuración específica para protección de datos en producción
@@ -210,6 +237,9 @@ if (!app.Environment.IsDevelopment())
 
 // CORS must be before Authentication
 app.UseCors("AllowConfiguredOrigins");
+
+// Session middleware debe ir antes de Authentication
+app.UseSession();
 
 // Configuración adicional para cookies en producción
 if (!app.Environment.IsDevelopment())

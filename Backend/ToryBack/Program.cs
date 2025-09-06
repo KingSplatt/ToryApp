@@ -141,7 +141,10 @@ builder.Services.AddScoped<IInventoryAuthorizationService, InventoryAuthorizatio
 builder.Services.AddScoped<ICustomIdService, CustomIdService>();
 
 // CORS configuration
-var allowedOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS")?.Split(',') 
+var corsOriginsEnv = Environment.GetEnvironmentVariable("CORS_ORIGINS");
+Console.WriteLine($"CORS_ORIGINS environment variable: {corsOriginsEnv ?? "NOT SET"}");
+
+var allowedOrigins = corsOriginsEnv?.Split(',') 
                     ?? builder.Configuration.GetSection("Cors:Origins").Get<string[]>() 
                     ?? new[] { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" };
 

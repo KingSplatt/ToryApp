@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using ToryBack.Models;
+using ToryBack.Models.DTOs;
 using ToryBack.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,54 +17,17 @@ namespace ToryBack.Controllers
         private readonly SignInManager<User> _signInManager;
         private readonly RoleInitializerService _roleService;
         private readonly ILogger<AccountController> _logger;
-        private readonly IConfiguration _configuration;
 
         public AccountController(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
             RoleInitializerService roleService,
-            ILogger<AccountController> logger,
-            IConfiguration configuration)
+            ILogger<AccountController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleService = roleService;
             _logger = logger;
-            _configuration = configuration;
-        }
-
-        // Helper method to get frontend URL based on environment
-        private string GetFrontendUrl()
-        {
-            // Check if we're in development by looking at the environment variable
-            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
-            
-            if (environment == "Development")
-            {
-                return "http://localhost:5173";
-            }
-            
-            // In production, use Netlify URL
-            return Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "https://toryappfront.netlify.app";
-        }
-
-        // Helper method to get backend base URL
-        private string GetBackendBaseUrl()
-        {
-            var request = HttpContext.Request;
-            
-            // In production (Render), use the correct HTTPS URL
-            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
-            
-            if (environment == "Development")
-            {
-                return $"{request.Scheme}://{request.Host}";
-            }
-            else
-            {
-                // Force HTTPS for production
-                return $"https://{request.Host}";
-            }
         }
 
         [HttpGet("status")]
@@ -182,13 +147,7 @@ namespace ToryBack.Controllers
         public IActionResult GoogleLogin(string returnUrl = "/")
         {
             // Generar la URL de callback correcta basada en el entorno
-            var baseUrl = GetBackendBaseUrl();
-            var redirectUrl = $"{baseUrl}/api/Account/google-callback";
-            
-            Console.WriteLine($"Environment: {Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}");
-            Console.WriteLine($"Base URL: {baseUrl}");
-            Console.WriteLine($"Redirect URL: {redirectUrl}");
-            
+            var redirectUrl = Url.Action("GoogleCallback", "Account", new { returnUrl }) ?? "/";
             var properties = _signInManager.ConfigureExternalAuthenticationProperties("Google", redirectUrl);
             return Challenge(properties, "Google");
         }
@@ -196,11 +155,10 @@ namespace ToryBack.Controllers
         [HttpGet("google-callback")]
         public async Task<IActionResult> GoogleCallback(string returnUrl = "/")
         {
-            var frontendUrl = GetFrontendUrl();
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
-                return Redirect($"{frontendUrl}/login?error=external_login_failed");
+                return Redirect("http://localhost:5173/login?error=external_login_failed");
             }
 
             // Attempt to sign in with external login provider
@@ -229,12 +187,12 @@ namespace ToryBack.Controllers
                     }
                     if (isBlocked)
                     {
-                        return Redirect($"{frontendUrl}/login?error=account_blocked&blockedAt={blockedAt?.ToString("o")}");
+                        return Redirect($"http://localhost:5173/login?error=account_blocked&blockedAt={blockedAt?.ToString("o")}");
                     }
                 }
 
                 // Redirect to frontend with success
-                return Redirect($"{frontendUrl}/?login=success");
+                return Redirect($"http://localhost:5173/?login=success");
             }
 
             // If external login is not registered, create a new user
@@ -243,7 +201,7 @@ namespace ToryBack.Controllers
 
             if (email == null)
             {
-                return Redirect($"{frontendUrl}/login?error=email_not_provided");
+                return Redirect($"http://localhost:5173/login?error=email_not_provided");
             }
 
             var user = await _userManager.FindByEmailAsync(email);
@@ -262,7 +220,7 @@ namespace ToryBack.Controllers
                 var createResult = await _userManager.CreateAsync(user);
                 if (!createResult.Succeeded)
                 {
-                    return Redirect($"{frontendUrl}/login?error=user_creation_failed");
+                    return Redirect($"http://localhost:5173/login?error=user_creation_failed");
                 }
             }
 
@@ -276,23 +234,17 @@ namespace ToryBack.Controllers
                 _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
                 // Redirect to frontend with success
-                return Redirect($"{frontendUrl}/?login=success&new_user=true");
+                return Redirect("https://localhost:5217/?login=success&new_user=true");
             }
 
-            return Redirect($"{frontendUrl}/login?error=login_association_failed");
+            return Redirect($"http://localhost:5173/login?error=login_association_failed");
         }
 
         [HttpGet("login/facebook")]
         public IActionResult FacebookLogin(string returnUrl = "/")
         {
             // Generar la URL de callback correcta basada en el entorno
-            var baseUrl = GetBackendBaseUrl();
-            var redirectUrl = $"{baseUrl}/api/Account/facebook-callback";
-            
-            Console.WriteLine($"Environment: {Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}");
-            Console.WriteLine($"Base URL: {baseUrl}");
-            Console.WriteLine($"Redirect URL: {redirectUrl}");
-            
+            var redirectUrl = Url.Action("FacebookCallback", "Account", new { returnUrl }) ?? "/";
             var properties = _signInManager.ConfigureExternalAuthenticationProperties("Facebook", redirectUrl);
             return Challenge(properties, "Facebook");
         }
@@ -300,11 +252,10 @@ namespace ToryBack.Controllers
         [HttpGet("facebook-callback")]
         public async Task<IActionResult> FacebookCallback(string returnUrl = "/")
         {
-            var frontendUrl = GetFrontendUrl();
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
-                return Redirect($"{frontendUrl}/login?error=external_login_failed");
+                return Redirect("http://localhost:5173/login?error=external_login_failed");
             }
 
             // Attempt to sign in with external login provider
@@ -335,12 +286,12 @@ namespace ToryBack.Controllers
 
                     if (isBlocked)
                     {
-                        return Redirect($"{frontendUrl}/login?error=account_blocked&blockedAt={blockedAt?.ToString("o")}");
+                        return Redirect($"http://localhost:5173/login?error=account_blocked&blockedAt={blockedAt?.ToString("o")}");
                     }
                 }
 
                 // Redirect to frontend with success
-                return Redirect($"{frontendUrl}/?login=success");
+                return Redirect($"http://localhost:5173/?login=success");
             }
 
             // If external login is not registered, create a new user
@@ -349,7 +300,7 @@ namespace ToryBack.Controllers
 
             if (email == null)
             {
-                return Redirect($"{frontendUrl}/login?error=email_not_provided");
+                return Redirect($"http://localhost:5173/login?error=email_not_provided");
             }
 
             var user = await _userManager.FindByEmailAsync(email);
@@ -368,7 +319,7 @@ namespace ToryBack.Controllers
                 var createResult = await _userManager.CreateAsync(user);
                 if (!createResult.Succeeded)
                 {
-                    return Redirect($"{frontendUrl}/login?error=user_creation_failed");
+                    return Redirect($"http://localhost:5173/login?error=user_creation_failed");
                 }
             }
 
@@ -382,12 +333,13 @@ namespace ToryBack.Controllers
                 _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
                 // Redirect to frontend with success
-                return Redirect($"{frontendUrl}/?login=success&new_user=true");
+                return Redirect($"http://localhost:5173/?login=success&new_user=true");
             }
 
-            return Redirect($"{frontendUrl}/login?error=login_association_failed");
+            return Redirect($"http://localhost:5173/login?error=login_association_failed");
         }
         [HttpGet("users")]
+        [Authorize] // Requiere autenticación
         public async Task<IActionResult> GetAllUsers()
         {
             var users = _userManager.Users.ToList();
@@ -575,31 +527,5 @@ namespace ToryBack.Controllers
             _logger.LogInformation("{UnblockedCount} users have been unblocked", unblockedCount);
             return Ok(new { message = $"{unblockedCount} users unblocked successfully", unblockedCount, userIds });
         }
-    }
-
-
-    public class BlockUsersRequest
-    {
-        public List<string> UserIds { get; set; } = new();
-    }
-
-    public class RegisterRequest
-    {
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        public string FullName { get; set; } = string.Empty;
-    }
-
-    public class LoginRequest
-    {
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        public bool RememberMe { get; set; } = false;
-    }
-
-    public class AssignRolesRequest
-    {
-        public List<string> UserIds { get; set; } = new();
-        public List<string> RoleNames { get; set; } = new();
     }
 }

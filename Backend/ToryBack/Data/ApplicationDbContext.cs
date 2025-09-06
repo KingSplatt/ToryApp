@@ -59,6 +59,13 @@ namespace ToryBack.Data
                 entity.Property(e => e.CustomDecimal2Value).HasColumnName("custom_decimal2_value").HasPrecision(18, 4);
                 entity.Property(e => e.CustomDecimal3Value).HasColumnName("custom_decimal3_value").HasPrecision(18, 4);
                 
+                // RowVersion configuration for PostgreSQL
+                entity.Property(e => e.RowVersion)
+                      .HasColumnName("RowVersion")
+                      .HasColumnType("bytea")
+                      .IsRowVersion()
+                      .HasDefaultValueSql("'\\x00000000'::bytea");
+                
                 // Add unique constraint for CustomId per Inventory
                 entity.HasIndex(e => new { e.InventoryId, e.CustomId })
                       .HasDatabaseName("unique_custom_id_per_inventory")
@@ -122,6 +129,13 @@ namespace ToryBack.Data
                 // Custom ID Configuration mappings
                 entity.Property(e => e.CustomIdFormat).HasColumnName("custom_id_format");
                 entity.Property(e => e.CustomIdEnabled).HasColumnName("custom_id_enabled").HasDefaultValue(true);
+                
+                // RowVersion configuration for PostgreSQL
+                entity.Property(e => e.RowVersion)
+                      .HasColumnName("RowVersion")
+                      .HasColumnType("bytea")
+                      .IsRowVersion()
+                      .HasDefaultValueSql("'\\x00000000'::bytea");
                 
                 // Foreign key relationships
                 entity.HasOne(e => e.Category)

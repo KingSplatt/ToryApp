@@ -110,61 +110,16 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Identity configuration
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
-    options.Password.RequireDigit = false;
+    options.Password.RequireDigit = true;
     options.Password.RequiredLength = 4;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireLowercase = false;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireLowercase = true;
     options.User.RequireUniqueEmail = true;
     options.SignIn.RequireConfirmedEmail = false;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
-
-// Configuración de cookies y sesiones para OAuth
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
-        ? CookieSecurePolicy.SameAsRequest 
-        : CookieSecurePolicy.Always;
-    options.Cookie.SameSite = builder.Environment.IsDevelopment() 
-        ? SameSiteMode.Lax 
-        : SameSiteMode.None;
-    options.ExpireTimeSpan = TimeSpan.FromDays(7);
-    options.SlidingExpiration = true;
-    
-    // Configuración específica para OAuth en producción
-    if (!builder.Environment.IsDevelopment())
-    {
-        options.Cookie.Name = "ToryApp.Auth";
-        options.Cookie.Domain = null; // Let the browser handle the domain
-        options.Cookie.Path = "/";
-    }
-});
-
-// Configuración adicional para sesiones distribuidas
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession(options =>
-{
-    options.Cookie.Name = "ToryApp.Session";
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
-        ? CookieSecurePolicy.SameAsRequest 
-        : CookieSecurePolicy.Always;
-    options.Cookie.SameSite = builder.Environment.IsDevelopment() 
-        ? SameSiteMode.Lax 
-        : SameSiteMode.None;
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
-    options.Cookie.IsEssential = true;
-});
-
-// Configuración específica para protección de datos en producción
-if (!builder.Environment.IsDevelopment())
-{
-    builder.Services.AddDataProtection();
-}
-
 //Google y Facebook authentication
 builder.Services.AddAuthentication()
     .AddGoogle(gl =>
@@ -172,30 +127,12 @@ builder.Services.AddAuthentication()
         gl.ClientId = builder.Configuration["Google:ClientId"] ?? throw new InvalidOperationException("Google ClientId no configurado");
         gl.ClientSecret = builder.Configuration["Google:ClientSecret"] ?? throw new InvalidOperationException("Google ClientSecret no configurado");
         gl.SaveTokens = true;
-        
-        // Configuración específica para manejo de errores OAuth
-        gl.Events.OnRemoteFailure = context =>
-        {
-            context.HandleResponse();
-            var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "https://toryappfront.netlify.app";
-            context.Response.Redirect($"{frontendUrl}/login?error=oauth_failed&provider=google&message={Uri.EscapeDataString(context.Failure?.Message ?? "Unknown error")}");
-            return Task.CompletedTask;
-        };
     })
     .AddFacebook(fb =>
     {
         fb.AppId = builder.Configuration["Facebook:AppId"] ?? throw new InvalidOperationException("Facebook AppId no configurado");
         fb.AppSecret = builder.Configuration["Facebook:AppSecret"] ?? throw new InvalidOperationException("Facebook AppSecret no configurado");
         fb.SaveTokens = true;
-        
-        // Configuración específica para manejo de errores OAuth
-        fb.Events.OnRemoteFailure = context =>
-        {
-            context.HandleResponse();
-            var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "https://toryappfront.netlify.app";
-            context.Response.Redirect($"{frontendUrl}/login?error=oauth_failed&provider=facebook&message={Uri.EscapeDataString(context.Failure?.Message ?? "Unknown error")}");
-            return Task.CompletedTask;
-        };
     });
 
 // Register custom services
@@ -234,20 +171,6 @@ if (!app.Environment.IsDevelopment())
 
 // CORS must be before Authentication
 app.UseCors("AllowConfiguredOrigins");
-
-// Session middleware debe ir antes de Authentication
-app.UseSession();
-
-// Configuración adicional para cookies en producción
-if (!app.Environment.IsDevelopment())
-{
-    app.Use(async (context, next) =>
-    {
-        context.Response.Headers["SameSite"] = "None";
-        context.Response.Headers["Secure"] = "true";
-        await next();
-    });
-}
 
 // Authentication & Authorization
 app.UseAuthentication();

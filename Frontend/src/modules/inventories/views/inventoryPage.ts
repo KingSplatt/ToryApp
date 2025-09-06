@@ -1,13 +1,13 @@
-import { getInventory, updateInventory, getUserInventoryPermissions } from "../services/inventoryServices";
-import { InventoryDto } from "../interfaces/InventoryDtoInterface";
-import { UpdateInventoryDto } from "../interfaces/UpdateInventoryDto";
-import "./inventoryPage.css"
+import { getInventory, updateInventory, getUserInventoryPermissions } from "../../../services/inventoryServices";
+import { InventoryDto } from "../../../interfaces/InventoryDtoInterface";
+import { UpdateInventoryDto } from "../../../interfaces/UpdateInventoryDto";
+import "../styles/inventoryPage.css";
 import { UIUtils } from "../../utils/ui";
-import { getItemsForInventory, createItem,deleteItems,updateItem } from "../../items/services/itemServices";
-import { CreateItemDto, CustomFieldValueDto } from "../../items/interfaces/CreateItemDto";
-import { getCategories,createCategory } from "../services/categoryServices";
+import { getItemsForInventory, createItem,deleteItems,updateItem } from "../../../services/itemServices";
+import { CreateItemDto, CustomFieldValueDto } from "../../../interfaces/CreateItemDto";
+import { getCategories, createCategory } from "../../../services/categoryServices";
 import { Router } from "../../router/router";
-import { UserInventoryPermissionsDto } from "../interfaces/PermissionInterface";
+import { UserInventoryPermissionsDto } from "../../../interfaces/PermissionInterface";
 
 const router = Router.getInstance();
 // Global variables for toolbar functionality

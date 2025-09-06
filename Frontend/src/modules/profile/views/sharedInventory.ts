@@ -1,8 +1,8 @@
-import { getUserInventoriesWithWriteAccess } from "../../inventories/services/inventoryServices";
-import { AuthService } from "../../login/services/auth";
-import { InventoryDto } from "../../inventories/interfaces/InventoryDtoInterface";
+import { getUserInventoriesWithWriteAccess } from "../../../services/inventoryServices";
+import { AuthService } from "../../../services/auth";
+import { InventoryDto } from "../../../interfaces/InventoryDtoInterface";
 import { UIUtils } from "../../utils/ui";
-import "./sharedInventory.css";
+import "../styles/sharedInventory.css";
 import { Router } from "../../router/router";
 
 

@@ -1,6 +1,6 @@
 import { Items } from "../interfaces/itemInterface";
 import { CreateItemDto } from "../interfaces/CreateItemDto";
-import { CONFIG } from "../../../config/config";
+import { CONFIG } from "../config/config";
 
 export const ITEMS_API_URL = `${CONFIG.API_BASE_URL}/api/Items`;
 export const API_CONFIG = {

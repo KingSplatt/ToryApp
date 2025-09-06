@@ -1,8 +1,8 @@
 // Search page component
 import { loadTagCloud } from "../home/home";
-import { getTags } from "../inventories/services/inventoryServices";
-import { getPopularTags } from "../inventories/services/inventoryServices";
-import { getInventories } from "../inventories/services/inventoryServices";
+import { getTags } from "../../services/inventoryServices";
+import { getPopularTags } from "../../services/inventoryServices";
+import { getInventories } from "../../services/inventoryServices";
 import "./search.css"
 
 export function searchPage() {

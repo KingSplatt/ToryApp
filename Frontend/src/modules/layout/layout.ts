@@ -1,5 +1,5 @@
-import { AuthService } from "../login/services/auth";
-import { User } from "../login/interfaces/UserInterface";
+import { AuthService } from "../../services/auth";
+import { User } from "../../interfaces/UserInterface";
 import { UIUtils } from "../utils/ui";
 import { Theme } from "../utils/theme";
 import { Language } from "../utils/language";

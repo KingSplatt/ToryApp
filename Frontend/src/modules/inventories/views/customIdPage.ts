@@ -1,7 +1,7 @@
-import { getCustomIdFormat, updateCustomIdFormat, previewCustomId } from "../services/inventoryServices";
-import { CustomIdFormatDto, UpdateCustomIdFormatDto, CUSTOM_ID_ELEMENTS } from "../interfaces/CustomIdInterface";
+import { getCustomIdFormat, updateCustomIdFormat, previewCustomId } from "../../../services/inventoryServices";
+import { CustomIdFormatDto, UpdateCustomIdFormatDto, CUSTOM_ID_ELEMENTS } from "../../../interfaces/CustomIdInterface";
 import { UIUtils } from "../../utils/ui";
-import "./customIdPage.css";
+import "../styles/customIdPage.css";
 
 let currentInventoryId: number | null = null;
 let currentFormat: CustomIdFormatDto | null = null;

@@ -1,7 +1,7 @@
 import { LoginRequest } from "../interfaces/LoginRequestInterface";
 import { AuthResponse } from "../interfaces/AuthRequestInterface";
 import { RegisterRequest } from "../interfaces/RegisterRequestInterface";
-import { CONFIG } from "../../../config/config";
+import CONFIG from "../config/config";
 
 export const API_CONFIG = {
   BASE_URL: CONFIG.API_BASE_URL,

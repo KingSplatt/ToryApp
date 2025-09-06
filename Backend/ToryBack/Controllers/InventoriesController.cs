@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ToryBack.Data;
 using ToryBack.Models;
+using ToryBack.Models.DTOs;
 using Microsoft.AspNetCore.Identity;
 using ToryBack.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -911,103 +912,5 @@ namespace ToryBack.Controllers
                 return BadRequest("Invalid format");
             }
         }
-    }
-
-    // DTOs
-    public class InventoryDto
-    {
-        public int Id { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string Category { get; set; } = string.Empty;
-        public string CategoryId { get; set; } = string.Empty;
-        public int ItemCount { get; set; }
-        public bool IsPublic { get; set; }
-        public string Owner { get; set; } = string.Empty;
-        public String OwnerId { get; set; } = string.Empty;
-        public DateTime LastUpdated { get; set; }
-        public List<string> Tags { get; set; } = new();
-        public string? ImageUrl { get; set; }
-    }
-
-    public class InventoryDetailDto : InventoryDto
-    {
-        public DateTime CreatedAt { get; set; }
-        public List<CustomFieldDto> CustomFields { get; set; } = new();
-        public string? CustomIdFormat { get; set; }
-        public bool CustomIdEnabled { get; set; }
-    }
-
-    public class CustomFieldDto
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Type { get; set; } = string.Empty;
-        public bool ShowInTable { get; set; }
-    }
-
-    public class CategoryDto
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-    }
-
-    public class TagDto
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public int UsageCount { get; set; }
-    }
-
-    public class CreateInventoryDto
-    {
-        public string Title { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public string CategoryName { get; set; } = string.Empty;
-        public bool IsPublic { get; set; }
-        public string OwnerId { get; set; } = string.Empty;
-        public List<string>? Tags { get; set; }
-        public List<CreateCustomFieldDto>? CustomFields { get; set; }
-    }
-
-    public class UpdateInventoryDto
-    {
-        public string Title { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public string CategoryName { get; set; } = string.Empty;
-        public bool IsPublic { get; set; }
-        public List<string>? Tags { get; set; }
-        public string? ImageUrl { get; set; }
-    }
-
-    public class CreateCustomFieldDto
-    {
-        public string Name { get; set; } = string.Empty;
-        public string Type { get; set; } = string.Empty;
-        public bool ShowInTable { get; set; }
-        public int SortOrder { get; set; }
-        public string? ValidationRules { get; set; }
-        public string? Options { get; set; }
-    }
-
-    public class UserInventoryPermissionsDto
-    {
-        public int InventoryId { get; set; }
-        public string UserId { get; set; } = string.Empty;
-        public bool IsOwner { get; set; }
-        public string? AccessLevel { get; set; }
-        public bool CanRead { get; set; }
-        public bool CanWrite { get; set; }
-        public bool CanCreateItems { get; set; }
-        public bool CanEditItems { get; set; }
-        public bool CanDeleteItems { get; set; }
-        public bool CanManageInventory { get; set; }
-    }
-
-    public class GrantAccessDto
-    {
-        public string UserId { get; set; } = string.Empty;
-        public AccessLevel AccessLevel { get; set; } = AccessLevel.Read;
     }
 }

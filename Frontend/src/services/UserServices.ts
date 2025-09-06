@@ -1,15 +1,16 @@
-import { User } from "../../login/interfaces/UserInterface";
-export const USERS_API_URL = "http://localhost:5217/api/Account/users";
+import { User } from "../interfaces/UserInterface";
+import { CONFIG } from "../config/config";
+export const USERS_API_URL = `${CONFIG.API_BASE_URL}/api/Account/users`;
 export const API_CONFIG = {
-    baseUrl: "http://localhost:5217/api",
+    baseUrl: `${CONFIG.API_BASE_URL}/api/Account`,
     ENDPOINTS:{
-        users: "/Account/users",
-        DELETEusers: "/Account/user/DeleteUsers",
-        DELETEUser: "/Account/user",
-        blockUsers: "/Account/users/block",
-        unblockUsers: "/Account/users/unblock",
-        assignRoles: "/Account/user/roles",
-        removeRoles: "/Account/user/roles",
+        users: "/users",
+        DELETEusers: "/user/DeleteUsers",
+        DELETEUser: "/user",
+        blockUsers: "/users/block",
+        unblockUsers: "/users/unblock",
+        assignRoles: "/user/roles",
+        removeRoles: "/user/roles",
     }
 };
 

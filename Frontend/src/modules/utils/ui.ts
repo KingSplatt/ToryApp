@@ -1,5 +1,5 @@
-import { AuthService } from '../login/services/auth';
-import { User } from '../login/interfaces/UserInterface';
+import { AuthService } from '../../services/auth';
+import { User } from '../../interfaces/UserInterface';
 import { Router } from '../router/router';
 
 export class UIUtils {

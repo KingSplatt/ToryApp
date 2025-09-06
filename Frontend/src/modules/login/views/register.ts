@@ -1,8 +1,8 @@
 import '../styles/register.css'
 import { Router } from "../../router/router";
-import { ApiService } from '../services/api';
-import { AuthService } from '../services/auth';
-import { RegisterRequest } from '../interfaces/RegisterRequestInterface';
+import { ApiService } from '../../../services/api';
+import { AuthService } from '../../../services/auth';
+import { RegisterRequest } from '../../../interfaces/RegisterRequestInterface';
 import { UIUtils } from '../../utils/ui';
 
 

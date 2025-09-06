@@ -1,9 +1,9 @@
 import { UIUtils } from '../../utils/ui';
-import { User } from '../../login/interfaces/UserInterface';
-import "./profile.css"
+import { User } from '../../../interfaces/UserInterface';
+import "../styles/profile.css"
 import { Router } from '../../router/router';
-import { getUserInventories } from '../../inventories/services/inventoryServices';
-import { AuthService } from '../../login/services/auth';
+import { getUserInventories } from '../../../services/inventoryServices';
+import { AuthService } from '../../../services/auth';
 import { Theme } from '../../utils/theme';
 
 export function profilePage() {

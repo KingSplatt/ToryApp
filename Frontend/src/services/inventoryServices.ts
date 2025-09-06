@@ -5,7 +5,7 @@ import { GrantAccess } from "../interfaces/GrantAccessInterface";
 import { Tag } from "../interfaces/TagInterface";
 import { UserInventoryPermissionsDto } from "../interfaces/PermissionInterface";
 import { CustomIdFormatDto, UpdateCustomIdFormatDto } from "../interfaces/CustomIdInterface";
-import { CONFIG } from "../../../config/config";
+import { CONFIG } from "../config/config";
 
 export const INVENTORY_API_URL = `${CONFIG.API_BASE_URL}/api/Inventories`;
 export const API_CONFIG_INVENTORIES = {

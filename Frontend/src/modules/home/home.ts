@@ -1,9 +1,9 @@
 import { UIUtils } from '../utils/ui';
-import { getPopularTags } from '../inventories/services/inventoryServices';
-import { Tag } from '../inventories/interfaces/TagInterface';
-import { getInventories } from '../inventories/services/inventoryServices';
-import { InventoryDto } from '../inventories/interfaces/InventoryDtoInterface';
-import { AuthService } from '../login/services/auth';
+import { getPopularTags } from '../../services/inventoryServices';
+import { Tag } from '../../interfaces/TagInterface';
+import { getInventories } from '../../services/inventoryServices';
+import { InventoryDto } from '../../interfaces/InventoryDtoInterface';
+import { AuthService } from '../../services/auth';
 import { Router } from '../router/router';
 
 const router = Router.getInstance();

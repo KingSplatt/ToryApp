@@ -1,12 +1,12 @@
-import { getUserInventories } from "../../inventories/services/inventoryServices";
-import { AuthService } from "../../login/services/auth";
+import { getUserInventories } from "../../../services/inventoryServices";
+import { AuthService } from "../../../services/auth";
 import { Router } from "../../router/router";
-import { InventoryDto } from "../../inventories/interfaces/InventoryDtoInterface";
-import { getUsers } from "../../admin/services/UserServices";
-import "./ownInventory.css"
-import { User } from "../../login/interfaces/UserInterface";
-import { grantWriterAccess, revokeWriterAccess } from "../../inventories/services/inventoryServices";
-import { GrantAccess, AccessLevel } from "../../inventories/interfaces/GrantAccessInterface";
+import { InventoryDto } from "../../../interfaces/InventoryDtoInterface";
+import { getUsers } from "../../../services/UserServices";
+import "../styles/ownInventory.css"
+import { User } from "../../../interfaces/UserInterface";
+import { grantWriterAccess, revokeWriterAccess } from "../../../services/inventoryServices";
+import { GrantAccess, AccessLevel } from "../../../interfaces/GrantAccessInterface";
 import { UIUtils } from "../../utils/ui";
 
 const router = Router.getInstance();
@@ -419,7 +419,9 @@ async function handleRemoveAccess() {
 async function loadUserInventories() {
     const user = AuthService.getInstance().getUser();
     const inventories = await getUserInventories(user?.id || '');
+    console.log('User inventories:', inventories);
     const allUsers = await getUsers();
+    //console.log('All users:', allUsers);
     users.length = 0;
     users.push(...allUsers);
     return inventories;

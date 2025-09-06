@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ToryBack.Data;
 using ToryBack.Models;
+using ToryBack.Models.DTOs;
 using Microsoft.AspNetCore.Identity;
 using ToryBack.Services;
 using System.ComponentModel.DataAnnotations;
@@ -516,59 +517,5 @@ namespace ToryBack.Controllers
                 }
             }
         }
-    }
-
-    // DTOs
-    public class ItemDto
-    {
-        public int Id { get; set; }
-        public string? CustomId { get; set; }
-        public int InventoryId { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
-        public List<CustomFieldValueDto> CustomFieldValues { get; set; } = new();
-    }
-
-    public class CreateItemDto
-    {
-        [StringLength(100)]
-        public string? CustomId { get; set; }
-        
-        [Required]
-        public int InventoryId { get; set; }
-        
-        [Required]
-        [StringLength(200, MinimumLength = 1)]
-        public string Name { get; set; } = string.Empty;
-        
-        [StringLength(2000)]
-        public string? Description { get; set; }
-        
-        public List<CustomFieldValueDto>? CustomFieldValues { get; set; }
-    }
-
-    public class UpdateItemDto
-    {
-        [StringLength(100)]
-        public string? CustomId { get; set; }
-        
-        [Required]
-        [StringLength(200, MinimumLength = 1)]
-        public string Name { get; set; } = string.Empty;
-        
-        [StringLength(2000)]
-        public string? Description { get; set; }
-        
-        public List<CustomFieldValueDto>? CustomFieldValues { get; set; }
-    }
-
-    public class CustomFieldValueDto
-    {
-        public int FieldId { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Type { get; set; } = string.Empty;
-        public string? Value { get; set; }
     }
 }

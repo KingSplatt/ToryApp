@@ -34,7 +34,7 @@ CREATE TABLE inventories (
     "OwnerId" VARCHAR(450) NOT NULL,
     "CreatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     "UpdatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    "RowVersion" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "RowVersion" BYTEA NOT NULL DEFAULT '\x00000000'::bytea,
     
     -- Custom ID Format Configuration
     "custom_id_format" TEXT,
@@ -132,7 +132,7 @@ CREATE TABLE items (
     "Description" TEXT,
     "CreatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     "UpdatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    "RowVersion" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "RowVersion" BYTEA NOT NULL DEFAULT '\x00000000'::bytea,
     
     -- String field values (corresponding to inventory custom fields)
     "custom_string1_value" TEXT,
@@ -253,4 +253,44 @@ FROM information_schema.triggers
 WHERE trigger_schema = 'public' 
 AND trigger_name IN ('update_inventories_updated_at', 'update_items_updated_at')
 ORDER BY event_object_table, trigger_name;
+
+-- Drop and recreate the RowVersion column in inventories table
+ALTER TABLE inventories DROP COLUMN IF EXISTS "RowVersion";
+ALTER TABLE inventories ADD COLUMN "RowVersion" BYTEA NOT NULL DEFAULT '\x00000000'::bytea;
+
+-- Drop and recreate the RowVersion column in items table  
+ALTER TABLE items DROP COLUMN IF EXISTS "RowVersion";
+ALTER TABLE items ADD COLUMN "RowVersion" BYTEA NOT NULL DEFAULT '\x00000000'::bytea;
+
+-- Create function to automatically update RowVersion on changes
+CREATE OR REPLACE FUNCTION update_rowversion_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW."RowVersion" = decode(lpad(to_hex(extract(epoch from now())::bigint), 16, '0'), 'hex');
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Create triggers to automatically update RowVersion on UPDATE
+DROP TRIGGER IF EXISTS update_inventories_rowversion ON inventories;
+CREATE TRIGGER update_inventories_rowversion 
+    BEFORE UPDATE ON inventories
+    FOR EACH ROW EXECUTE FUNCTION update_rowversion_column();
+
+DROP TRIGGER IF EXISTS update_items_rowversion ON items;
+CREATE TRIGGER update_items_rowversion 
+    BEFORE UPDATE ON items
+    FOR EACH ROW EXECUTE FUNCTION update_rowversion_column();
+
+-- Verify the changes
+SELECT 
+    column_name, 
+    data_type, 
+    is_nullable, 
+    column_default
+FROM information_schema.columns 
+WHERE table_name IN ('inventories', 'items') 
+AND column_name = 'RowVersion'
+ORDER BY table_name;
+
 

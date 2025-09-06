@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using ToryBack.Models.DTOs;
 
 namespace ToryBack.Services
 {
@@ -108,18 +109,5 @@ namespace ToryBack.Services
             var maxValue = (1 << bits) - 1;
             return _random.Next(0, maxValue + 1);
         }
-    }
-
-    public class CustomIdFormatDto
-    {
-        public string Format { get; set; } = string.Empty;
-        public bool Enabled { get; set; }
-        public string Preview { get; set; } = string.Empty;
-    }
-
-    public class UpdateCustomIdFormatDto
-    {
-        public string Format { get; set; } = string.Empty;
-        public bool Enabled { get; set; }
     }
 }

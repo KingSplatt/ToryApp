@@ -1,14 +1,14 @@
-import "./inventories.css"
+import "../styles/inventories.css"
 import { categories } from "../additions/categoriesContainer"
-import { AuthService } from "../../login/services/auth";
-import { getInventories } from "../services/inventoryServices";
-import { CreateInventoryDto } from "../interfaces/CreateInventoryDto";
-import { CreateCustomFieldDto } from "../interfaces/CreateInventoryDto";
-import { createInventory } from "../services/inventoryServices";
+import { AuthService } from "../../../services/auth";
+import { getInventories } from "../../../services/inventoryServices";
+import { CreateInventoryDto } from "../../../interfaces/CreateInventoryDto";
+import { CreateCustomFieldDto } from "../../../interfaces/CreateInventoryDto";
+import { createInventory } from "../../../services/inventoryServices";
 import { UIUtils } from "../../utils/ui";
-import { InventoryDto } from "../interfaces/InventoryDtoInterface";
-import { createCategory } from "../services/categoryServices";
-import { CreateCategoryDto } from "../interfaces/CategoryInterface";
+import { InventoryDto } from "../../../interfaces/InventoryDtoInterface";
+import { createCategory } from "../../../services/categoryServices";
+import { CreateCategoryDto } from "../../../interfaces/CategoryInterface";
 const additionalFields = [
   {
     id: "inventory-serial-number",
@@ -155,11 +155,6 @@ export function inventoriesPage() {
             <div class="form-group">
               <label for="inventory-title">Title *</label>
               <input type="text" id="inventory-title" name="title" required placeholder="E.g. Books">
-            </div>
-
-            <div class="form-group">
-              <label for="inventory-customid">Custom ID *</label>
-              <input type="text" id="inventory-customid" name="customId" required placeholder="Custom ID">
             </div>
             
             <div class="form-group">

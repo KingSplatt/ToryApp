@@ -10,7 +10,7 @@ import { ownInventory, initOwnInventory } from './modules/profile/views/ownInven
 import { sharedInventory, initSharedInventory } from './modules/profile/views/sharedInventory';
 import { searchPage, initializeSearch } from './modules/search/search';
 import { profilePage, initializeProfile } from './modules/profile/views/profile';
-import { AuthService } from './modules/login/services/auth';
+import { AuthService } from './services/auth';
 import { Register } from './modules/login/views/register';
 import { adminPage, initAdminPage } from './modules/admin/views/admin';
 import { initializeRegisterForm } from './modules/login/views/register';

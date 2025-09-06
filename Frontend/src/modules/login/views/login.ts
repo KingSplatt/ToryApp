@@ -1,8 +1,8 @@
 import '../styles/login.css'
-import { ApiService } from '../services/api';
-import { AuthService } from '../services/auth';
+import { ApiService } from '../../../services/api';
+import { AuthService } from '../../../services/auth';
 import { UIUtils } from '../../utils/ui';
-import { LoginRequest } from '../interfaces/LoginRequestInterface';
+import { LoginRequest } from '../../../interfaces/LoginRequestInterface';
 import { Router } from '../../router/router';
 import { LoginSchema } from '../schemas/LoginSchema';
 import { ZodError } from 'zod';

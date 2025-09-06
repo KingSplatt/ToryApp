@@ -1,9 +1,9 @@
-import { User } from "../../login/interfaces/UserInterface";
+import { User } from "../../../interfaces/UserInterface";
 import { Route } from "../../router/router";
-import { getUsers, deleteUsers, blockUsers, unblockUsers,assignRoles,removeRoles } from "../services/UserServices";
-import "./admin.css";
+import { getUsers, deleteUsers, blockUsers, unblockUsers,assignRoles,removeRoles } from "../../../services/UserServices";
+import "../styles/admin.css"
 import { UIUtils } from "../../utils/ui";
-import { AuthService } from "../../login/services/auth";
+import { AuthService } from "../../../services/auth";
 const authService = AuthService.getInstance();
 
 

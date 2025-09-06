@@ -147,19 +147,16 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.Name = "ToryApp.Session";
     options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
     options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
         ? CookieSecurePolicy.SameAsRequest 
         : CookieSecurePolicy.Always;
     options.Cookie.SameSite = builder.Environment.IsDevelopment() 
         ? SameSiteMode.Lax 
         : SameSiteMode.None;
-    if (!builder.Environment.IsDevelopment())
-    {
-        options.Cookie.Name = "ToryApp.Session";
-    }
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.IsEssential = true;
 });
 
 // Configuración específica para protección de datos en producción

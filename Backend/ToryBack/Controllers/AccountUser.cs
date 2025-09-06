@@ -34,14 +34,35 @@ namespace ToryBack.Controllers
         // Helper method to get frontend URL based on environment
         private string GetFrontendUrl()
         {
-            // In development, use localhost
-            if (_configuration["ASPNETCORE_ENVIRONMENT"] == "Development")
+            // Check if we're in development by looking at the environment variable
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+            
+            if (environment == "Development")
             {
                 return "http://localhost:5173";
             }
             
             // In production, use Netlify URL
             return Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "https://toryappfront.netlify.app";
+        }
+
+        // Helper method to get backend base URL
+        private string GetBackendBaseUrl()
+        {
+            var request = HttpContext.Request;
+            
+            // In production (Render), use the correct HTTPS URL
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+            
+            if (environment == "Development")
+            {
+                return $"{request.Scheme}://{request.Host}";
+            }
+            else
+            {
+                // Force HTTPS for production
+                return $"https://{request.Host}";
+            }
         }
 
         [HttpGet("status")]
@@ -161,10 +182,10 @@ namespace ToryBack.Controllers
         public IActionResult GoogleLogin(string returnUrl = "/")
         {
             // Generar la URL de callback correcta basada en el entorno
-            var request = HttpContext.Request;
-            var baseUrl = $"{request.Scheme}://{request.Host}";
+            var baseUrl = GetBackendBaseUrl();
             var redirectUrl = $"{baseUrl}/api/Account/google-callback";
             
+            Console.WriteLine($"Environment: {Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}");
             Console.WriteLine($"Base URL: {baseUrl}");
             Console.WriteLine($"Redirect URL: {redirectUrl}");
             
@@ -265,10 +286,10 @@ namespace ToryBack.Controllers
         public IActionResult FacebookLogin(string returnUrl = "/")
         {
             // Generar la URL de callback correcta basada en el entorno
-            var request = HttpContext.Request;
-            var baseUrl = $"{request.Scheme}://{request.Host}";
+            var baseUrl = GetBackendBaseUrl();
             var redirectUrl = $"{baseUrl}/api/Account/facebook-callback";
             
+            Console.WriteLine($"Environment: {Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}");
             Console.WriteLine($"Base URL: {baseUrl}");
             Console.WriteLine($"Redirect URL: {redirectUrl}");
             

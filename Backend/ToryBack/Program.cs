@@ -156,12 +156,15 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+// Enable Swagger in all environments for API documentation
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-else
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "ToryApp API V1");
+    c.RoutePrefix = "swagger"; // This makes Swagger available at /swagger
+});
+
+if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }

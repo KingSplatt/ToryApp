@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ToryBack.Data;
 using ToryBack.Models;
 using ToryBack.Services;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -120,6 +121,26 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
+// Configuración de cookies y sesiones para OAuth
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
+        ? CookieSecurePolicy.SameAsRequest 
+        : CookieSecurePolicy.Always;
+    options.Cookie.SameSite = builder.Environment.IsDevelopment() 
+        ? SameSiteMode.Lax 
+        : SameSiteMode.None;
+    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+    options.SlidingExpiration = true;
+});
+
+// Configuración específica para protección de datos en producción
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.AddDataProtection();
+}
+
 //Google y Facebook authentication
 builder.Services.AddAuthentication()
     .AddGoogle(gl =>
@@ -127,12 +148,30 @@ builder.Services.AddAuthentication()
         gl.ClientId = builder.Configuration["Google:ClientId"] ?? throw new InvalidOperationException("Google ClientId no configurado");
         gl.ClientSecret = builder.Configuration["Google:ClientSecret"] ?? throw new InvalidOperationException("Google ClientSecret no configurado");
         gl.SaveTokens = true;
+        
+        // Configuración específica para manejo de errores OAuth
+        gl.Events.OnRemoteFailure = context =>
+        {
+            context.HandleResponse();
+            var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "https://toryappfront.netlify.app";
+            context.Response.Redirect($"{frontendUrl}/login?error=oauth_failed&provider=google&message={Uri.EscapeDataString(context.Failure?.Message ?? "Unknown error")}");
+            return Task.CompletedTask;
+        };
     })
     .AddFacebook(fb =>
     {
         fb.AppId = builder.Configuration["Facebook:AppId"] ?? throw new InvalidOperationException("Facebook AppId no configurado");
         fb.AppSecret = builder.Configuration["Facebook:AppSecret"] ?? throw new InvalidOperationException("Facebook AppSecret no configurado");
         fb.SaveTokens = true;
+        
+        // Configuración específica para manejo de errores OAuth
+        fb.Events.OnRemoteFailure = context =>
+        {
+            context.HandleResponse();
+            var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "https://toryappfront.netlify.app";
+            context.Response.Redirect($"{frontendUrl}/login?error=oauth_failed&provider=facebook&message={Uri.EscapeDataString(context.Failure?.Message ?? "Unknown error")}");
+            return Task.CompletedTask;
+        };
     });
 
 // Register custom services
@@ -171,6 +210,17 @@ if (!app.Environment.IsDevelopment())
 
 // CORS must be before Authentication
 app.UseCors("AllowConfiguredOrigins");
+
+// Configuración adicional para cookies en producción
+if (!app.Environment.IsDevelopment())
+{
+    app.Use(async (context, next) =>
+    {
+        context.Response.Headers["SameSite"] = "None";
+        context.Response.Headers["Secure"] = "true";
+        await next();
+    });
+}
 
 // Authentication & Authorization
 app.UseAuthentication();

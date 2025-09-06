@@ -144,6 +144,9 @@ builder.Services.AddScoped<ICustomIdService, CustomIdService>();
 var allowedOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS")?.Split(',') 
                     ?? builder.Configuration.GetSection("Cors:Origins").Get<string[]>() 
                     ?? new[] { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" };
+
+Console.WriteLine($"CORS allowed origins: {string.Join(", ", allowedOrigins)}");
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowConfiguredOrigins", policy =>

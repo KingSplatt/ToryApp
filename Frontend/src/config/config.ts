@@ -2,7 +2,7 @@
 export const CONFIG = {
   API_BASE_URL: window.location.hostname === 'localhost' 
     ? 'http://localhost:5217'
-    : (import.meta as any).env?.VITE_API_URL || 'https://toryappwebservice.onrender.com',
+    : (import.meta as any).env?.VITE_API_BASE_URL || 'https://toryappwebservice.onrender.com',
   
   // Environment detection
   IS_DEVELOPMENT: window.location.hostname === 'localhost',

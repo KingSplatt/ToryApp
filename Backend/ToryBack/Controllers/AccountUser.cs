@@ -15,17 +15,33 @@ namespace ToryBack.Controllers
         private readonly SignInManager<User> _signInManager;
         private readonly RoleInitializerService _roleService;
         private readonly ILogger<AccountController> _logger;
+        private readonly IConfiguration _configuration;
 
         public AccountController(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
             RoleInitializerService roleService,
-            ILogger<AccountController> logger)
+            ILogger<AccountController> logger,
+            IConfiguration configuration)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleService = roleService;
             _logger = logger;
+            _configuration = configuration;
+        }
+
+        // Helper method to get frontend URL based on environment
+        private string GetFrontendUrl()
+        {
+            // In development, use localhost
+            if (_configuration["ASPNETCORE_ENVIRONMENT"] == "Development")
+            {
+                return "http://localhost:5173";
+            }
+            
+            // In production, use Netlify URL
+            return Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "https://toryappfront.netlify.app";
         }
 
         [HttpGet("status")]
@@ -153,10 +169,11 @@ namespace ToryBack.Controllers
         [HttpGet("google-callback")]
         public async Task<IActionResult> GoogleCallback(string returnUrl = "/")
         {
+            var frontendUrl = GetFrontendUrl();
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
-                return Redirect("http://localhost:5173/login?error=external_login_failed");
+                return Redirect($"{frontendUrl}/login?error=external_login_failed");
             }
 
             // Attempt to sign in with external login provider
@@ -185,12 +202,12 @@ namespace ToryBack.Controllers
                     }
                     if (isBlocked)
                     {
-                        return Redirect($"http://localhost:5173/login?error=account_blocked&blockedAt={blockedAt?.ToString("o")}");
+                        return Redirect($"{frontendUrl}/login?error=account_blocked&blockedAt={blockedAt?.ToString("o")}");
                     }
                 }
 
                 // Redirect to frontend with success
-                return Redirect("http://localhost:5173/?login=success");
+                return Redirect($"{frontendUrl}/?login=success");
             }
 
             // If external login is not registered, create a new user
@@ -199,7 +216,7 @@ namespace ToryBack.Controllers
 
             if (email == null)
             {
-                return Redirect("http://localhost:5173/login?error=email_not_provided");
+                return Redirect($"{frontendUrl}/login?error=email_not_provided");
             }
 
             var user = await _userManager.FindByEmailAsync(email);
@@ -218,7 +235,7 @@ namespace ToryBack.Controllers
                 var createResult = await _userManager.CreateAsync(user);
                 if (!createResult.Succeeded)
                 {
-                    return Redirect("http://localhost:5173/login?error=user_creation_failed");
+                    return Redirect($"{frontendUrl}/login?error=user_creation_failed");
                 }
             }
 
@@ -232,10 +249,10 @@ namespace ToryBack.Controllers
                 _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
                 // Redirect to frontend with success
-                return Redirect("http://localhost:5173/?login=success&new_user=true");
+                return Redirect($"{frontendUrl}/?login=success&new_user=true");
             }
 
-            return Redirect("http://localhost:5173/login?error=login_association_failed");
+            return Redirect($"{frontendUrl}/login?error=login_association_failed");
         }
 
         [HttpGet("login/facebook")]
@@ -249,10 +266,11 @@ namespace ToryBack.Controllers
         [HttpGet("facebook-callback")]
         public async Task<IActionResult> FacebookCallback(string returnUrl = "/")
         {
+            var frontendUrl = GetFrontendUrl();
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
-                return Redirect("http://localhost:5173/login?error=external_login_failed");
+                return Redirect($"{frontendUrl}/login?error=external_login_failed");
             }
 
             // Attempt to sign in with external login provider
@@ -283,12 +301,12 @@ namespace ToryBack.Controllers
 
                     if (isBlocked)
                     {
-                        return Redirect($"http://localhost:5173/login?error=account_blocked&blockedAt={blockedAt?.ToString("o")}");
+                        return Redirect($"{frontendUrl}/login?error=account_blocked&blockedAt={blockedAt?.ToString("o")}");
                     }
                 }
 
                 // Redirect to frontend with success
-                return Redirect("http://localhost:5173/?login=success");
+                return Redirect($"{frontendUrl}/?login=success");
             }
 
             // If external login is not registered, create a new user
@@ -297,7 +315,7 @@ namespace ToryBack.Controllers
 
             if (email == null)
             {
-                return Redirect("http://localhost:5174/login?error=email_not_provided");
+                return Redirect($"{frontendUrl}/login?error=email_not_provided");
             }
 
             var user = await _userManager.FindByEmailAsync(email);
@@ -316,7 +334,7 @@ namespace ToryBack.Controllers
                 var createResult = await _userManager.CreateAsync(user);
                 if (!createResult.Succeeded)
                 {
-                    return Redirect("http://localhost:5173/login?error=user_creation_failed");
+                    return Redirect($"{frontendUrl}/login?error=user_creation_failed");
                 }
             }
 
@@ -330,10 +348,10 @@ namespace ToryBack.Controllers
                 _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
                 // Redirect to frontend with success
-                return Redirect("http://localhost:5173/?login=success&new_user=true");
+                return Redirect($"{frontendUrl}/?login=success&new_user=true");
             }
 
-            return Redirect("http://localhost:5173/login?error=login_association_failed");
+            return Redirect($"{frontendUrl}/login?error=login_association_failed");
         }
         [HttpGet("users")]
         public async Task<IActionResult> GetAllUsers()

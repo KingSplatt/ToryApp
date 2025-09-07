@@ -60,6 +60,31 @@ namespace ToryBack.Controllers
             return Ok(result);
         }
 
+        [HttpGet("inventory/{inventoryId}/item/{id}")]
+        public async Task<ActionResult<ItemDto>> GetItemForInventory(int inventoryId, int id)
+        {
+            var item = await _context.Items
+                .Include(i => i.Inventory)
+                .FirstOrDefaultAsync(i => i.Id == id && i.InventoryId == inventoryId);
+
+            if (item == null)
+                return NotFound();
+
+            var result = new ItemDto
+            {
+                Id = item.Id,
+                CustomId = item.CustomId,
+                InventoryId = item.InventoryId,
+                Name = item.Name,
+                Description = item.Description ?? string.Empty,
+                CreatedAt = item.CreatedAt,
+                UpdatedAt = item.UpdatedAt,
+                CustomFieldValues = GetItemCustomFieldValues(item, item.Inventory)
+            };
+
+            return Ok(result);
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<ItemDto>> GetItem(int id)
         {

@@ -1,6 +1,5 @@
 import { User } from "../interfaces/UserInterface";
 import { CONFIG } from "../config/config";
-export const USERS_API_URL = `${CONFIG.API_BASE_URL}/api/Account/users`;
 export const API_CONFIG = {
     baseUrl: `${CONFIG.API_BASE_URL}/api/Account`,
     ENDPOINTS:{
@@ -15,7 +14,7 @@ export const API_CONFIG = {
 };
 
 export const getUsers = async (): Promise<User[]> => {
-    const response = await fetch(USERS_API_URL, {
+    const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.ENDPOINTS.users, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -29,7 +28,7 @@ export const getUsers = async (): Promise<User[]> => {
 };
 
 export const deleteUser = async (userId: string): Promise<void> => {
-    const response = await fetch(`${USERS_API_URL}/${userId}`, {
+    const response = await fetch(`${API_CONFIG.baseUrl + API_CONFIG.ENDPOINTS.DELETEUser}/${userId}`, {
         method: 'DELETE',
         credentials: 'include',
         headers: {

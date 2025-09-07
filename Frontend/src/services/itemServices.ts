@@ -6,7 +6,8 @@ export const ITEMS_API_URL = `${CONFIG.API_BASE_URL}/api/Items`;
 export const API_CONFIG = {
     baseUrl: ITEMS_API_URL,
     ENDPOINTS:{
-        GET_ITEM_FOR_INVENTORY: (id:number) => `/inventory/${id}`,
+        GET_ITEMS_FOR_INVENTORY: (id:number) => `/inventory/${id}`,
+        GET_ITEM_FOR_INVENTORY: (inventoryId: number, itemId: number) => `/inventory/${inventoryId}/item/${itemId}`,
         GET_ITEMS: (id: number) => `/${id}`,
         CREATE_ITEM: () => `/`,
         UPDATE_ITEM: (id: number) => `/${id}`,
@@ -19,7 +20,16 @@ export const API_CONFIG = {
 }
 
 export const getItemsForInventory = async (id: number) => {
-    const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.ENDPOINTS.GET_ITEM_FOR_INVENTORY(id)}`, {
+    const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.ENDPOINTS.GET_ITEMS_FOR_INVENTORY(id)}`, {
+        method: "GET",
+        headers: API_CONFIG.headers,
+        credentials: "include"
+    });
+    return response.json();
+};
+
+export const getItemForInventory = async (inventoryId: number, itemId: number) => {
+    const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.ENDPOINTS.GET_ITEM_FOR_INVENTORY(inventoryId, itemId)}`, {
         method: "GET",
         headers: API_CONFIG.headers,
         credentials: "include"

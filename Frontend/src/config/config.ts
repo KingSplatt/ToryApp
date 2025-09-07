@@ -12,12 +12,12 @@ export const CONFIG = {
 // API endpoints configuration
 export const API_ENDPOINTS = {
   // Auth endpoints
-  LOGIN: '/Account/login',
-  REGISTER: '/Account/register',
-  LOGOUT: '/Account/logout',
-  PROFILE: '/Account/profile',
-  GOOGLE_LOGIN: '/Account/google-login',
-  FACEBOOK_LOGIN: '/Account/facebook-login',
+  LOGIN: '/api/Account/login',
+  REGISTER: '/api/Account/register',
+  LOGOUT: '/api/Account/logout',
+  PROFILE: '/api/Account/profile',
+  GOOGLE_LOGIN: '/api/Account/google-login',
+  FACEBOOK_LOGIN: '/api/Account/facebook-login',
   
   // Inventories endpoints
   INVENTORIES: '/api/Inventories',

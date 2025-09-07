@@ -5,6 +5,7 @@ using ToryBack.Data;
 using ToryBack.Models;
 using ToryBack.Services;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -174,6 +175,12 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Configurar para trabajar detrás de un proxy (Render)
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+});
+
 // Configure the HTTP request pipeline
 // Enable Swagger in all environments for API documentation
 app.UseSwagger();
@@ -185,8 +192,13 @@ app.UseSwaggerUI(c =>
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseHttpsRedirection();
-    // Forzar HTTPS en producción
+    // Configurar para HTTPS detrás de proxy (Render)
+    app.Use((context, next) =>
+    {
+        context.Request.Scheme = "https";
+        return next();
+    });
+    
     app.UseHsts();
 }
 
@@ -243,17 +255,7 @@ app.MapGet("/api/test-db", async (ApplicationDbContext context) =>
 // Configure port for Render
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5217";
 
-if (app.Environment.IsDevelopment())
-{
-    Console.WriteLine("Entre en desarrollo");
-    app.Urls.Add($"https://0.0.0.0:{port}");
-}
-else
-{
-    // En producción, usar HTTPS si está disponible
-    Console.WriteLine("Entre en produccion");
-    app.Urls.Add($"https://0.0.0.0:{port}");
-    app.Urls.Add($"http://0.0.0.0:{port}"); // Fallback para HTTP que se redirigirá a HTTPS
-}
+// En Render, siempre usar HTTP internamente, Render maneja HTTPS externamente
+app.Urls.Add($"http://0.0.0.0:{port}");
 
 app.Run();

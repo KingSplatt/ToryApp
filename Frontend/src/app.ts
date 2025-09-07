@@ -4,6 +4,7 @@ import { homePage, initializeHome } from './modules/home/home';
 import { loginPage, initializeLogin } from './modules/login/views/login';
 import { inventoriesPage, initializeInventories } from './modules/inventories/views/inventories';
 import { initInventoryPage, inventoryPage } from './modules/inventories/views/inventoryPage';
+import { ItemPage, initItemPage } from './modules/items/views/itemPage';
 import { customIdPage, initializeCustomIdPage } from './modules/inventories/views/customIdPage';
 import { discusspost, initDiscusspost } from './modules/discusspost/views/discusspost';
 import { ownInventory, initOwnInventory } from './modules/profile/views/ownInventory';
@@ -79,6 +80,17 @@ router.addRoute({
     return createLayout(content, router.getCurrentPath());
   },
   requiresAuth: true
+});
+
+router.addRoute({
+  path: '/inventories/:id/items/:itemId',
+  title: 'Item Details',
+  component: () => {
+    const params = router.getParams();
+    const content = ItemPage();
+    setTimeout(initItemPage, 0, parseInt(params.id), parseInt(params.itemId));
+    return createLayout(content, router.getCurrentPath());
+  }
 });
 
 router.addRoute({

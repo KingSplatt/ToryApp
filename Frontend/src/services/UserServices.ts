@@ -14,17 +14,30 @@ export const API_CONFIG = {
 };
 
 export const getUsers = async (): Promise<User[]> => {
-    const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.ENDPOINTS.users, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    });
-    if (!response.ok) {
-        throw new Error("Failed to fetch users");
+    try {
+        const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.ENDPOINTS.users, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error("Unauthorized: Please log in to access users");
+            }
+            if (response.status === 404) {
+                throw new Error("Users endpoint not found");
+            }
+            throw new Error(`Failed to fetch users: ${response.status} ${response.statusText}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error in getUsers:', error);
+        throw error;
     }
-    return response.json();
 };
 
 export const deleteUser = async (userId: string): Promise<void> => {

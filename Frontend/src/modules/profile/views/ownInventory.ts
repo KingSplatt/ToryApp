@@ -418,12 +418,26 @@ async function handleRemoveAccess() {
 
 async function loadUserInventories() {
     const user = AuthService.getInstance().getUser();
+    
+    // Verificar autenticación antes de cargar usuarios
+    if (!AuthService.getInstance().isAuthenticated()) {
+        console.warn('User not authenticated, cannot load users');
+        return [];
+    }
+    
     const inventories = await getUserInventories(user?.id || '');
     console.log('User inventories:', inventories);
-    const allUsers = await getUsers();
-    //console.log('All users:', allUsers);
-    users.length = 0;
-    users.push(...allUsers);
+    
+    try {
+        const allUsers = await getUsers();
+        //console.log('All users:', allUsers);
+        users.length = 0;
+        users.push(...allUsers);
+    } catch (error) {
+        console.error('Error loading users:', error);
+        // Puedes manejar el error aquí, quizás mostrando un mensaje al usuario
+    }
+    
     return inventories;
 }
 

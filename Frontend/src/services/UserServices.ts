@@ -16,7 +16,11 @@ export const API_CONFIG = {
 
 export const getUsers = async (): Promise<User[]> => {
     const response = await fetch(USERS_API_URL, {
-        credentials: 'include'
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+        },
     });
     if (!response.ok) {
         throw new Error("Failed to fetch users");
@@ -27,6 +31,7 @@ export const getUsers = async (): Promise<User[]> => {
 export const deleteUser = async (userId: string): Promise<void> => {
     const response = await fetch(`${USERS_API_URL}/${userId}`, {
         method: 'DELETE',
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json',
         },
@@ -40,6 +45,7 @@ export const deleteUser = async (userId: string): Promise<void> => {
 export const deleteUsers = async (userIds: string[]): Promise<void> => {
     const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.ENDPOINTS.DELETEusers, {
         method: 'DELETE',
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json',
         },
@@ -54,6 +60,7 @@ export const deleteUsers = async (userIds: string[]): Promise<void> => {
 export const blockUsers = async (userIds: string[]): Promise<void> => {
     const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.ENDPOINTS.blockUsers, {
         method: 'POST',
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json',
         },
@@ -68,6 +75,7 @@ export const blockUsers = async (userIds: string[]): Promise<void> => {
 export const unblockUsers = async (userIds: string[]): Promise<void> => {
     const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.ENDPOINTS.unblockUsers, {
         method: 'POST',
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json',
         },
@@ -82,6 +90,7 @@ export const unblockUsers = async (userIds: string[]): Promise<void> => {
 export const assignRoles = async (userIds: string[], roleNames: string[]): Promise<void> => {
     const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.ENDPOINTS.assignRoles}`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json',
         },
@@ -96,6 +105,7 @@ export const assignRoles = async (userIds: string[], roleNames: string[]): Promi
 export const removeRoles = async (userIds: string[], roleNames: string[]): Promise<void> => {
     const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.ENDPOINTS.removeRoles}`, {
         method: 'DELETE',
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json',
         },

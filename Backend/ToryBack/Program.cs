@@ -147,7 +147,7 @@ var allowedOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS")?.Split('
                         "http://localhost:5173", 
                         "http://localhost:5174", 
                         "http://localhost:3000",
-                        "https://toryappfront.netlify.app/" // Allow all Netlify apps
+                        "https://toryappfront.netlify.app" // Removed trailing slash
                     };
 
 builder.Services.AddCors(options =>

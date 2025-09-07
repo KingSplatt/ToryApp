@@ -121,6 +121,25 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
+
+// Configure Identity to work as API (no redirects)
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Events.OnRedirectToLogin = context =>
+    {
+        context.Response.StatusCode = 401;
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        context.Response.StatusCode = 403;
+        return Task.CompletedTask;
+    };
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.HttpOnly = true;
+});
+
 //Google y Facebook authentication
 builder.Services.AddAuthentication()
     .AddGoogle(gl =>

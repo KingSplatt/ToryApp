@@ -27,13 +27,17 @@ export const getUsers = async (): Promise<User[]> => {
             if (response.status === 401) {
                 throw new Error("Unauthorized: Please log in to access users");
             }
+            if (response.status === 403) {
+                throw new Error("Forbidden: You don't have permission to access users");
+            }
             if (response.status === 404) {
                 throw new Error("Users endpoint not found");
             }
             throw new Error(`Failed to fetch users: ${response.status} ${response.statusText}`);
         }
         
-        return await response.json();
+        const data = await response.json();
+        return data;
     } catch (error) {
         console.error('Error in getUsers:', error);
         throw error;

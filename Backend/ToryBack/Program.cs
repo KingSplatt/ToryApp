@@ -186,6 +186,8 @@ app.UseSwaggerUI(c =>
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
+    // Forzar HTTPS en producción
+    app.UseHsts();
 }
 
 // CORS must be before Authentication
@@ -240,6 +242,16 @@ app.MapGet("/api/test-db", async (ApplicationDbContext context) =>
 
 // Configure port for Render
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5217";
-app.Urls.Add($"http://0.0.0.0:{port}");
+
+if (app.Environment.IsDevelopment())
+{
+    app.Urls.Add($"http://0.0.0.0:{port}");
+}
+else
+{
+    // En producción, usar HTTPS si está disponible
+    app.Urls.Add($"https://0.0.0.0:{port}");
+    app.Urls.Add($"http://0.0.0.0:{port}"); // Fallback para HTTP que se redirigirá a HTTPS
+}
 
 app.Run();

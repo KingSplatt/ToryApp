@@ -143,14 +143,33 @@ builder.Services.AddScoped<ICustomIdService, CustomIdService>();
 // CORS configuration
 var allowedOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS")?.Split(',') 
                     ?? builder.Configuration.GetSection("Cors:Origins").Get<string[]>() 
-                    ?? new[] { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" };
+                    ?? new[] { 
+                        "http://localhost:5173", 
+                        "http://localhost:5174", 
+                        "http://localhost:3000",
+                        "https://toryappfront.netlify.app/" // Allow all Netlify apps
+                    };
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowConfiguredOrigins", policy =>
-        policy.WithOrigins(allowedOrigins)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials());
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            // En desarrollo, permite cualquier origen
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        }
+        else
+        {
+            // En producción, usa orígenes específicos
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
+    });
 });
 
 var app = builder.Build();

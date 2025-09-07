@@ -245,11 +245,13 @@ var port = Environment.GetEnvironmentVariable("PORT") ?? "5217";
 
 if (app.Environment.IsDevelopment())
 {
-    app.Urls.Add($"http://0.0.0.0:{port}");
+    Console.WriteLine("Entre en desarrollo");
+    app.Urls.Add($"https://0.0.0.0:{port}");
 }
 else
 {
     // En producción, usar HTTPS si está disponible
+    Console.WriteLine("Entre en produccion");
     app.Urls.Add($"https://0.0.0.0:{port}");
     app.Urls.Add($"http://0.0.0.0:{port}"); // Fallback para HTTP que se redirigirá a HTTPS
 }

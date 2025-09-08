@@ -78,6 +78,36 @@ namespace ToryBack.Controllers
             });
         }
 
+        /// <summary>
+        /// OAuth Testing Information
+        /// </summary>
+        /// <returns>Information about how to properly test OAuth endpoints</returns>
+        [HttpGet("oauth-info")]
+        public IActionResult GetOAuthInfo()
+        {
+            var frontendUrl = GetFrontendUrl();
+            
+            return Ok(new
+            {
+                message = "OAuth Endpoint Testing Information",
+                warning = "OAuth endpoints cannot be tested directly from Swagger UI",
+                explanation = "OAuth requires browser redirects and cookie handling that Swagger cannot provide",
+                properTestingMethods = new[]
+                {
+                    "Use the frontend application for complete OAuth flow testing",
+                    "Test manually by navigating to the OAuth URLs in a browser",
+                    "Use tools like Postman with proper cookie handling (advanced)"
+                },
+                endpoints = new
+                {
+                    googleLogin = $"{Request.Scheme}://{Request.Host}/api/Account/login/google",
+                    facebookLogin = $"{Request.Scheme}://{Request.Host}/api/Account/login/facebook",
+                    frontendApp = frontendUrl
+                },
+                note = "The 'Failed to fetch' error in Swagger is expected for OAuth endpoints"
+            });
+        }
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
@@ -155,6 +185,16 @@ namespace ToryBack.Controllers
             return Ok(new { message = "Logout successful" });
         }
 
+        /// <summary>
+        /// Initiates Google OAuth login process
+        /// </summary>
+        /// <param name="returnUrl">URL to return to after authentication</param>
+        /// <returns>Redirects to Google OAuth provider</returns>
+        /// <remarks>
+        /// This endpoint should be accessed via browser redirect, not direct API calls.
+        /// Testing from Swagger will not work properly due to OAuth redirect requirements.
+        /// Use the frontend application for proper OAuth testing.
+        /// </remarks>
         [HttpGet("login/google")]
         public IActionResult GoogleLogin(string returnUrl = "/")
         {
@@ -259,6 +299,16 @@ namespace ToryBack.Controllers
             return Redirect($"{frontendErrorUrl}/login?error=login_association_failed");
         }
 
+        /// <summary>
+        /// Initiates Facebook OAuth login process
+        /// </summary>
+        /// <param name="returnUrl">URL to return to after authentication</param>
+        /// <returns>Redirects to Facebook OAuth provider</returns>
+        /// <remarks>
+        /// This endpoint should be accessed via browser redirect, not direct API calls.
+        /// Testing from Swagger will not work properly due to OAuth redirect requirements.
+        /// Use the frontend application for proper OAuth testing.
+        /// </remarks>
         [HttpGet("login/facebook")]
         public IActionResult FacebookLogin(string returnUrl = "/")
         {

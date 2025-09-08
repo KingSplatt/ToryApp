@@ -16,8 +16,8 @@ export const API_ENDPOINTS = {
   REGISTER: '/api/Account/register',
   LOGOUT: '/api/Account/logout',
   PROFILE: '/api/Account/profile',
-  GOOGLE_LOGIN: '/api/Account/google-login',
-  FACEBOOK_LOGIN: '/api/Account/facebook-login',
+  GOOGLE_LOGIN: '/api/Account/login/google',
+  FACEBOOK_LOGIN: '/api/Account/login/facebook',
   
   // Inventories endpoints
   INVENTORIES: '/api/Inventories',

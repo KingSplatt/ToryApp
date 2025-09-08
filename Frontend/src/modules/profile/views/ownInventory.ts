@@ -282,10 +282,8 @@ function updateInventoryToolBar() {
     if (grantCountSpan) grantCountSpan.textContent = checkedBoxes.length.toString();
     if (removeCountSpan) removeCountSpan.textContent = checkedBoxes.length.toString();
 
-    // Actualizar array de IDs seleccionados
     selectedInventoryIds = Array.from(checkedBoxes).map(cb => cb.getAttribute('data-inventory-id') || '');
 
-    // Actualizar checkbox select all
     const inventoryCheckboxes = document.querySelectorAll(".inventory-checkbox") as NodeListOf<HTMLInputElement>;
     const allChecked = Array.from(inventoryCheckboxes).every(checkbox => checkbox.checked);
     const selectAllCheckbox = document.getElementById("inventory-select-all") as HTMLInputElement;
@@ -362,7 +360,6 @@ function closeRemoveAccessModal() {
         modal.style.display = 'none';
     }
 }
-
 // Funciones para manejar los permisos
 async function handleGrantAccess() {
     if (!selectedUser) {

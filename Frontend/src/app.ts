@@ -83,7 +83,7 @@ router.addRoute({
 });
 
 router.addRoute({
-  path: '/inventories/:id/items/:itemId',
+  path: '/inventories/:id/item/:itemId',
   title: 'Item Details',
   component: () => {
     const params = router.getParams();

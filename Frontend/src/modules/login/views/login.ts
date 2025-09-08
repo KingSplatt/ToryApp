@@ -41,11 +41,11 @@ export function loginPage() {
         
         <div class="social-login">
           <button class="btn-google" id="google-login">
-            <img src="/assets/icongoogle.png" alt="Google" class="social-icon">
+            <img src="../../../../assets/icongoogle.png" alt="Google" class="social-icon">
             Google
           </button>
           <button class="btn-facebook" id="facebook-login">
-            <img src="/assets/iconfacebook2.png" alt="Facebook" class="social-icon">
+            <img src="../../../../assets/iconfacebook2.png" alt="Facebook" class="social-icon">
             Facebook
           </button>
         </div>

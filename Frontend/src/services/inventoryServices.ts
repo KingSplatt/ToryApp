@@ -244,7 +244,7 @@ export const previewCustomId = async (inventoryId: number, format: string): Prom
     throw new Error(`Failed to preview custom ID: ${response.status} - ${errorText}`);
   }
 
-  // The backend returns a JSON string, so we need to parse it to get the actual string value
+  // The backend now returns { preview: "generated-id" }
   const result = await response.json();
-  return result;
+  return result.preview;
 };

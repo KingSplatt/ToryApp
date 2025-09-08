@@ -20,7 +20,126 @@
     margin-bottom: 0.5rem;
 }
 
-
 .checkk{
     outline: none;
+}
+
+/* Password Requirements Styles */
+.password-requirements {
+    margin-top: 0.5rem;
+    padding: 1rem;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.requirements-title {
+    margin: 0 0 0.5rem 0;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.requirements-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.requirement {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.25rem;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
+}
+
+.requirement-icon {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    text-align: center;
+    margin-right: 0.5rem;
+    font-weight: bold;
+    color: #dc3545;
+    transition: color 0.3s ease;
+}
+
+.requirement-text {
+    flex: 1;
+}
+
+/* Password Match Styles */
+.password-match {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
+}
+
+.match-icon {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    text-align: center;
+    margin-right: 0.5rem;
+    font-weight: bold;
+    color: #dc3545;
+    transition: color 0.3s ease;
+}
+
+.match-text {
+    flex: 1;
+}
+
+/* Submit button disabled state */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: var(--secondary-color);
+}
+
+.btn:disabled:hover {
+    background-color: var(--secondary-color);
+    transform: none;
+}
+
+/* Animation for requirements appearing */
+.password-requirements {
+    animation: slideDown 0.3s ease-out;
+}
+
+.password-match {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 480px) {
+    .login-card {
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+    
+    .password-requirements,
+    .password-match {
+        padding: 0.75rem;
+        font-size: 0.8rem;
+    }
 }

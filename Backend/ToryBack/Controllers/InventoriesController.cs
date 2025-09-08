@@ -896,7 +896,7 @@ namespace ToryBack.Controllers
         }
 
         [HttpPost("{id}/custom-id/preview")]
-        public ActionResult<string> PreviewCustomId(int id, [FromBody] string format)
+        public ActionResult<object> PreviewCustomId(int id, [FromBody] string format)
         {
             try
             {
@@ -904,7 +904,7 @@ namespace ToryBack.Controllers
                     return BadRequest("Format cannot be empty");
 
                 var preview = _customIdService.PreviewCustomId(format);
-                return Ok(preview);
+                return Ok(new { preview = preview });
             }
             catch (Exception ex)
             {

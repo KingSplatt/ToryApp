@@ -350,8 +350,7 @@ function setupCreateButton() {
 
   createBtn?.addEventListener('click', () => {
     modalNewInventory?.classList.add('is-active');
-    setupCustomFields(); // Configurar los campos personalizados al abrir el modal
-    // No need to add the category select event listener here anymore
+    setupCustomFields(); 
   });
   
 

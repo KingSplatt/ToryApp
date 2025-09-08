@@ -45,10 +45,15 @@ namespace ToryBack.Services
         {
             try
             {
-                return ProcessFormat(format);
+                if (string.IsNullOrEmpty(format))
+                    return "Invalid format";
+                    
+                var result = ProcessFormat(format);
+                return result;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"Error in PreviewCustomId: {ex.Message}");
                 return "Invalid format";
             }
         }

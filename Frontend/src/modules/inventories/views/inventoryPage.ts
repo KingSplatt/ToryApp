@@ -8,6 +8,7 @@ import { CreateItemDto, CustomFieldValueDto } from "../../../interfaces/CreateIt
 import { getCategories, createCategory } from "../../../services/categoryServices";
 import { Router } from "../../router/router";
 import { UserInventoryPermissionsDto } from "../../../interfaces/PermissionInterface";
+import { Items } from "../../../interfaces/itemInterface";
 
 const router = Router.getInstance();
 // Global variables for toolbar functionality
@@ -158,18 +159,13 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
                 <label>New Value:</label>
                 <input type="text" id="new-field-value" placeholder="Enter new value">
               </div>
-              <div class="action-buttons">
-                <button class="btn btn-primary" id="apply-field-operation" disabled>
-                  <i class="fas fa-magic"></i> Apply to Selected Items
-                </button>
-              </div>
             </div>
           </div>
         </section>
     </table>
     </section>
     <section class="inventory-items-section" id="inventory-items-section" style="display: block;">
-        <h3>Items in this Inventory</h3>
+        <h3>Items</h3>
         <div id="items-table-container">
             <!-- Items table will be inserted here -->
         </div>
@@ -356,7 +352,7 @@ export async function loadItemsTable(inventoryId: string) {
                         </thead>
                         <tbody>
                             ${items.map((item: any) => `
-                                <tr>
+                                <tr data-item-id="${item.id}">
                                     ${showCheckboxes ? `<td><input type="checkbox" class="item-checkbox" value="${item.id}"></td>` : ''}
                                     <td>${item.id || 'N/A'}</td>
                                     <td>${item.name || 'N/A'}</td>
@@ -369,24 +365,25 @@ export async function loadItemsTable(inventoryId: string) {
                         </tbody>
                     </table>
                 `;
+                
                 tableContainer.innerHTML = tableHTML;
+                
+                // Add click event listeners to table rows for navigation
+                attachRowClickEvents(inventoryId);
                 attachItemButtonEvents();
-                // Attach checkbox event listeners if checkboxes are shown
                 if (showCheckboxes) {
                     attachCheckboxEventListeners();
                 }
             } else {
                 // Show "Add Item" button even for public inventories when no items exist
                 const showAddButton = currentInventory?.isPublic || currentInventoryPermissions?.canEditItems;
-                
                 tableContainer.innerHTML = `
                     <div class="no-items-message">
-                        <p>No items found in this inventory.</p>
+                        <p>No items here yet!.</p>
                         ${showAddButton ? '<button class="btn btn-primary" id="add-item-btn">Add First Item</button>' : ''}
                     </div>
                 `;
                 
-                // Attach event listener for add item button
                 const addItemBtn = document.getElementById('add-item-btn');
                 if (addItemBtn) {
                     addItemBtn.addEventListener('click', () => {
@@ -472,7 +469,6 @@ function attachItemButtonEvents() {
     editButtons.forEach(button => {
         button.addEventListener('click', () => {
             const itemId = button.getAttribute('data-item-id');
-    
             // TODO: Implement edit item functionality
         });
     });
@@ -480,8 +476,25 @@ function attachItemButtonEvents() {
     deleteButtons.forEach(button => {
         button.addEventListener('click', () => {
             const itemId = button.getAttribute('data-item-id');
-    
             // TODO: Implement delete item functionality
+        });
+    });
+}
+
+// Attach click events to table rows for navigation
+function attachRowClickEvents(inventoryId: string) {
+    const tableRows = document.querySelectorAll('.items-table tbody tr');
+    
+    tableRows.forEach(row => {
+        row.addEventListener('click', (e) => {
+            const target = e.target as HTMLElement;
+            if ((target as HTMLInputElement).type === 'checkbox' || target.closest('input[type="checkbox"]')) {
+                return;
+            }
+            const itemId = (row as HTMLElement).getAttribute('data-item-id');
+            if (itemId && itemId !== 'N/A') {
+                router.navigate(`/inventories/${inventoryId}/item/${itemId}`);
+            }
         });
     });
 }
@@ -636,14 +649,6 @@ async function initializeToolbarsWithPermissions(inventoryId: number) {
             }
         }
 
-        if (currentInventoryPermissions.canEditItems) {
-            const fieldsToolbar = document.getElementById('fields-action-toolbar');
-            if (fieldsToolbar) {
-                fieldsToolbar.style.display = 'block';
-                initializeFieldsToolbar(inventoryId);
-            }
-        }
-
     } catch (error) {
         // In case of error, still check if inventory is public to allow adding items
         if (currentInventory?.isPublic) {
@@ -735,37 +740,6 @@ function initializeItemsToolbarForPublicInventory() {
     });
 }
 
-// Initialize fields action toolbar
-async function initializeFieldsToolbar(inventoryId: number) {
-    const fieldSelector = document.getElementById('field-selector') as HTMLSelectElement;
-    const operationSelector = document.getElementById('operation-selector') as HTMLSelectElement;
-    const newValueInput = document.getElementById('new-value-input');
-    const applyButton = document.getElementById('apply-field-operation') as HTMLButtonElement;
-
-    try {
-        const inventory = await getInventory(inventoryId);
-        populateFieldSelector(fieldSelector, inventory);
-    } catch (error) {
-        console.error('Error loading inventory fields:', error);
-    }
-    operationSelector?.addEventListener('change', () => {
-        const operation = operationSelector.value;
-        if (operation === 'replace' || operation === 'append') {
-            newValueInput!.style.display = 'block';
-        } else {
-            newValueInput!.style.display = 'none';
-        }
-        updateFieldOperationState();
-    });
-    applyButton?.addEventListener('click', () => {
-        if (selectedItemIds.size === 0) {
-            UIUtils.showModalForMessages('Please select items to modify');
-            return;
-        }
-        applyFieldOperation();
-    });
-    fieldSelector?.addEventListener('change', updateFieldOperationState);
-}
 
 // Update toolbar button states
 function updateToolbarState() {
@@ -782,56 +756,9 @@ function updateToolbarState() {
     if (deleteButton) deleteButton.disabled = count === 0;
 }
 
-// Update field operation button state
-function updateFieldOperationState() {
-    const fieldSelector = document.getElementById('field-selector') as HTMLSelectElement;
-    const operationSelector = document.getElementById('operation-selector') as HTMLSelectElement;
-    const applyButton = document.getElementById('apply-field-operation') as HTMLButtonElement;
-    const hasField = fieldSelector?.value !== '';
-    const hasOperation = operationSelector?.value !== '';
-    const hasSelectedItems = selectedItemIds.size > 0;
-
-    if (applyButton) {
-        applyButton.disabled = !hasField || !hasOperation || !hasSelectedItems;
-    }
-}
-
-// Populate field selector with available custom fields
-function populateFieldSelector(selector: HTMLSelectElement, inventory: InventoryDto) {
-    selector.innerHTML = '';
-    const defaultOption = document.createElement('option');
-    defaultOption.value = '';
-    defaultOption.textContent = 'Select a field...';
-    selector.appendChild(defaultOption);
-    
-    const nameOption = document.createElement('option');
-    nameOption.value = 'name';
-    nameOption.textContent = 'Name';
-    selector.appendChild(nameOption);
-    
-    const descOption = document.createElement('option');
-    descOption.value = 'description';
-    descOption.textContent = 'Description';
-    selector.appendChild(descOption);
-    
-    const customIdOption = document.createElement('option');
-    customIdOption.value = 'customId';
-    customIdOption.textContent = 'Custom ID';
-    selector.appendChild(customIdOption);
-    
-    if (inventory.customFields) {
-        inventory.customFields.forEach((field, index) => {
-            const option = document.createElement('option');
-            option.value = `custom_${index}`;
-            option.textContent = field.name;
-            selector.appendChild(option);
-        });
-    }
-}
-
 // Bulk edit modal functions
 function openBulkEditModal() {
-    UIUtils.showModalForMessages('Bulk edit functionality coming soon!');
+    UIUtils.showModalForMessages('Edit functionality coming soon!');
 }
 
 function confirmBulkDelete() {
@@ -1048,7 +975,6 @@ async function handleAddItemFormSubmit() {
                     case 'date':
                     case 'datetime':
                         if (input.value) {
-                            // Convert to ISO string for backend
                             value = new Date(input.value).toISOString();
                         }
                         break;
@@ -1057,7 +983,6 @@ async function handleAddItemFormSubmit() {
                         break;
                 }
                 
-                // Only add if there's a value or it's a boolean field
                 if (value && (value !== 'false' || fieldType.toLowerCase().includes('checkbox'))) {
                     customFieldValues.push({
                         fieldId: parseInt(fieldId),
@@ -1098,8 +1023,6 @@ async function handleAddItemFormSubmit() {
     } catch (error) {
         console.error('Error adding item:', error);
         UIUtils.showModalForMessages('Error adding item: ' + (error instanceof Error ? error.message : 'Unknown error'));
-
-        // Reset button state
         const submitBtn = document.querySelector('#add-item-form button[type="submit"]') as HTMLButtonElement;
         if (submitBtn) {
             submitBtn.disabled = false;

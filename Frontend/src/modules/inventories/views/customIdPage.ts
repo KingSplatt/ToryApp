@@ -28,7 +28,7 @@ export function customIdPage(inventoryId: number) {
           
           <div id="custom-id-config" class="custom-id-config" style="display: none;">
             <div class="form-group">
-              <label for="custom-id-format">ID Format Pattern</label>
+              <h3>ID Format Pattern</h3>
               <input 
                 type="text" 
                 id="custom-id-format" 
@@ -46,7 +46,7 @@ export function customIdPage(inventoryId: number) {
                 ${CUSTOM_ID_ELEMENTS.map(element => `
                   <div class="element-card" data-placeholder="${element.placeholder}">
                     <div class="element-header">
-                      <strong>${element.name}</strong>
+                      <h4>${element.name}</h4>
                       <code class="element-code">${element.placeholder}</code>
                     </div>
                     <p class="element-description">${element.description}</p>
@@ -83,10 +83,7 @@ export async function initializeCustomIdPage(inventoryId: number) {
   currentInventoryId = inventoryId;
   
   try {
-    // Load current configuration
     currentFormat = await getCustomIdFormat(inventoryId);
-    
-    // Set up UI with current values
     const enableToggle = document.getElementById('enable-custom-id') as HTMLInputElement;
     const formatInput = document.getElementById('custom-id-format') as HTMLInputElement;
     const configSection = document.getElementById('custom-id-config') as HTMLElement;
@@ -109,7 +106,6 @@ export async function initializeCustomIdPage(inventoryId: number) {
 }
 
 function attachEventListeners() {
-  // Toggle enable/disable
   const enableToggle = document.getElementById('enable-custom-id') as HTMLInputElement;
   const configSection = document.getElementById('custom-id-config') as HTMLElement;
   
@@ -119,11 +115,9 @@ function attachEventListeners() {
     }
   });
   
-  // Format input changes
   const formatInput = document.getElementById('custom-id-format') as HTMLInputElement;
   formatInput?.addEventListener('input', debounce(updatePreview, 500));
   
-  // Element cards clicks
   const elementCards = document.querySelectorAll('.element-card');
   elementCards.forEach(card => {
     card.addEventListener('click', () => {
@@ -135,15 +129,12 @@ function attachEventListeners() {
     });
   });
   
-  // Refresh preview button
   const refreshBtn = document.getElementById('refresh-preview');
   refreshBtn?.addEventListener('click', updatePreview);
   
-  // Save button
   const saveBtn = document.getElementById('save-custom-id');
   saveBtn?.addEventListener('click', saveConfiguration);
   
-  // Cancel button
   const cancelBtn = document.getElementById('cancel-custom-id');
   cancelBtn?.addEventListener('click', () => {
     window.history.back();
@@ -159,17 +150,25 @@ async function updatePreview() {
   const format = formatInput.value.trim();
   if (!format) {
     previewResult.textContent = '-';
+    previewResult.style.color = '#6c757d';
     return;
   }
   
   try {
-    console.log('Generating preview with format:', format,currentInventoryId);
+    console.log('Generating preview with format:', format, 'for inventory:', currentInventoryId);
     const preview = await previewCustomId(currentInventoryId, format);
     console.log('Preview generated:', preview);
-    previewResult.textContent = preview;
+    
+    if (preview === 'Invalid format') {
+      previewResult.textContent = 'Invalid format';
+      previewResult.style.color = '#dc3545';
+    } else {
+      previewResult.textContent = preview;
+      previewResult.style.color = '#007bff';
+    }
   } catch (error) {
     console.error('Error generating preview:', error);
-    previewResult.textContent = 'Invalid format';
+    previewResult.textContent = 'Error generating preview';
     previewResult.style.color = '#dc3545';
     setTimeout(() => {
       previewResult.style.color = '#007bff';
@@ -188,7 +187,6 @@ async function saveConfiguration() {
     format: formatInput.value.trim()
   };
   
-  // Validate format if enabled
   if (updateData.enabled && !updateData.format) {
     UIUtils.showMessage('Please enter a format pattern when custom ID is enabled', 'error');
     return;

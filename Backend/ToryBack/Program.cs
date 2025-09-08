@@ -35,37 +35,7 @@ builder.Configuration["Facebook:AppSecret"] = Environment.GetEnvironmentVariable
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo 
-    { 
-        Title = "ToryApp API", 
-        Version = "v1",
-        Description = "API for ToryApp Inventory Management System\n\n" +
-                     "**Note about OAuth endpoints:**\n" +
-                     "- `/api/Account/login/google` and `/api/Account/login/facebook` are OAuth redirect endpoints\n" +
-                     "- These should be accessed via browser redirect, not direct API calls\n" +
-                     "- Testing OAuth from Swagger will not work properly due to redirect requirements\n" +
-                     "- Use the frontend application for proper OAuth testing"
-    });
-    
-    // Add security definition for cookie authentication
-    c.AddSecurityDefinition("Cookie", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-    {
-        Name = "Cookie Authentication",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
-        In = Microsoft.OpenApi.Models.ParameterLocation.Cookie,
-        Description = "Authentication via session cookies"
-    });
-    
-    // Include XML comments if available
-    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    if (File.Exists(xmlPath))
-    {
-        c.IncludeXmlComments(xmlPath);
-    }
-});
+builder.Services.AddSwaggerGen();
 
 // Database configuration
 var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");

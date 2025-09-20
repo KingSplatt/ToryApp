@@ -6,17 +6,19 @@ namespace ToryBack.Models.DTOs
     {
         [StringLength(100)]
         public string? CustomId { get; set; }
-        
+
         [Required]
         public int InventoryId { get; set; }
-        
+
         [Required]
         [StringLength(200, MinimumLength = 1)]
         public string Name { get; set; } = string.Empty;
-        
+
         [StringLength(2000)]
         public string? Description { get; set; }
-        
+
         public List<CustomFieldValueDto>? CustomFieldValues { get; set; }
+        
+        public string? ImgUrl { get; set; } = string.Empty;
     }
 }

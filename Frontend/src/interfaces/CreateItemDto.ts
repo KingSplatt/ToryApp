@@ -4,6 +4,7 @@ export interface CreateItemDto {
   description?: string;
   customId?: string;
   customFieldValues?: CustomFieldValueDto[];
+  ImgUrl?: string;
 }
 
 export interface CustomFieldValueDto {
@@ -16,10 +17,19 @@ export interface CustomFieldValueDto {
 export interface ItemDto {
   id: number;
   customId?: string;
+  ImgUrl?: string;
   inventoryId: number;
   name: string;
   description: string;
   createdAt: Date;
   updatedAt: Date;
   customFieldValues: CustomFieldValueDto[];
+}
+
+export interface UpdateItemDto {
+  name?: string;
+  description?: string;
+  customId?: string;
+  customFieldValues?: CustomFieldValueDto[];
+  ImgUrl?: string;
 }

@@ -32,6 +32,9 @@ namespace ToryBack.Models
         
         [Column("UpdatedAt")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        [Column("ImgUrl")]
+        public string? ImgUrl { get; set; } = string.Empty;
         
         // Optimistic locking
         [Timestamp]

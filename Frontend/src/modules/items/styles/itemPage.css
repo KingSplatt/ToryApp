@@ -16,10 +16,20 @@
 
 .item-img{
     width: 50%;
+    height: auto;
     display: flex;
     justify-content: center;
     align-items: center;
     margin-top: 20px;
+}
+
+.item-img img{
+    max-width: 400px;
+    height: 295px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid var(--bg-secondary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .item-info h1{

@@ -9,7 +9,6 @@ import { getCategories, createCategory } from "../../../services/categoryService
 import { Router } from "../../router/router";
 import { UserInventoryPermissionsDto } from "../../../interfaces/PermissionInterface";
 import { uploadImageToCloudinary } from "../../../services/cloudinaryService";
-import { Items } from "../../../interfaces/itemInterface";
 
 const router = Router.getInstance();
 // Global variables for toolbar functionality
@@ -257,6 +256,11 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
                     <!-- Dynamic custom fields will be added here -->
                     <div id="custom-fields-container">
                         <!-- Custom fields will be dynamically generated -->
+                    </div>
+
+                    <div class="img-attach">
+                        <label for="add-item-image" id="add-item-image-label">Attach Image:</label>
+                        <input type="file" id="add-item-image" name="itemImage" accept="image/*">
                     </div>
                     
                     <div class="modal-actions">
@@ -983,6 +987,28 @@ async function handleAddItemFormSubmit() {
         const name = (formData.get('name') as string)?.trim();
         const customId = (formData.get('customId') as string)?.trim();
         const description = (formData.get('description') as string)?.trim();
+        const itemImage = formData.get('itemImage') as File;
+        let imageUrl: string | undefined;
+
+        if (itemImage && itemImage.size > 0) {
+            const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+            const originalText = submitBtn?.textContent || 'Add Item';
+            try {
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Uploading image...';
+                }
+                console.log('Uploading item image to Cloudinary...');
+                imageUrl = await uploadImageToCloudinary(itemImage);
+                console.log('Item image uploaded successfully:', imageUrl);
+                if (submitBtn) {
+                    submitBtn.textContent = 'Adding Item...';
+                }
+            } catch (err) {
+                console.error('Error uploading item image:', err);
+                UIUtils.showModalForMessages('Error uploading image: ' + (err instanceof Error ? err.message : 'Unknown error'));
+            }
+        }
 
         if (!name) {
             UIUtils.showModalForMessages('Item name is required');
@@ -1046,7 +1072,8 @@ async function handleAddItemFormSubmit() {
             name: name,
             description: description || undefined,
             customId: customId || undefined,
-            customFieldValues: customFieldValues
+            customFieldValues: customFieldValues,
+            ImgUrl: imageUrl
         };
 
         const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;

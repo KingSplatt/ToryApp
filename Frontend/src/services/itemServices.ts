@@ -1,5 +1,4 @@
-import { Items } from "../interfaces/itemInterface";
-import { CreateItemDto } from "../interfaces/CreateItemDto";
+import { CreateItemDto, UpdateItemDto } from "../interfaces/CreateItemDto";
 import { CONFIG } from "../config/config";
 
 export const ITEMS_API_URL = `${CONFIG.API_BASE_URL}/api/Items`;
@@ -62,7 +61,7 @@ export const createItem = async (itemData: CreateItemDto) => {
     return response.json();
 };
 
-export const updateItem = async (id: number, itemData: Items) => {
+export const updateItem = async (id: number, itemData: UpdateItemDto) => {
     const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.ENDPOINTS.UPDATE_ITEM(id)}`, {
         method: "PUT",
         headers: API_CONFIG.headers,

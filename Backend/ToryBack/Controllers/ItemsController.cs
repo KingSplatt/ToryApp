@@ -54,7 +54,8 @@ namespace ToryBack.Controllers
                 Description = item.Description ?? string.Empty,
                 CreatedAt = item.CreatedAt,
                 UpdatedAt = item.UpdatedAt,
-                CustomFieldValues = GetItemCustomFieldValues(item, inventory_info!)
+                CustomFieldValues = GetItemCustomFieldValues(item, inventory_info!),
+                ImgUrl = item.ImgUrl
             }).ToList();
 
             return Ok(result);
@@ -79,7 +80,8 @@ namespace ToryBack.Controllers
                 Description = item.Description ?? string.Empty,
                 CreatedAt = item.CreatedAt,
                 UpdatedAt = item.UpdatedAt,
-                CustomFieldValues = GetItemCustomFieldValues(item, item.Inventory)
+                CustomFieldValues = GetItemCustomFieldValues(item, item.Inventory),
+                ImgUrl = item.ImgUrl
             };
 
             return Ok(result);
@@ -124,7 +126,8 @@ namespace ToryBack.Controllers
                 Description = item.Description ?? string.Empty,
                 CreatedAt = item.CreatedAt,
                 UpdatedAt = item.UpdatedAt,
-                CustomFieldValues = GetItemCustomFieldValues(item, item.Inventory)
+                CustomFieldValues = GetItemCustomFieldValues(item, item.Inventory),
+                ImgUrl = item.ImgUrl
             };
 
             return Ok(result);
@@ -199,7 +202,8 @@ namespace ToryBack.Controllers
                     Name = createDto.Name,
                     Description = createDto.Description ?? string.Empty,
                     CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    UpdatedAt = DateTime.UtcNow,
+                    ImgUrl = createDto.ImgUrl
                 };
 
                 // Set custom field values
@@ -221,7 +225,8 @@ namespace ToryBack.Controllers
                     Description = item.Description,
                     CreatedAt = item.CreatedAt,
                     UpdatedAt = item.UpdatedAt,
-                    CustomFieldValues = GetItemCustomFieldValues(item, inventory)
+                    CustomFieldValues = GetItemCustomFieldValues(item, inventory),
+                    ImgUrl = item.ImgUrl
                 };
 
                 return CreatedAtAction(nameof(GetItem), new { id = item.Id }, result);
@@ -286,6 +291,10 @@ namespace ToryBack.Controllers
                 if (!string.IsNullOrEmpty(updateDto.CustomId))
                     item.CustomId = updateDto.CustomId;
 
+                // Update image URL if provided
+                if (!string.IsNullOrEmpty(updateDto.ImgUrl))
+                    item.ImgUrl = updateDto.ImgUrl;
+
                 // Update custom field values
                 SetItemCustomFieldValues(item, updateDto.CustomFieldValues, item.Inventory);
 
@@ -303,7 +312,8 @@ namespace ToryBack.Controllers
                     Description = item.Description,
                     CreatedAt = item.CreatedAt,
                     UpdatedAt = item.UpdatedAt,
-                    CustomFieldValues = GetItemCustomFieldValues(item, item.Inventory)
+                    CustomFieldValues = GetItemCustomFieldValues(item, item.Inventory),
+                    ImgUrl = item.ImgUrl
                 };
 
                 return Ok(result);

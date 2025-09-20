@@ -12,5 +12,7 @@ namespace ToryBack.Models.DTOs
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public List<CustomFieldValueDto> CustomFieldValues { get; set; } = new();
+
+        public string? ImgUrl { get; set; } = string.Empty;
     }
 }

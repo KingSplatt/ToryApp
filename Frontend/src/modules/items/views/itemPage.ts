@@ -4,15 +4,9 @@ import { UserInventoryPermissionsDto } from "../../../interfaces/PermissionInter
 import { CustomFieldValueDto } from "../../../interfaces/CreateItemDto";
 import { UIUtils } from "../../utils/ui";
 import { Router } from "../../router/router";
+import { UpdateItemDto } from "../../../interfaces/CreateItemDto";
+import { uploadImageToCloudinary } from "../../../services/cloudinaryService";
 import "../styles/itemPage.css";
-
-// Interface for updating items
-interface UpdateItemDto {
-  name: string;
-  description?: string;
-  customId?: string;
-  customFieldValues?: CustomFieldValueDto[];
-}
 
 const router = Router.getInstance();
 let currentInventoryPermissions: UserInventoryPermissionsDto | null = null;
@@ -42,7 +36,6 @@ export function ItemPage(){
             <section class="item-info">
             </section>
             <section class="item-img">
-              <img src="/assets/images/item-placeholder.png" alt="Item Image" />
             </section>
         </section>  
       </section>
@@ -55,7 +48,9 @@ export function ItemPage(){
 
 export async function initItemPage(Inventoryid: number, itemId: number) {
   const itemSection = document.querySelector('.item-info') as HTMLElement;
-   
+  let itemImgSection = document.querySelector('.item-img') as HTMLElement;
+  itemSection.innerHTML = '';
+  itemImgSection.innerHTML = '';
   const itemHeader = document.querySelector('.item-title') as HTMLElement;
   const itemTable = document.createElement('table');
   const getItem = await getItemDetails(Inventoryid, itemId);
@@ -74,7 +69,7 @@ export async function initItemPage(Inventoryid: number, itemId: number) {
   let tableRows = `
     <tr>
       <th>ID: </th>
-      <td>${getItem.id}</td>
+      <td>${getItem.customId}</td>
     </tr>
     <tr>
       <th>Name: </th>
@@ -105,6 +100,10 @@ export async function initItemPage(Inventoryid: number, itemId: number) {
       `;
     });
   }
+
+  itemImgSection.innerHTML = `
+    <img src="${escapeHtml(getItem.imgUrl || '')}" alt="Item Image" />
+  `;
 
   itemTable.innerHTML = tableRows;
   itemSection.appendChild(itemTable);
@@ -257,6 +256,11 @@ function openModalToUpdateItem() {
           <div id="edit-custom-fields-container">
             <!-- Custom fields will be dynamically generated -->
           </div>
+
+          <div class="img-upload-section">
+            <label for="edit-item-image">Item Image:</label>
+            <input type="file" id="edit-item-image" name="image" accept="image/*">
+          </div>
           
           <div class="modal-actions">
             <button type="button" class="btn btn-secondary" id="cancel-edit-item">Cancel</button>
@@ -403,6 +407,15 @@ async function handleEditItemFormSubmit() {
     const name = (formData.get('name') as string)?.trim();
     const customId = (formData.get('customId') as string)?.trim();
     const description = (formData.get('description') as string)?.trim();
+    const imageFile = (document.getElementById('edit-item-image') as HTMLInputElement)?.files?.[0];
+    let imageUrl: string | undefined;
+
+    if (imageFile) {
+      // Upload image to Cloudinary and get the URL
+      imageUrl = await uploadImageToCloudinary(imageFile);
+      console.log('Uploaded image URL:', imageUrl);
+    }
+
 
     if (!name) {
       UIUtils.showModalForMessages('Item name is required');
@@ -459,7 +472,8 @@ async function handleEditItemFormSubmit() {
       name: name,
       description: description || undefined,
       customId: customId || undefined,
-      customFieldValues: customFieldValues
+      customFieldValues: customFieldValues,
+      ImgUrl: imageUrl // Include image URL if uploaded
     };
 
     const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
@@ -474,7 +488,8 @@ async function handleEditItemFormSubmit() {
       name: updateData.name,
       description: updateData.description || currentItem.description,
       customId: updateData.customId || currentItem.customId,
-      customFieldValues: updateData.customFieldValues || currentItem.customFieldValues
+      customFieldValues: updateData.customFieldValues || currentItem.customFieldValues,
+      ImgUrl: updateData.ImgUrl || currentItem.ImgUrl // Include the image URL
     };
 
     await updateItem(currentItem.id, fullItemData);

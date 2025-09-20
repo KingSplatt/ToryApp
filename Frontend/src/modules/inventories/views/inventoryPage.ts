@@ -8,6 +8,7 @@ import { CreateItemDto, CustomFieldValueDto } from "../../../interfaces/CreateIt
 import { getCategories, createCategory } from "../../../services/categoryServices";
 import { Router } from "../../router/router";
 import { UserInventoryPermissionsDto } from "../../../interfaces/PermissionInterface";
+import { uploadImageToCloudinary } from "../../../services/cloudinaryService";
 import { Items } from "../../../interfaces/itemInterface";
 
 const router = Router.getInstance();
@@ -51,6 +52,10 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
   const inventory = await getInventory(parseInt(idInventory));
   currentInventory = inventory; // Store current inventory globally
   console.log('Loaded inventory:', inventory);
+  console.log('Original imageUrl:', inventory.imageUrl);
+  console.log('ImageUrl type:', typeof inventory.imageUrl);
+  console.log('ImageUrl is null/undefined?', inventory.imageUrl == null);
+  
   const categories = await getCategories();
   
   const inventoryDetails = document.getElementById('inventory-details');
@@ -101,7 +106,12 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
                     
                     <section class="inventory-meta-img">
                         <section class="inventory-image">
-                            <img src="${escapeHtml(inventory.imageUrl || 'placeholder.jpg')}" alt="${escapeHtml(inventory.title || 'Untitled Inventory')}">
+                            <img src="${escapeHtml(inventory.imageUrl || 'placeholder.jpg')}" 
+                                 alt="${escapeHtml(inventory.title || 'Untitled Inventory')}"
+                                 onload="console.log('Image loaded successfully:', this.src)"
+                                 onerror="console.error('Image failed to load:', this.src); this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22 viewBox=%220 0 300 200%22%3E%3Crect width=%22300%22 height=%22200%22 fill=%22%23f0f0f0%22/%3E%3Ctext x=%22150%22 y=%22100%22 font-family=%22Arial%22 font-size=%2216%22 fill=%22%23999%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'; this.onerror=null;"
+                                 loading="lazy"
+                                 class="inventory-main-image">
                         </section>
                     </section>
                 </section>
@@ -208,6 +218,10 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
                             <input type="checkbox" id="edit-isPublic" name="isPublic">
                             Public Inventory
                         </label>
+                    </div>
+                    <div class="attach-image-group">
+                        <label for="edit-attachImage" id="edit-attachImage-label">Attach Image:</label>
+                        <input type="file" id="edit-attachImage" name="attachImage" accept="image/*">
                     </div>
                     <div class="modal-actions">
                         <button type="button" class="btn btn-secondary" id="cancel-edit">Cancel</button>
@@ -561,7 +575,38 @@ async function handleEditFormSubmit(inventoryId: number) {
         const description = (formData.get('description') as string)?.trim();
         const categoryId = (formData.get('categoryId') as string)?.trim();
 
-        const imageUrl = (formData.get('imageUrl') as string)?.trim();
+        let imageUrl = (formData.get('imageUrl') as string)?.trim();
+        const imageFile = formData.get('attachImage') as File;
+        
+        // Handle image upload with user feedback
+        if (imageFile && imageFile.size > 0) {
+            const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+            const originalText = submitBtn?.textContent || 'Save Changes';
+            
+            try {
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Uploading image...';
+                }
+                
+                console.log('Uploading image to Cloudinary...');
+                imageUrl = await uploadImageToCloudinary(imageFile);
+                console.log('Image uploaded successfully:', imageUrl);
+                
+                if (submitBtn) {
+                    submitBtn.textContent = 'Saving changes...';
+                }
+            } catch (err) {
+                console.error('Error uploading image:', err);
+                UIUtils.showModalForMessages('Error uploading image: ' + (err instanceof Error ? err.message : 'Unknown error'));
+                
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                }
+                return;
+            }
+        }
 
         if (!title) {
             UIUtils.showModalForMessages('Title is required');

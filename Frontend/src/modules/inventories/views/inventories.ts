@@ -9,6 +9,7 @@ import { UIUtils } from "../../utils/ui";
 import { InventoryDto } from "../../../interfaces/InventoryDtoInterface";
 import { createCategory } from "../../../services/categoryServices";
 import { CreateCategoryDto } from "../../../interfaces/CategoryInterface";
+import { uploadImageToCloudinary } from "../../../services/cloudinaryService";
 const additionalFields = [
   {
     id: "inventory-serial-number",
@@ -192,6 +193,10 @@ export function inventoriesPage() {
                 <!-- Custom fields will be loaded here -->
               </div>
               <button type="button" class="btn btn-secondary btn-sm" id="add-custom-field">+ Add Custom Field</button>
+            </div>
+            <div class="form-group">
+              <label for="inventory-image">Inventory Image</label>
+              <input type="file" id="inventory-image" name="inventoryImage" accept="image/*">
             </div>
           </form>
         </div>
@@ -570,7 +575,7 @@ function setupCreateButton() {
     if (addBtn) addBtn.style.display = 'inline-block';
   }
 
-  function handleCreateInventory() {
+  async function handleCreateInventory() {
     const formData = new FormData(form);
     
     // Obtener usuario autenticado
@@ -613,6 +618,40 @@ function setupCreateButton() {
     console.log('Custom ID Enabled:', customidenable);
     
     
+
+    // Subir imagen a Cloudinary si se seleccionó
+    const imageFile = formData.get('inventoryImage') as File;
+    let imageUrl = '';
+    
+    if (imageFile && imageFile.size > 0) {
+      const saveBtn = document.getElementById('save-inventory') as HTMLButtonElement;
+      const originalText = saveBtn?.textContent || 'Create Inventory';
+      
+      try {
+        if (saveBtn) {
+          saveBtn.disabled = true;
+          saveBtn.textContent = 'Uploading image...';
+        }
+        
+        console.log('Uploading image to Cloudinary...');
+        imageUrl = await uploadImageToCloudinary(imageFile);
+        console.log('Image uploaded successfully:', imageUrl);
+        
+        if (saveBtn) {
+          saveBtn.textContent = 'Creating inventory...';
+        }
+      } catch (err) {
+        console.error('Error uploading image:', err);
+        alert('Error uploading image: ' + (err instanceof Error ? err.message : 'Unknown error'));
+        
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.textContent = originalText;
+        }
+        return;
+      }
+    }
+
     const inventoryData: CreateInventoryDto = {
       title: formData.get('title') as string,
       description: formData.get('description') as string,
@@ -622,7 +661,8 @@ function setupCreateButton() {
       ownerId: currentUser.id, // Usar ID del usuario autenticado
       customFields: [], // Always initialized as an array
       customIdFormat: formData.get('customIdFormat') as string,
-      customIdEnabled: formData.get('customIdEnabled') === 'on'
+      customIdEnabled: formData.get('customIdEnabled') === 'on',
+      imageUrl: imageUrl
     };
 
     // Recopilar datos de campos personalizados

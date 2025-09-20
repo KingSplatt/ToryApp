@@ -30,4 +30,9 @@ export const API_ENDPOINTS = {
   HEALTH: '/api/health'
 };
 
+export const CLOUDINARY_CONFIG = {
+  CLOUD_NAME: (import.meta as any).env?.VITE_CLOUDINARY_CLOUD_NAME || 'dk8wdgwcn',
+  UPLOAD_PRESET: (import.meta as any).env?.VITE_CLOUDINARY_UPLOAD_PRESET || 'Tory-Images'
+};
+
 export default CONFIG;

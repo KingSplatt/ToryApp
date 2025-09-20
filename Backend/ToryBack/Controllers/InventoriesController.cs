@@ -489,6 +489,7 @@ namespace ToryBack.Controllers
                     CategoryId = category.Id,
                     IsPublic = createDto.IsPublic,
                     OwnerId = currentUserId,
+                    ImageUrl = createDto.ImageUrl,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -729,6 +730,12 @@ namespace ToryBack.Controllers
                 inventory.Description = updateDto.Description ?? string.Empty;
                 inventory.IsPublic = updateDto.IsPublic;
                 inventory.UpdatedAt = DateTime.UtcNow;
+                
+                // Update image URL if provided
+                if (!string.IsNullOrEmpty(updateDto.ImageUrl))
+                {
+                    inventory.ImageUrl = updateDto.ImageUrl;
+                }
 
                 // Update category if provided
                 if (!string.IsNullOrEmpty(updateDto.CategoryName))

@@ -70,6 +70,20 @@
     height: auto;
 }
 
+.inventory-main-image {
+    max-width: 400px;
+    height: 295px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid var(--bg-secondary);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.inventory-main-image:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
 .inventory-control{
     width: 100%;
     padding: 8px 16px;

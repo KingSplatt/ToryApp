@@ -10,6 +10,7 @@ export interface CreateInventoryDto {
   title: string;
   description?: string;
   categoryName: string;
+  imageUrl?: string;
   isPublic: boolean;
   tags?: string[];
   ownerId: string;

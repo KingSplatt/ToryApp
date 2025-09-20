@@ -9,5 +9,6 @@ namespace ToryBack.Models.DTOs
         public string OwnerId { get; set; } = string.Empty;
         public List<string>? Tags { get; set; }
         public List<CreateCustomFieldDto>? CustomFields { get; set; }
+        public string? ImageUrl { get; set; }
     }
 }

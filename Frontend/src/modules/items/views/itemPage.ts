@@ -126,13 +126,34 @@ async function getItemDetails(inventoryId: number, itemId: number) {
 async function initializeToolbarWithPermissions(inventoryId: number) {
     try {
         const isAuthenticated = UIUtils.isUserAuthenticated();
+        const isAdmin = UIUtils.isAdmin();
+        
         if (!isAuthenticated) {
             initializeToolbarForGuests(inventoryId);
             return;
         }
         
         currentInventoryPermissions = await getUserInventoryPermissions(inventoryId);
-        if (currentInventoryPermissions.canEditItems || currentInventoryPermissions.canDeleteItems) {
+        
+        // User has access to item management if they have:
+        // - Can edit or delete items specifically
+        // - Can write to the inventory
+        // - Can manage the inventory
+        // - Are the owner
+        // - Have Creator or Admin access level
+        // - Are system admin
+        const hasItemAccess = (currentInventoryPermissions && (
+            currentInventoryPermissions.canEditItems ||
+            currentInventoryPermissions.canDeleteItems ||
+            currentInventoryPermissions.canWrite ||
+            currentInventoryPermissions.canCreateItems ||
+            currentInventoryPermissions.canManageInventory ||
+            currentInventoryPermissions.isOwner ||
+            currentInventoryPermissions.accessLevel === "Creator" ||
+            currentInventoryPermissions.accessLevel === "Admin"
+        )) || isAdmin;
+        
+        if (hasItemAccess) {
             const toolbar = document.getElementById('item-toolbar');
             if (toolbar) {
                 toolbar.style.display = 'block';
@@ -153,11 +174,31 @@ function initializeItemToolbar(inventoryId: number) {
     const editButton = document.getElementById('edit-item-btn') as HTMLButtonElement;
     const deleteButton = document.getElementById('delete-item-btn') as HTMLButtonElement;
     const backButton = document.getElementById('back-to-inventory-btn') as HTMLButtonElement;
+    const isAdmin = UIUtils.isAdmin();
 
-    if (!currentInventoryPermissions?.canEditItems && editButton) {
+    // Show edit button if user can edit items OR has write access OR is owner/admin
+    const canEdit = (currentInventoryPermissions && (
+        currentInventoryPermissions.canEditItems ||
+        currentInventoryPermissions.canWrite ||
+        currentInventoryPermissions.canManageInventory ||
+        currentInventoryPermissions.isOwner ||
+        currentInventoryPermissions.accessLevel === "Creator" ||
+        currentInventoryPermissions.accessLevel === "Admin"
+    )) || isAdmin;
+
+    // Show delete button if user can delete items OR is owner/admin
+    const canDelete = (currentInventoryPermissions && (
+        currentInventoryPermissions.canDeleteItems ||
+        currentInventoryPermissions.canManageInventory ||
+        currentInventoryPermissions.isOwner ||
+        currentInventoryPermissions.accessLevel === "Creator" ||
+        currentInventoryPermissions.accessLevel === "Admin"
+    )) || isAdmin;
+
+    if (!canEdit && editButton) {
         editButton.style.display = 'none';
     }
-    if (!currentInventoryPermissions?.canDeleteItems && deleteButton) {
+    if (!canDelete && deleteButton) {
         deleteButton.style.display = 'none';
     }
     editButton?.addEventListener('click', () => {

@@ -9,6 +9,7 @@ import { getCategories, createCategory } from "../../../services/categoryService
 import { Router } from "../../router/router";
 import { UserInventoryPermissionsDto } from "../../../interfaces/PermissionInterface";
 import { uploadImageToCloudinary } from "../../../services/cloudinaryService";
+import { User } from "../../../interfaces/UserInterface";
 
 const router = Router.getInstance();
 // Global variables for toolbar functionality
@@ -16,12 +17,17 @@ let currentInventoryPermissions: UserInventoryPermissionsDto | null = null;
 let currentInventory: InventoryDto | null = null;
 let selectedItemIds: Set<number> = new Set();
 let inventoryItems: any[] = [];
+let user: User | null = null;
+let isAdmin = false;
 
 export function inventoryPage(){
     const isAuthenticated = UIUtils.isUserAuthenticated();
-    const User = UIUtils.getCurrentUser();
-    const isAdmin = UIUtils.isAdmin();
-    console.log("User in inventoryPage:", User);
+    user = UIUtils.getCurrentUser();
+    isAdmin = UIUtils.isAdmin();
+    (window as any).checkInventoryPageVars = function() {
+        return { user, isAdmin, currentInventoryPermissions, currentInventory, selectedItemIds, inventoryItems };
+    };
+    
   return `
     <div class="inventory-details-page" id="inventory-details">
         <h2></h2>
@@ -37,9 +43,12 @@ export const initInventoryPage = async (idInventory: string) => {
         UIUtils.showModalForMessages('Invalid inventory ID: ' + idInventory);
         return;
     }
-    // Check if user is authenticated and admin first
+    
+    // Update global variables
     const isAuthenticated = UIUtils.isUserAuthenticated();
-    const isAdmin = UIUtils.isAdmin();
+    user = UIUtils.getCurrentUser();
+    isAdmin = UIUtils.isAdmin();
+    
     
     let permissions = null;
     let hasInventoryAccess = false;
@@ -50,7 +59,6 @@ export const initInventoryPage = async (idInventory: string) => {
         try {
             permissions = await getUserInventoryPermissions(parsedId);
             currentInventoryPermissions = permissions;
-            console.log("Permissions in initInventoryPage:", permissions);
             
             // User has access to management actions
             hasInventoryAccess = (permissions && (
@@ -72,7 +80,6 @@ export const initInventoryPage = async (idInventory: string) => {
             )) || isAdmin;
             
         } catch (error) {
-            console.log("No permissions found for user, treating as guest");
             hasInventoryAccess = isAdmin;
             hasWriteAccess = isAdmin;
         }
@@ -84,8 +91,8 @@ export const initInventoryPage = async (idInventory: string) => {
     
     const inventory = await takeInventory(idInventory, hasInventoryAccess, hasWriteAccess);
     
-    // Attach button event listeners if user has any access
-    if (hasInventoryAccess || hasWriteAccess) {
+    // Attach button event listeners if user has any access OR is admin
+    if (hasInventoryAccess || hasWriteAccess || isAdmin) {
         attachButtons();
     }
     
@@ -406,7 +413,7 @@ export async function loadItemsTable(inventoryId: string) {
             if (items && items.length > 0) {
                 // Check if user has permissions for checkboxes or if it's a public inventory
                 const isAuthenticated = UIUtils.isUserAuthenticated();
-                const showCheckboxes = isAuthenticated && (currentInventoryPermissions?.canEditItems || currentInventoryPermissions?.canDeleteItems);
+                const showCheckboxes = isAuthenticated && (isAdmin || currentInventoryPermissions?.canEditItems || currentInventoryPermissions?.canDeleteItems);
                 
                 const tableHTML = `
                     <table class="items-table">
@@ -447,7 +454,7 @@ export async function loadItemsTable(inventoryId: string) {
                 }
             } else {
                 // Show "Add Item" button even for public inventories when no items exist
-                const showAddButton = currentInventory?.isPublic || currentInventoryPermissions?.canEditItems;
+                const showAddButton = isAdmin || currentInventory?.isPublic || currentInventoryPermissions?.canEditItems;
                 tableContainer.innerHTML = `
                     <div class="no-items-message">
                         <p>No items here yet!.</p>
@@ -726,8 +733,9 @@ async function handleEditFormSubmit(inventoryId: number) {
 // Initialize toolbars with permission checking
 async function initializeToolbarsWithPermissions(inventoryId: number) {
     try {
-        // Check if user is authenticated
+        // Check if user is authenticated and admin status
         const isAuthenticated = UIUtils.isUserAuthenticated();
+        
         if (!isAuthenticated) {
             // For unauthenticated users, only show "Add Item" button if inventory is public
             if (currentInventory?.isPublic) {
@@ -736,6 +744,17 @@ async function initializeToolbarsWithPermissions(inventoryId: number) {
                     itemsToolbar.style.display = 'block';
                     initializeItemsToolbarForPublicInventory();
                 }
+            }
+            return;
+        }
+        
+        // If user is admin, always show the full toolbar
+        if (isAdmin) {
+            const itemsToolbar = document.getElementById('items-action-toolbar');
+            if (itemsToolbar) {
+                itemsToolbar.style.display = 'block';
+                initializeItemsToolbar();
+            } else {
             }
             return;
         }
@@ -752,6 +771,16 @@ async function initializeToolbarsWithPermissions(inventoryId: number) {
         }
 
     } catch (error) {
+        // If user is admin, show toolbar even if there's an error getting permissions
+        if (isAdmin) {
+            const itemsToolbar = document.getElementById('items-action-toolbar');
+            if (itemsToolbar) {
+                itemsToolbar.style.display = 'block';
+                initializeItemsToolbar();
+            }
+            return;
+        }
+        
         // In case of error, still check if inventory is public to allow adding items
         if (currentInventory?.isPublic) {
             const itemsToolbar = document.getElementById('items-action-toolbar');
@@ -768,15 +797,32 @@ function initializeItemsToolbar() {
     const selectAllCheckbox = document.getElementById('select-all-items') as HTMLInputElement;
     const editButton = document.getElementById('edit-selected-items') as HTMLButtonElement;
     const deleteButton = document.getElementById('delete-selected-items') as HTMLButtonElement;
-    const addItemButton = document.getElementById(`add-item-${currentInventoryPermissions?.inventoryId}`) as HTMLButtonElement;
+    
+    // For admins, use currentInventory.id if currentInventoryPermissions is null
+    const inventoryId = currentInventoryPermissions?.inventoryId || currentInventory?.id;
+    const addItemButton = document.getElementById(`add-item-${inventoryId}`) as HTMLButtonElement;
     const selectedCount = document.getElementById('selected-count');
-
-    // Handle permissions for buttons
-    if (!currentInventoryPermissions?.canEditItems) {
-        editButton.style.display = 'none';
+    
+    
+    // Show/hide buttons based on admin status or permissions
+    if (!isAdmin && !currentInventoryPermissions?.canEditItems) {
+        if (editButton) {
+            editButton.style.display = 'none';
+        }
+    } else {
+        if (editButton) {
+            editButton.style.display = 'block';
+        }
     }
-    if (!currentInventoryPermissions?.canDeleteItems) {
-        deleteButton.style.display = 'none';
+    
+    if (!isAdmin && !currentInventoryPermissions?.canDeleteItems) {
+        if (deleteButton) {
+            deleteButton.style.display = 'none';
+        }
+    } else {
+        if (deleteButton) {
+            deleteButton.style.display = 'block';
+        }
     }
 
     // Select all functionality
@@ -830,13 +876,55 @@ function initializeItemsToolbarForPublicInventory() {
     const selectedCount = document.getElementById('selected-count');
     const label = document.querySelector('.select-all-label') as HTMLLabelElement;
 
-    if (label) label.style.display = 'none';
-    // Hide edit and delete buttons for public inventories without permissions
-    if (editButton) editButton.style.display = 'none';
-    if (deleteButton) deleteButton.style.display = 'none';
-    if (selectAllCheckbox) selectAllCheckbox.style.display = 'none';
-    if (selectedCount) selectedCount.style.display = 'none';
-    // Only show "Add Item" button for public inventories
+    // Check if user is admin - admins have full access even in public inventories
+    
+    if (!isAdmin) {
+        if (label) label.style.display = 'none';
+        // Hide edit and delete buttons for public inventories without permissions
+        if (editButton) editButton.style.display = 'none';
+        if (deleteButton) deleteButton.style.display = 'none';
+        if (selectAllCheckbox) selectAllCheckbox.style.display = 'none';
+        if (selectedCount) selectedCount.style.display = 'none';
+    } else {
+        // Admins get full access - initialize like regular toolbar
+        // Select all functionality for admins
+        selectAllCheckbox?.addEventListener('change', (e) => {
+            const target = e.target as HTMLInputElement;
+            const itemCheckboxes = document.querySelectorAll('.item-checkbox') as NodeListOf<HTMLInputElement>;
+            
+            itemCheckboxes.forEach(checkbox => {
+                checkbox.checked = target.checked;
+                const itemId = parseInt(checkbox.value);
+                if (target.checked) {
+                    selectedItemIds.add(itemId);
+                } else {
+                    selectedItemIds.delete(itemId);
+                }
+            });
+            
+            updateToolbarState();
+        });
+
+        // Edit selected items for admins
+        editButton?.addEventListener('click', () => {
+            if (selectedItemIds.size === 0) {
+                UIUtils.showModalForMessages('Please select items to edit');
+                return;
+            }
+            openBulkEditModal();
+        });
+
+        // Delete selected items for admins
+        deleteButton?.addEventListener('click', () => {
+            if (selectedItemIds.size === 0) {
+                UIUtils.showModalForMessages('Please select items to delete');
+                return;
+            }
+            confirmBulkDelete();
+        });
+    }
+    
+    // Add Item button is available for both admins and regular users in public inventories
     addItemButton?.addEventListener('click', () => {
         openAddItemModal();
     });

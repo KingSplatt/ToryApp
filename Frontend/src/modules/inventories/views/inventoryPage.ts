@@ -37,10 +37,13 @@ export const initInventoryPage = async (idInventory: string) => {
         UIUtils.showModalForMessages('Invalid inventory ID: ' + idInventory);
         return;
     }
+    // Check if user is authenticated and admin first
     const isAuthenticated = UIUtils.isUserAuthenticated();
     const isAdmin = UIUtils.isAdmin();
+    
     let permissions = null;
     let hasInventoryAccess = false;
+    let hasWriteAccess = false; // New variable for write permissions
     
     // Only try to get permissions if user is authenticated
     if (isAuthenticated) {
@@ -49,25 +52,40 @@ export const initInventoryPage = async (idInventory: string) => {
             currentInventoryPermissions = permissions;
             console.log("Permissions in initInventoryPage:", permissions);
             
-            // User has access to actions if they have management permissions, are owner, or are admin
+            // User has access to management actions
             hasInventoryAccess = (permissions && (
                 permissions.canManageInventory || 
                 permissions.isOwner ||
                 permissions.accessLevel === "Creator" ||
                 permissions.accessLevel === "Admin"
             )) || isAdmin;
+            
+            // User has write access (for discussions and item creation)
+            hasWriteAccess = (permissions && (
+                permissions.canWrite ||
+                permissions.canCreateItems ||
+                permissions.canEditItems ||
+                permissions.canManageInventory ||
+                permissions.isOwner ||
+                permissions.accessLevel === "Creator" ||
+                permissions.accessLevel === "Admin"
+            )) || isAdmin;
+            
         } catch (error) {
             console.log("No permissions found for user, treating as guest");
-            hasInventoryAccess = isAdmin; // Only admin can access if permissions fail
+            hasInventoryAccess = isAdmin;
+            hasWriteAccess = isAdmin;
         }
     } else {
-        // For unauthenticated users, no access to management actions
+        // For unauthenticated users, no access to management or write actions
         hasInventoryAccess = false;
+        hasWriteAccess = false;
     }
     
-    const inventory = await takeInventory(idInventory, hasInventoryAccess);
+    const inventory = await takeInventory(idInventory, hasInventoryAccess, hasWriteAccess);
     
-    if (hasInventoryAccess) {
+    // Attach button event listeners if user has any access
+    if (hasInventoryAccess || hasWriteAccess) {
         attachButtons();
     }
     
@@ -78,7 +96,7 @@ export const initInventoryPage = async (idInventory: string) => {
     await loadItemsTable(idInventory);
 };
 
-async function takeInventory(idInventory: string, hasInventoryAccess: boolean = false): Promise<InventoryDto> {
+async function takeInventory(idInventory: string, hasInventoryAccess: boolean = false, hasWriteAccess: boolean = false): Promise<InventoryDto> {
   const inventory = await getInventory(parseInt(idInventory));
   currentInventory = inventory; // Store current inventory globally
   
@@ -148,12 +166,17 @@ async function takeInventory(idInventory: string, hasInventoryAccess: boolean = 
             <section class="inventory-actions">
                 <button class="btn btn-primary" id="edit-inventory-${inventory.id}">Edit</button>
                 <button class="btn btn-primary" id="custom-id-inventory-${inventory.id}">Custom ID</button>
-                <button class="btn btn-primary" id="discuss-inventory-${inventory.id}">Discussion post</button>
+                ${hasWriteAccess ? `<button class="btn btn-primary" id="discuss-inventory-${inventory.id}">Discussion post</button>` : ''}
                 <button class="btn btn-primary" id="items-inventory-${inventory.id}">Hide Items</button>
             </section>
         </section>
-        ` : `
-        `}
+        ` : hasWriteAccess ? `
+        <section class="inventory-control">
+            <section class="inventory-actions">
+                <button class="btn btn-primary" id="discuss-inventory-${inventory.id}">Discussion post</button>
+            </section>
+        </section>
+        ` : ''}
         <section class="inventory-meta-actions">
           <div class="items-action-toolbar" id="items-action-toolbar" style="display: none;">
             <div class="toolbar-actions">

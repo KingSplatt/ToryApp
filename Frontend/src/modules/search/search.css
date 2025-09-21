@@ -6,3 +6,35 @@
     gap: 0.5rem;
 }
 
+.inventory-card-search{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    border: 1px solid var(--text-secondary);
+    border-radius: 5px;
+    margin-bottom: 0.5rem;
+    align-items: center;
+}
+
+.inventory-info-search{
+    width: 100%;
+    gap: 0.25rem;
+    padding-left: 15px;
+}
+
+.inventory-image-search{
+    max-width: 150px;
+    width: 50%;
+    justify-content: flex-end;
+    padding: 0.5rem;
+}
+
+.inventory-image-search img{
+    max-width: 180px;
+    width: 100%;
+    justify-content: flex-end;
+    height: auto;
+    border-radius: 5px;
+}
+
+

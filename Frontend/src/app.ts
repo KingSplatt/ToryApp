@@ -97,8 +97,9 @@ router.addRoute({
   path: '/inventories/:id/discusspost',
   title: 'Discussion Post',
   component: () => {
+    const params = router.getParams();
     const content = discusspost();
-    setTimeout(initDiscusspost, 0);
+    setTimeout(initDiscusspost, 0, parseInt(params.id));
     return createLayout(content, router.getCurrentPath());
   }
 });

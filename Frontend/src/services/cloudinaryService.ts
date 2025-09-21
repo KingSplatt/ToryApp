@@ -17,7 +17,6 @@ export async function uploadImageToCloudinary(file: File): Promise<string> {
   
   // Verificar resultado de moderacion si esta disponible
   if (data.moderation) {
-    console.log('Moderation data:', data.moderation);
     
     // Verificar si la moderación básica rechazó la imagen
     if (Array.isArray(data.moderation)) {
@@ -62,7 +61,7 @@ async function deleteImageFromCloudinary(publicId: string): Promise<void> {
     });
     
     if (response.ok) {
-      console.log(`Imagen ${publicId} eliminada exitosamente por contenido inapropiado`);
+
     } else {
       console.error(`Error eliminando imagen ${publicId}:`, await response.text());
     }
@@ -111,7 +110,7 @@ export async function getModerationInfo(publicId: string): Promise<any> {
     
     if (response.ok) {
       const result = await response.json();
-      console.log('Moderation info:', result);
+
       return result;
     } else {
       throw new Error(`Error getting moderation info: ${response.status}`);

@@ -21,6 +21,7 @@ export function inventoryPage(){
     const isAuthenticated = UIUtils.isUserAuthenticated();
     const User = UIUtils.getCurrentUser();
     const isAdmin = UIUtils.isAdmin();
+    console.log("User in inventoryPage:", User);
   return `
     <div class="inventory-details-page" id="inventory-details">
         <h2></h2>
@@ -36,9 +37,39 @@ export const initInventoryPage = async (idInventory: string) => {
         UIUtils.showModalForMessages('Invalid inventory ID: ' + idInventory);
         return;
     }
+    const isAuthenticated = UIUtils.isUserAuthenticated();
+    const isAdmin = UIUtils.isAdmin();
+    let permissions = null;
+    let hasInventoryAccess = false;
     
-    const inventory = await takeInventory(idInventory);
-    attachButtons();
+    // Only try to get permissions if user is authenticated
+    if (isAuthenticated) {
+        try {
+            permissions = await getUserInventoryPermissions(parsedId);
+            currentInventoryPermissions = permissions;
+            console.log("Permissions in initInventoryPage:", permissions);
+            
+            // User has access to actions if they have management permissions, are owner, or are admin
+            hasInventoryAccess = (permissions && (
+                permissions.canManageInventory || 
+                permissions.isOwner ||
+                permissions.accessLevel === "Creator" ||
+                permissions.accessLevel === "Admin"
+            )) || isAdmin;
+        } catch (error) {
+            console.log("No permissions found for user, treating as guest");
+            hasInventoryAccess = isAdmin; // Only admin can access if permissions fail
+        }
+    } else {
+        // For unauthenticated users, no access to management actions
+        hasInventoryAccess = false;
+    }
+    
+    const inventory = await takeInventory(idInventory, hasInventoryAccess);
+    
+    if (hasInventoryAccess) {
+        attachButtons();
+    }
     
     // Check user permissions and initialize toolbars
     await initializeToolbarsWithPermissions(parsedId);
@@ -47,13 +78,9 @@ export const initInventoryPage = async (idInventory: string) => {
     await loadItemsTable(idInventory);
 };
 
-async function takeInventory(idInventory: string): Promise<InventoryDto> {
+async function takeInventory(idInventory: string, hasInventoryAccess: boolean = false): Promise<InventoryDto> {
   const inventory = await getInventory(parseInt(idInventory));
   currentInventory = inventory; // Store current inventory globally
-  console.log('Loaded inventory:', inventory);
-  console.log('Original imageUrl:', inventory.imageUrl);
-  console.log('ImageUrl type:', typeof inventory.imageUrl);
-  console.log('ImageUrl is null/undefined?', inventory.imageUrl == null);
   
   const categories = await getCategories();
   
@@ -107,7 +134,7 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
                         <section class="inventory-image">
                             <img src="${escapeHtml(inventory.imageUrl || 'placeholder.jpg')}" 
                                  alt="${escapeHtml(inventory.title || 'Untitled Inventory')}"
-                                 onload="console.log('Image loaded successfully:', this.src)"
+                            
                                  onerror="console.error('Image failed to load:', this.src); this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22 viewBox=%220 0 300 200%22%3E%3Crect width=%22300%22 height=%22200%22 fill=%22%23f0f0f0%22/%3E%3Ctext x=%22150%22 y=%22100%22 font-family=%22Arial%22 font-size=%2216%22 fill=%22%23999%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'; this.onerror=null;"
                                  loading="lazy"
                                  class="inventory-main-image">
@@ -116,14 +143,17 @@ async function takeInventory(idInventory: string): Promise<InventoryDto> {
                 </section>
             </section>
         </section>
+        ${hasInventoryAccess ? `
         <section class="inventory-control">
             <section class="inventory-actions">
-                <button class="btn btn-secondary" id="edit-inventory-${inventory.id}">Edit</button>
-                <button class="btn btn-info" id="custom-id-inventory-${inventory.id}">Custom ID</button>
+                <button class="btn btn-primary" id="edit-inventory-${inventory.id}">Edit</button>
+                <button class="btn btn-primary" id="custom-id-inventory-${inventory.id}">Custom ID</button>
                 <button class="btn btn-primary" id="discuss-inventory-${inventory.id}">Discussion post</button>
-                <button class="btn btn-secondary" id="items-inventory-${inventory.id}">Hide Items</button>
+                <button class="btn btn-primary" id="items-inventory-${inventory.id}">Hide Items</button>
             </section>
-            </section>
+        </section>
+        ` : `
+        `}
         <section class="inventory-meta-actions">
           <div class="items-action-toolbar" id="items-action-toolbar" style="display: none;">
             <div class="toolbar-actions">
@@ -593,9 +623,9 @@ async function handleEditFormSubmit(inventoryId: number) {
                     submitBtn.textContent = 'Uploading image...';
                 }
                 
-                console.log('Uploading image to Cloudinary...');
+        
                 imageUrl = await uploadImageToCloudinary(imageFile);
-                console.log('Image uploaded successfully:', imageUrl);
+        
                 
                 if (submitBtn) {
                     submitBtn.textContent = 'Saving changes...';
@@ -814,7 +844,7 @@ function confirmBulkDelete() {
     UIUtils.ModalForConfirmation(
         `Are you sure you want to delete ${selectedItemIds.size} selected items? This action cannot be undone.`,
         () => executeBulkDelete(),
-        () => console.log('Bulk delete canceled')
+
     );
 }
 
@@ -822,7 +852,7 @@ async function executeBulkDelete() {
     try {
         const itemCheckboxes = document.querySelectorAll('.item-checkbox') as NodeListOf<HTMLInputElement>;
         const itemIdsToDelete = Array.from(selectedItemIds);
-        console.log('Deleting items:', itemIdsToDelete);
+
         await deleteItems(itemIdsToDelete);
         selectedItemIds.clear();
         updateToolbarState();
@@ -867,11 +897,10 @@ function populateCustomFieldsForAdd() {
     
     const inventory = currentInventory;
     if (!inventory || !inventory.customFields || inventory.customFields.length === 0) {
-        console.log('No custom fields found for inventory:', inventory?.id);
+
         return;
     }
     
-    console.log('Populating custom fields for inventory:', inventory.id, 'Fields:', inventory.customFields);
     
     container.innerHTML = '';
     
@@ -949,7 +978,6 @@ function populateCustomFieldsForAdd() {
         container.appendChild(fieldGroup);
     });
     
-    console.log('Custom fields populated. Container children count:', container.children.length);
 }
 
 function attachAddItemModalEventListeners() {
@@ -998,9 +1026,9 @@ async function handleAddItemFormSubmit() {
                     submitBtn.disabled = true;
                     submitBtn.textContent = 'Uploading image...';
                 }
-                console.log('Uploading item image to Cloudinary...');
+        
                 imageUrl = await uploadImageToCloudinary(itemImage);
-                console.log('Item image uploaded successfully:', imageUrl);
+        
                 if (submitBtn) {
                     submitBtn.textContent = 'Adding Item...';
                 }
@@ -1026,14 +1054,14 @@ async function handleAddItemFormSubmit() {
         const customFieldValues: CustomFieldValueDto[] = [];
         const customFieldInputs = form.querySelectorAll('[data-field-name]') as NodeListOf<HTMLInputElement>;
         
-        console.log('Found custom field inputs:', customFieldInputs.length);
+
         
         customFieldInputs.forEach((input) => {
             const fieldName = input.getAttribute('data-field-name');
             const fieldType = input.getAttribute('data-field-type');
             const fieldId = input.getAttribute('data-field-id');
             
-            console.log('Processing field:', { fieldName, fieldType, fieldId, value: input.value });
+    
             
             if (fieldName && fieldType && fieldId) {
                 let value: string | undefined;
@@ -1065,7 +1093,7 @@ async function handleAddItemFormSubmit() {
             }
         });
 
-        console.log('Custom field values to send:', customFieldValues);
+
 
         const itemData: CreateItemDto = {
             inventoryId: inventoryId,

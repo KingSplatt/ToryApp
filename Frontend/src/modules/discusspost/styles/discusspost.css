@@ -1,0 +1,264 @@
+/* Discussion Post Styles */
+.discusspost-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.discussion-header {
+  width: 100%;
+  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.discussion-header h1 {
+  color: var(--text-primary);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #545b62;
+}
+
+.new-post-form {
+  background-color: var(--bg-primary);
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  border: 1px solid #dee2e6;
+}
+
+.new-post-form.hidden {
+  display: none;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #495057;
+}
+
+.form-group textarea {
+  border-radius: 5px;
+  border: 1px solid var(--text-secondary);
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--bg-primary);
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.form-control:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.discussion-posts {
+  margin-top: 20px;
+}
+
+.discussion-post {
+  background-color: var(--bg-primary);
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.discussion-post:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.author-info strong {
+  color: var(--text-primary);
+  font-size: 16px;
+}
+
+.post-date {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.post-content {
+  margin-bottom: 15px;
+}
+
+.post-content p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.post-actions {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.like-btn {
+  background: none;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  padding: 8px 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.like-btn:hover {
+  background-color: var(--bg-tertiary);
+  border-color: #007bff;
+}
+
+.like-btn.liked {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.like-btn.liked:hover {
+  background-color: #0056b3;
+}
+
+.like-icon {
+  font-size: 16px;
+}
+
+.like-count {
+  font-weight: 500;
+}
+
+.loading, .error, .no-posts {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-style: italic;
+}
+
+.error {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+}
+
+.no-posts {
+  background-color: #e2e3e5;
+  border: 1px solid #d6d8db;
+  border-radius: 4px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .discusspost-container {
+    padding: 15px;
+  }
+  
+  .discussion-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .discussion-header h1 {
+    font-size: 24px;
+  }
+  
+  .new-post-form {
+    padding: 15px;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+  
+  .discussion-post {
+    padding: 15px;
+  }
+  
+  .author-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+}

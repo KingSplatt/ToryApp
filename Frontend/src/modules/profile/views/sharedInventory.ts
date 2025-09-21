@@ -60,8 +60,8 @@ function loadTableSharedInventories(){
       <tr>
         <th>Inventory Name</th>
         <th>Description</th>
-        <th>Category</th>
-        <th>Total Custom Fields</th>
+        <th>Created</th>
+        <th>Total Items</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -75,8 +75,8 @@ function loadTableSharedInventories(){
         row.innerHTML = `
           <td>${item.title}</td>
           <td>${item.description}</td>
-          <td>${item.category}</td>
-          <td>${item.customFields.length}</td>
+          <td>${new Date(item.createdAt).toLocaleDateString()}</td>
+          <td>${item.itemCount}</td>
         `;
 
         row.addEventListener('click', () => {

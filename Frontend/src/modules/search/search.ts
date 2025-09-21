@@ -243,15 +243,15 @@ async function loadCardInventories() {
   try {
     const inventories = await getInventories();
     inventoriesContainer.innerHTML = inventories.map(inv => `
-      <div class="inventory-card">
-        <div class="inventory-image">
-          ${inv.imageUrl ? `<img src="${inv.imageUrl}" alt="${inv.title}">` : '<div class="image-placeholder">📦</div>'}
-        </div>
-        <div class="inventory-info">
-          <h3><a href="/inventory/${inv.id}" data-navigate="/inventory/${inv.id}">${inv.title}</a></h3>
-          <p class="inventory-category">${inv.category}</p>
-          <p class="inventory-count">${inv.itemCount} elementos</p>
-        </div>
+      <div class="inventory-card-search">
+      <div class="inventory-info-search">
+        <h3><a href="/inventory/${inv.id}" data-navigate="/inventory/${inv.id}">${inv.title}</a></h3>
+        <p class="inventory-category">${inv.category}</p>
+        <p class="inventory-count">${inv.itemCount} elementos</p>
+      </div>
+      <div class="inventory-image-search">
+        ${inv.imageUrl ? `<img src="${inv.imageUrl}" alt="${inv.title}">` : '<div class="image-placeholder">📦</div>'}
+      </div>
       </div>
     `).join('');
   } catch (error) {

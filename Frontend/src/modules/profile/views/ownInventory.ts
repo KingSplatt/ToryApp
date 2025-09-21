@@ -455,8 +455,8 @@ export function loadTableOfInventories(){
           </th>
           <th>Inventory</th>
           <th>Description</th>
-          <th>Category</th>
-          <th>Total Custom Fields</th>
+          <th>Created</th>
+          <th>Total Items</th>
         </tr>
       </thead>
       <tbody>
@@ -472,8 +472,8 @@ export function loadTableOfInventories(){
             <td><input type="checkbox" class="inventory-checkbox" data-inventory-id="${tory.id}" onchange="updateInventoryToolBar()"></td>
             <td class="inventory-title-cell">${tory.title}</td>
             <td class="inventory-description-cell">${tory.description}</td>
-            <td class="inventory-category-cell">${tory.category}</td>
-            <td class="inventory-fields-cell">${tory.customFields.length}</td>
+            <td class="inventory-category-cell">${new Date(tory.createdAt).toLocaleDateString()}</td>
+            <td class="inventory-fields-cell">${tory.itemCount}</td>
           `;
           
           // Add click event listener to navigate to inventory page
